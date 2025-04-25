@@ -1,0 +1,671 @@
+import React, { useState, useEffect, createContext, useContext } from 'react';
+import { 
+  AppBar, Toolbar, IconButton, Typography, Drawer, Divider, 
+  List, ListItem, ListItemIcon, ListItemText, Box, useTheme, useMediaQuery, 
+  Menu, MenuItem, Avatar, ListItemAvatar, Badge, Tooltip, alpha,
+  ThemeProvider, createTheme, CssBaseline
+} from '@mui/material';
+import { 
+  Menu as MenuIcon, Dashboard, Category, AttachMoney, 
+  AccountCircle, Logout, BarChart, Settings, ChevronLeft,
+  Savings as SavingsIcon, Person, Notifications, Language, 
+  DarkMode, LightMode, HelpOutline
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import Swal from 'sweetalert2';
+
+// Constants
+const DRAWER_WIDTH = 240;
+const MINI_DRAWER_WIDTH = 65;
+
+// Theme Context for Dark Mode
+const ThemeModeContext = createContext({
+  toggleThemeMode: () => {},
+  mode: 'light',
+});
+
+export const useThemeMode = () => useContext(ThemeModeContext);
+
+// Styled components
+const DrawerHeader = styled('div')(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: theme.spacing(0, 1),
+  ...theme.mixins.toolbar,
+  justifyContent: 'flex-end',
+}));
+
+// Enhanced ListItem with hover and active states
+const StyledListItem = styled(ListItem)(({ theme, active }) => ({
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.08),
+    '& .MuiListItemIcon-root': {
+      color: theme.palette.primary.main,
+    },
+    '& .MuiListItemText-primary': {
+      fontWeight: 600,
+    },
+  },
+  ...(active && {
+    backgroundColor: alpha(theme.palette.primary.main, 0.15),
+    '& .MuiListItemIcon-root': {
+      color: theme.palette.primary.main,
+    },
+    '& .MuiListItemText-primary': {
+      fontWeight: 600,
+      color: theme.palette.primary.main,
+    },
+  }),
+  transition: 'all 0.2s',
+}));
+
+// ProfileMenuItem with hover effects
+const ProfileMenuItem = styled(MenuItem)(({ theme, danger }) => ({
+  padding: theme.spacing(1.5, 2),
+  '&:hover': {
+    backgroundColor: danger 
+      ? alpha(theme.palette.error.main, 0.08) 
+      : alpha(theme.palette.primary.main, 0.08),
+    '& .MuiListItemIcon-root': {
+      color: danger ? theme.palette.error.main : theme.palette.primary.main,
+    },
+  },
+  '& .MuiListItemIcon-root': {
+    color: danger ? theme.palette.error.light : 'inherit',
+    minWidth: 36,
+  },
+  '& .MuiTypography-root': {
+    color: danger ? theme.palette.error.main : 'inherit',
+    fontWeight: danger ? 500 : 400,
+  }
+}));
+
+const UserAvatar = styled(Avatar)(({ theme }) => ({
+  width: 40,
+  height: 40,
+  backgroundColor: theme.palette.primary.main,
+  cursor: 'pointer',
+  transition: 'all 0.2s ease-in-out',
+  border: `2px solid ${alpha(theme.palette.background.paper, 0.8)}`,
+  '&:hover': {
+    transform: 'scale(1.05)',
+    boxShadow: `0 0 0 2px ${alpha(theme.palette.primary.main, 0.2)}`,
+  }
+}));
+
+const ThemeModeProvider = ({ children }) => {
+  const [mode, setMode] = useState(() => {
+    // Try to get the mode from localStorage
+    const savedMode = localStorage.getItem('themeMode');
+    return savedMode || 'light';
+  });
+
+  useEffect(() => {
+    // Save mode to localStorage when it changes
+    localStorage.setItem('themeMode', mode);
+  }, [mode]);
+
+  const theme = React.useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode,
+          ...(mode === 'dark' 
+            ? {
+                primary: {
+                  main: '#90caf9',
+                },
+                background: {
+                  default: '#121212',
+                  paper: '#1e1e1e',
+                },
+              } 
+            : {
+                primary: {
+                  main: '#1976d2',
+                },
+              }),
+        },
+        components: {
+          MuiCssBaseline: {
+            styleOverrides: {
+              body: {
+                scrollbarColor: mode === 'dark' ? '#6b6b6b #2b2b2b' : '#959595 #f5f5f5',
+                '&::-webkit-scrollbar, & *::-webkit-scrollbar': {
+                  width: '8px',
+                  height: '8px',
+                },
+                '&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb': {
+                  borderRadius: 8,
+                  backgroundColor: mode === 'dark' ? '#6b6b6b' : '#959595',
+                  minHeight: 24,
+                },
+                '&::-webkit-scrollbar-track, & *::-webkit-scrollbar-track': {
+                  borderRadius: 8,
+                  backgroundColor: mode === 'dark' ? '#2b2b2b' : '#f5f5f5',
+                },
+              },
+            },
+          },
+        },
+      }),
+    [mode],
+  );
+
+  const themeMode = React.useMemo(
+    () => ({
+      toggleThemeMode: () => {
+        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+      },
+      mode,
+    }),
+    [mode],
+  );
+
+  return (
+    <ThemeModeContext.Provider value={themeMode}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </ThemeModeContext.Provider>
+  );
+};
+
+const MainLayout = ({ children }) => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { toggleThemeMode, mode } = useThemeMode();
+  const isDarkMode = mode === 'dark';
+
+  const [open, setOpen] = useState(!isMobile);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (isMobile && open) {
+        setOpen(false);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobile, open]);
+
+  const handleDrawerOpen = () => {
+    setOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setOpen(false);
+  };
+
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleNotificationsMenu = (event) => {
+    setNotificationsAnchorEl(event.currentTarget);
+  };
+
+  const handleNotificationsMenuClose = () => {
+    setNotificationsAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    handleMenuClose();
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'You will be logged out of your account.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: theme.palette.primary.main,
+      cancelButtonColor: theme.palette.error.main,
+      confirmButtonText: 'Yes, logout',
+      background: isDarkMode ? '#1e1e1e' : '#ffffff',
+      color: isDarkMode ? '#ffffff' : '#000000',
+    });
+
+    if (result.isConfirmed) {
+      await logout();
+      navigate('/login');
+      Swal.fire({
+        title: 'Logged Out',
+        text: 'You have been logged out successfully.',
+        icon: 'success',
+        background: isDarkMode ? '#1e1e1e' : '#ffffff',
+        color: isDarkMode ? '#ffffff' : '#000000',
+      });
+    }
+  };
+
+  const handleProfile = () => {
+    handleMenuClose();
+    navigate('/profile');
+  };
+
+  const handleSettings = () => {
+    handleMenuClose();
+    navigate('/settings');
+  };
+
+  const handleThemeToggle = () => {
+    toggleThemeMode();
+    handleMenuClose();
+  };
+
+  const menuItems = [
+    { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
+    { text: 'Expenses', icon: <AttachMoney />, path: '/expenses' },
+    { text: 'Categories', icon: <Category />, path: '/categories' },
+    { text: 'Budgets', icon: <BarChart />, path: '/budgets' },
+    { text: 'Settings', icon: <Settings />, path: '/settings' },
+  ];
+
+  const isActiveRoute = (path) => {
+    return location.pathname === path || 
+           (path !== '/dashboard' && location.pathname.startsWith(path));
+  };
+  
+  // Get current page title based on route
+  const getPageTitle = () => {
+    const currentPath = location.pathname.split('/')[1];
+    if (!currentPath) return 'Dashboard';
+    return currentPath.charAt(0).toUpperCase() + currentPath.slice(1);
+  };
+
+  // User information (would come from auth context in a real app)
+  const userName = user?.name || 'John Doe';
+  const userEmail = user?.email || 'john.doe@example.com';
+  const userInitial = userName.charAt(0).toUpperCase();
+  const hasNotifications = true; // Example flag
+  const notificationCount = 3; // Example count
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      <AppBar 
+        position="fixed" 
+        elevation={1}
+        sx={{ 
+          zIndex: theme.zIndex.drawer + 1,
+          width: { xs: '100%', md: open ? `calc(100% - ${DRAWER_WIDTH}px)` : `calc(100% - ${MINI_DRAWER_WIDTH}px)` },
+          ml: { xs: 0, md: open ? DRAWER_WIDTH : MINI_DRAWER_WIDTH },
+          transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+          }),
+          bgcolor: theme.palette.mode === 'dark' ? '#1976d2' : '#1976d2',
+          color: '#ffffff'
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="toggle drawer"
+            edge="start"
+            onClick={open ? handleDrawerClose : handleDrawerOpen}
+            sx={{ mr: 2 }}
+          >
+            {open ? <ChevronLeft /> : <MenuIcon />}
+          </IconButton>
+          {/* Display current page title instead of app title */}
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            {getPageTitle()}
+          </Typography>
+          
+          {/* Header Actions */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* Dark Mode Toggle (Direct access) */}
+            <Tooltip title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+  <IconButton 
+    onClick={handleThemeToggle}
+    color="inherit"
+    size="large"
+    sx={{ 
+      mx: 1,
+      transition: 'transform 0.3s ease-in-out',
+      transform: isDarkMode ? 'rotate(180deg)' : 'rotate(0deg)',
+      color: '#FFD700', // Clean white for contrast against blue
+      // Alternative options:
+      // color: '#F5F5F5', // Slightly softer white
+      // color: '#FFD700', // Gold for high visibility
+      // color: '#E0F7FA', // Light cyan - easy on eyes
+      '&:hover': {
+        bgcolor: 'rgba(255, 255, 255, 0.15)',
+        color: '#E0F7FA'
+      }
+    }}
+  >
+    {isDarkMode ? <LightMode /> : <DarkMode />}
+  </IconButton>
+</Tooltip>
+            
+            {/* Notifications */}
+            <Tooltip title="Notifications">
+              <IconButton 
+                color="inherit"
+                onClick={handleNotificationsMenu}
+                size="large"
+                sx={{ mx: 0.5, color: '#FFD700' }}
+              >
+                <Badge badgeContent={notificationCount} color="error">
+                  <Notifications />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+            
+           
+            
+            <Menu
+              anchorEl={notificationsAnchorEl}
+              open={Boolean(notificationsAnchorEl)}
+              onClose={handleNotificationsMenuClose}
+              PaperProps={{
+                elevation: 3,
+                sx: {
+                  width: 320,
+                  maxHeight: 400,
+                  mt: 1.5,
+                  borderRadius: 2,
+                  overflow: 'auto',
+                  '&:before': {
+                    content: '""',
+                    display: 'block',
+                    position: 'absolute',
+                    top: 0,
+                    right: 14,
+                    width: 10,
+                    height: 10,
+                    bgcolor: 'background.paper',
+                    transform: 'translateY(-50%) rotate(45deg)',
+                    zIndex: 0,
+                  },
+                },
+              }}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            >
+              <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="h6" sx={{ fontSize: 16, fontWeight: 600 }}>Notifications</Typography>
+              </Box>
+              {hasNotifications ? (
+                [1, 2, 3].map((notification) => (
+                  <MenuItem key={notification} onClick={handleNotificationsMenuClose} sx={{ py: 1.5 }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                        <AttachMoney />
+                      </Avatar>
+                    </ListItemAvatar>
+                    <Box>
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>New expense added</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        You added a new expense of $45.00
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                        2 hours ago
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))
+              ) : (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography color="text.secondary">No notifications</Typography>
+                </Box>
+              )}
+              <Box sx={{ p: 1, borderTop: `1px solid ${theme.palette.divider}`, textAlign: 'center' }}>
+                <Typography 
+                  variant="body2" 
+                  color="primary" 
+                  sx={{ 
+                    cursor: 'pointer', 
+                    fontWeight: 500,
+                    '&:hover': { textDecoration: 'underline' }
+                  }}
+                >
+                  View all notifications
+                </Typography>
+              </Box>
+            </Menu>
+            
+            {/* User Menu */}
+            <Tooltip title="Account settings">
+              <UserAvatar onClick={handleMenu}>
+                {userInitial}
+              </UserAvatar>
+            </Tooltip>
+            
+            <Menu
+              id="profile-menu"
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              PaperProps={{
+                elevation: 3,
+                sx: {
+                  width: 280,
+                  mt: 1.5,
+                  borderRadius: 2,
+                  overflow: 'visible',
+                  '&:before': {
+                    content: '""',
+                    display: 'block',
+                    position: 'absolute',
+                    top: 0,
+                    right: 14,
+                    width: 10,
+                    height: 10,
+                    bgcolor: 'background.paper',
+                    transform: 'translateY(-50%) rotate(45deg)',
+                    zIndex: 0,
+                  },
+                },
+              }}
+              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            >
+              {/* User Info */}
+              <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Avatar 
+                    sx={{ 
+                      width: 50, 
+                      height: 50, 
+                      mr: 2, 
+                      bgcolor: theme.palette.primary.main 
+                    }}
+                  >
+                    {userInitial}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontSize: 16, fontWeight: 600 }}>
+                      {userName}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary" 
+                      sx={{ 
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: 180
+                      }}
+                    >
+                      {userEmail}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+              
+              {/* Menu Items */}
+              <Box sx={{ py: 1 }}>
+                <ProfileMenuItem onClick={handleProfile}>
+                  <ListItemIcon>
+                    <Person fontSize="small" />
+                  </ListItemIcon>
+                  <Typography variant="body1">My Profile</Typography>
+                </ProfileMenuItem>
+                
+                <ProfileMenuItem onClick={handleSettings}>
+                  <ListItemIcon>
+                    <Settings fontSize="small" />
+                  </ListItemIcon>
+                  <Typography variant="body1">Account Settings</Typography>
+                </ProfileMenuItem>
+                
+                <ProfileMenuItem onClick={handleThemeToggle}>
+                  <ListItemIcon>
+                    {isDarkMode ? <LightMode fontSize="small" /> : <DarkMode fontSize="small" />}
+                  </ListItemIcon>
+                  <Typography variant="body1">
+                    {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+                  </Typography>
+                </ProfileMenuItem>
+                
+                <Divider sx={{ my: 1 }} />
+                
+                <ProfileMenuItem onClick={() => { window.open('https://support.example.com', '_blank') }}>
+                  <ListItemIcon>
+                    <HelpOutline fontSize="small" />
+                  </ListItemIcon>
+                  <Typography variant="body1">Help & Support</Typography>
+                </ProfileMenuItem>
+                
+                <ProfileMenuItem onClick={handleLogout} danger>
+                  <ListItemIcon>
+                    <Logout fontSize="small" />
+                  </ListItemIcon>
+                  <Typography variant="body1">Logout</Typography>
+                </ProfileMenuItem>
+              </Box>
+            </Menu>
+          </Box>
+        </Toolbar>
+      </AppBar>
+      
+      <Drawer
+        variant={isMobile ? "temporary" : "permanent"}
+        open={isMobile ? open : true}
+        onClose={handleDrawerClose}
+        sx={{
+          width: { xs: DRAWER_WIDTH, md: open ? DRAWER_WIDTH : MINI_DRAWER_WIDTH },
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: { xs: DRAWER_WIDTH, md: open ? DRAWER_WIDTH : MINI_DRAWER_WIDTH },
+            overflowX: 'hidden',
+            transition: theme.transitions.create('width', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
+            boxSizing: 'border-box',
+          },
+        }}
+      >
+        <DrawerHeader sx={{ justifyContent: 'center' }} >
+          {open ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', px: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <SavingsIcon sx={{ mr: 1, color: 'primary.main' }} />
+                <Typography variant="subtitle1" color="primary.main" fontWeight="bold">
+                  Expense Tracker
+                </Typography>
+              </Box>
+              {!isMobile && (
+                <IconButton onClick={handleDrawerClose} sx={{ color: 'primary.main' }}>
+                  <ChevronLeft />
+                </IconButton>
+              )}
+            </Box>
+          ) : (
+            <IconButton onClick={handleDrawerOpen} sx={{ color: 'primary.main' }}>
+              <SavingsIcon />
+            </IconButton>
+          )}
+        </DrawerHeader>
+        <Divider />
+        <List>
+          {menuItems.map((item) => (
+            <StyledListItem 
+              button 
+              key={item.text} 
+              onClick={() => navigate(item.path)}
+              active={isActiveRoute(item.path)}
+              sx={{ 
+                px: open ? 2 : 1.5,
+                py: 1,
+                justifyContent: open ? 'flex-start' : 'center'
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: open ? 40 : 0, justifyContent: open ? 'flex-start' : 'center' }}>
+                {item.icon}
+              </ListItemIcon>
+              {open && <ListItemText primary={item.text} />}
+            </StyledListItem>
+          ))}
+        </List>
+        <Divider />
+        <List>
+          <StyledListItem 
+            button 
+            onClick={handleLogout}
+            sx={{ 
+              px: open ? 2 : 1.5,
+              py: 1,
+              justifyContent: open ? 'flex-start' : 'center'
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: open ? 40 : 0, justifyContent: open ? 'flex-start' : 'center' }}>
+              <Logout />
+            </ListItemIcon>
+            {open && <ListItemText primary="Logout" />}
+          </StyledListItem>
+        </List>
+      </Drawer>
+      
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: { xs: 1, sm: 2 },
+          pt: { xs: 2, sm: 3 },
+          backgroundColor: 'background.default',
+          minHeight: '100vh',
+          paddingBottom: 4,
+          width: { 
+            xs: '100%',
+            md: open ? `calc(100% - ${DRAWER_WIDTH}px)` : `calc(100% - ${MINI_DRAWER_WIDTH}px)`
+          },
+          transition: theme.transitions.create(['margin', 'width'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+          }),
+          overflow: 'auto'
+        }}
+      >
+        <DrawerHeader />
+        {children}
+      </Box>
+    </Box>
+  );
+};
+
+// Wrapper component that provides theme context
+const MainLayoutWithTheme = ({ children }) => {
+  return (
+    <ThemeModeProvider>
+      <MainLayout>{children}</MainLayout>
+    </ThemeModeProvider>
+  );
+};
+
+export default MainLayoutWithTheme;
