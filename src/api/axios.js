@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://pr457s6q9l.sharedwithexpose.com/api'; 
+const API_URL = 'https://3mv0wacdxm.sharedwithexpose.com/api'; 
 const axiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
