@@ -176,7 +176,7 @@ const Register = () => {
         flexDirection: 'column',
         backgroundImage: `linear-gradient(120deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
         position: 'relative',
-        overflow: 'hidden'
+        // overflow: 'hidden'
       }}
     >
       {/* Success Modal */}
@@ -327,7 +327,7 @@ const Register = () => {
             backdropFilter: 'blur(10px)',
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
             position: 'relative',
-            overflow: 'hidden',
+            // overflow: 'hidden',
             maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column'
@@ -432,13 +432,13 @@ const Register = () => {
             sx={{ 
               position: 'relative', 
               zIndex: 1, 
-              overflow: 'auto', 
+              // overflow: 'auto', 
               flexGrow: 1,
               display: 'flex',
               flexDirection: 'column' 
             }}
           >
-            <Box sx={{ flexGrow: 1, overflow: 'auto', pr: 1, mr: -1 }}>
+            <Box sx={{ flexGrow: 1, pr: 1, mr: -1 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
@@ -645,7 +645,7 @@ const Register = () => {
                   borderRadius: 2,
                   boxShadow: 2,
                   position: 'relative',
-                  overflow: 'hidden',
+                  // overflow: 'hidden',
                   '&::after': {
                     content: '""',
                     position: 'absolute',
