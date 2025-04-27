@@ -176,7 +176,7 @@ const Register = () => {
         flexDirection: 'column',
         backgroundImage: `linear-gradient(120deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
         position: 'relative',
-        // overflow: 'hidden'
+        overflow: 'hidden'
       }}
     >
       {/* Success Modal */}
@@ -438,7 +438,7 @@ const Register = () => {
               flexDirection: 'column' 
             }}
           >
-            <Box sx={{ flexGrow: 1,  pr: 1, mr: -1 }}>
+            <Box sx={{ flexGrow: 1, pr: 1, mr: -1 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
