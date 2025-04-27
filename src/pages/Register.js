@@ -432,7 +432,7 @@ const Register = () => {
             sx={{ 
               position: 'relative', 
               zIndex: 1, 
-              overflow: 'auto', 
+              // overflow: 'auto', 
               flexGrow: 1,
               display: 'flex',
               flexDirection: 'column' 
