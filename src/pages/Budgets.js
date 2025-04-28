@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, 
   TableHead, TableRow, Button, IconButton, Dialog, DialogActions, 
@@ -20,6 +20,7 @@ import {
   PictureAsPdf as PictureAsPdfIcon
 } from '@mui/icons-material';
 import MainLayout from '../layouts/MainLayout';
+import { debounce } from 'lodash';
 
 import { exportBudgetsToCSV, exportBudgetsToPDF } from '../utils/exportUtils';
 import { getBudgetsForMonth, addBudget, updateBudget, deleteBudget } from '../api/budgets';
@@ -27,23 +28,72 @@ import { getCategories } from '../api/categories';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
+// Add custom styles for hardware acceleration and optimized animations
+const globalStyles = `
+  .hardware-accelerated {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .aos-init {
+    will-change: transform, opacity;
+  }
+
+  .aos-animate {
+    will-change: auto;
+  }
+
+  .transition-row {
+    transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  @media (max-width: 768px) {
+    [data-aos] {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+`;
+
 const Budgets = () => {
   const theme = useTheme();
   
-  // Initialize AOS
+  // Initialize AOS with optimized settings
   useEffect(() => {
     AOS.init({
-      duration: 800,
-      once: false,
-      mirror: true,
-      easing: 'ease-out-cubic',
+      duration: 600,
+      once: true,
+      mirror: false,
+      easing: 'ease-out',
+      offset: 120,
+      debounceDelay: 50,
+      throttleDelay: 99,
+      disable: window.innerWidth < 768,
     });
+    
+    // Apply global styles for optimized animations
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = globalStyles;
+    document.head.appendChild(styleTag);
     
     // Refresh AOS when the component updates
     return () => {
       AOS.refresh();
+      if (styleTag && document.head.contains(styleTag)) {
+        document.head.removeChild(styleTag);
+      }
     };
   }, []);
+
+  // Debounced refresh function for better performance
+  const debouncedRefresh = useCallback(
+    debounce(() => {
+      AOS.refresh();
+    }, 150),
+    []
+  );
   
   // State for budgets data
   const [budgets, setBudgets] = useState([]);
@@ -51,6 +101,10 @@ const Budgets = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalBudgets, setTotalBudgets] = useState(0);
+  
+  // State for visible rows (used for lazy loading)
+  const [visibleRows, setVisibleRows] = useState({});
+  const rowObserver = useRef(null);
   
   // State for pagination
   const [page, setPage] = useState(0);
@@ -144,6 +198,62 @@ const Budgets = () => {
     };
   }, [searchTimeout]);
 
+  // Setup intersection observer for lazy loading row animations
+  useEffect(() => {
+    rowObserver.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setVisibleRows(prev => ({
+              ...prev,
+              [entry.target.dataset.rowid]: true
+            }));
+            rowObserver.current.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    );
+    
+    return () => {
+      if (rowObserver.current) {
+        rowObserver.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Reset visible rows when page changes
+  useEffect(() => {
+    setVisibleRows({});
+  }, [page]);
+
+  // Row reference callback for intersection observer
+  const rowRef = useCallback(node => {
+    if (node !== null && rowObserver.current) {
+      rowObserver.current.observe(node);
+    }
+  }, []);
+
+  // Handle mobile optimization
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        // Disable most animations on mobile for better performance
+        document.querySelectorAll('[data-aos]').forEach(el => {
+          el.removeAttribute('data-aos');
+          el.removeAttribute('data-aos-delay');
+        });
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Run once on mount
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   // Fetch budgets and categories on component mount and when filters change
   useEffect(() => {
     fetchData();
@@ -168,16 +278,14 @@ const Budgets = () => {
     }
   }, [budgets, filters.searchTerm]);
 
-  // Refresh AOS when budgets are loaded
+  // Refresh AOS when budgets are loaded - using debounced refresh for better performance
   useEffect(() => {
     if (!loading) {
-      setTimeout(() => {
-        AOS.refresh();
-      }, 100);
+      debouncedRefresh();
     }
-  }, [loading, filteredBudgets]);
+  }, [loading, filteredBudgets, debouncedRefresh]);
 
-  // Function to fetch budgets and categories
+  // Function to fetch budgets and categories with progressive loading
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -192,7 +300,23 @@ const Budgets = () => {
         budget => budget.month === filters.month
       );
       
-      setBudgets(filteredBudgets);
+      // Progressive loading for larger datasets
+      if (filteredBudgets.length > 15) {
+        setBudgets([]); // Clear current budgets
+        
+        // Load in chunks to avoid jank
+        const chunkSize = 5;
+        for (let i = 0; i < filteredBudgets.length; i += chunkSize) {
+          const chunk = filteredBudgets.slice(i, i + chunkSize);
+          setTimeout(() => {
+            setBudgets(prev => [...prev, ...chunk]);
+          }, i * 30); // Small staggered delay
+        }
+      } else {
+        // For smaller datasets, load all at once
+        setBudgets(filteredBudgets);
+      }
+      
       setLoading(false);
       
     } catch (error) {
@@ -250,9 +374,7 @@ const Budgets = () => {
   const handleToggleFilters = () => {
     setShowFilters(prev => !prev);
     // Refresh AOS to make animations work with newly visible elements
-    setTimeout(() => {
-      AOS.refresh();
-    }, 100);
+    debouncedRefresh();
   };
 
   // Form handlers
@@ -505,7 +627,7 @@ const Budgets = () => {
     <Card 
       sx={{ mb: 3, boxShadow: 3, borderRadius: 2, overflow: 'hidden' }}
       data-aos="fade-up"
-      data-aos-delay="100"
+      className="hardware-accelerated"
     >
       <CardContent sx={{ p: 3 }}>
         <Grid container spacing={2} alignItems="center">
@@ -544,7 +666,8 @@ const Budgets = () => {
               sx={{ mb: { xs: 2, md: 0 } }}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={4}>
+               
             <FormControl fullWidth size="small">
               <InputLabel id="month-select-label">Month</InputLabel>
               <Select
@@ -632,7 +755,7 @@ const Budgets = () => {
               data-aos="fade-down"
             >
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={6} data-aos="fade-right" data-aos-delay="50">
+                <Grid item xs={12} md={6}>
                   <Stack direction="row" spacing={1}>
                     <Button
                       variant="outlined"
@@ -668,7 +791,7 @@ const Budgets = () => {
                     </Button>
                   </Stack>
                 </Grid>
-                <Grid item xs={12} md={3} data-aos="fade-right" data-aos-delay="100">
+                <Grid item xs={12} md={3}>
                   <Typography variant="body2" color="textSecondary">
                     {isCurrentMonth(filters.month) ? 
                       "Viewing current month's budgets" : 
@@ -677,7 +800,7 @@ const Budgets = () => {
                       "Planning future budgets"}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} md={3} data-aos="fade-right" data-aos-delay="150">
+                <Grid item xs={12} md={3}>
                   <Button
                     variant="outlined"
                     onClick={handleClearFilters}
@@ -726,8 +849,6 @@ const Budgets = () => {
           variant="subtitle1" 
           color="textSecondary"
           sx={{ mb: 2 }}
-          data-aos="fade-up"
-          data-aos-delay="100"
         >
           Set and track your monthly budgets by category
         </Typography>
@@ -737,7 +858,6 @@ const Budgets = () => {
       <Box 
         sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}
         data-aos="fade-left"
-        data-aos-delay="200"
       >
         <Button
           variant="contained"
@@ -758,6 +878,7 @@ const Budgets = () => {
               transform: 'translateY(-2px)'
             }
           }}
+          className="hardware-accelerated"
         >
           Add Budget
         </Button>
@@ -771,7 +892,7 @@ const Budgets = () => {
         <Card 
           sx={{ mb: 3, boxShadow: 2, borderRadius: 2, overflow: 'hidden' }}
           data-aos="fade-up"
-          data-aos-delay="200"
+          className="hardware-accelerated"
         >
           <CardContent sx={{ p: 3 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
@@ -836,8 +957,6 @@ const Budgets = () => {
           borderRadius: 2,
           overflow: 'hidden'
         }}
-        // data-aos="fade-up"
-        // data-aos-delay="300"
       >
         <TableContainer>
           <Table sx={{ minWidth: 650 }} aria-label="budgets table">
@@ -863,18 +982,21 @@ const Budgets = () => {
                   return (
                     <TableRow 
                       key={budget.id}
+                      ref={rowRef}
+                      data-rowid={budget.id}
                       hover
                       sx={{ 
                         '&:last-child td, &:last-child th': { border: 0 },
-                        transition: 'all 0.2s ease',
+                        transition: 'transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease',
+                        opacity: visibleRows[budget.id] ? 1 : 0.4,
+                        transform: visibleRows[budget.id] ? 'translateY(0)' : 'translateY(10px)',
                         '&:hover': {
                           backgroundColor: theme.palette.primary.main + '05',
                           transform: 'translateY(-2px)',
                           boxShadow: 1
                         }
                       }}
-                      data-aos="fade-up"
-                      data-aos-delay={50 * (index % 10)}
+                      className="transition-row"
                     >
                       <TableCell component="th" scope="row">
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>

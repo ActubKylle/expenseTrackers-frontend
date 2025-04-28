@@ -5,10 +5,6 @@ import {
   Stack, useTheme, useMediaQuery
 } from '@mui/material';
 import { 
-  Timeline, TimelineItem, TimelineContent, 
-  TimelineSeparator, TimelineDot, TimelineConnector 
-} from '@mui/lab';
-import { 
   BarChart as ChartIcon, 
   Savings as SavingsIcon, 
   Category as CategoryIcon, 
@@ -136,6 +132,296 @@ const floatingAnimation = {
   }
 };
 
+// Enhanced How It Works Component
+const HowItWorksSection = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  return (
+    <Box sx={{ py: 8, bgcolor: 'grey.50' }}>
+      <Container maxWidth="lg">
+        <Box 
+          sx={{ textAlign: 'center', mb: 6 }}
+          data-aos="fade-up"
+        >
+          <Typography 
+            variant="h3" 
+            component="h2" 
+            sx={{ 
+              fontWeight: 'bold',
+              mb: 2,
+              background: 'linear-gradient(90deg, #1976d2, #42a5f5)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              display: 'inline-block'
+            }}
+          >
+            How It Works
+          </Typography>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              color: 'text.secondary',
+              maxWidth: '700px',
+              mx: 'auto'
+            }}
+          >
+            Start managing your expenses in three simple steps
+          </Typography>
+        </Box>
+        
+        {/* Centered Timeline with Modern Styling */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            maxWidth: '800px',
+            mx: 'auto',
+            position: 'relative'
+          }}
+        >
+          {/* Center line */}
+          <Box
+            sx={{
+              position: 'absolute',
+              height: '100%',
+              width: '4px',
+              bgcolor: 'rgba(25, 118, 210, 0.15)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: { xs: 'none', md: 'block' }
+            }}
+          />
+
+          {/* Step 1 */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              width: '100%',
+              mb: 5,
+              alignItems: 'center'
+            }}
+            data-aos={isMobile ? "fade-up" : "fade-right"}
+          >
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                justifyContent: { xs: 'center', md: 'flex-end' },
+                pr: { xs: 0, md: 4 },
+                pb: { xs: 2, md: 0 },
+                position: 'relative'
+              }}
+            >
+              <Box
+                sx={{
+                  textAlign: { xs: 'center', md: 'right' },
+                  maxWidth: '300px'
+                }}
+              >
+                <Typography variant="h5" component="span" sx={{ 
+                  fontWeight: 'bold',
+                  mb: 1,
+                  display: 'block'
+                }}>
+                  Create an Account
+                </Typography>
+                <Typography variant="body1">
+                  Sign up for free and set up your profile in seconds.
+                </Typography>
+              </Box>
+            </Box>
+            
+            <Box 
+              sx={{ 
+                zIndex: 2,
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                bgcolor: 'primary.main',
+                boxShadow: '0 0 0 8px rgba(25, 118, 210, 0.1)',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '1.5rem',
+                mx: { xs: 0, md: 3 }
+              }}
+              data-aos="zoom-in"
+            >
+              1
+            </Box>
+            
+            <Box sx={{ flex: 1, pl: { xs: 0, md: 4 }, display: { xs: 'none', md: 'block' } }} />
+          </Box>
+
+          {/* Step 2 */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              width: '100%',
+              mb: 5,
+              alignItems: 'center'
+            }}
+            data-aos={isMobile ? "fade-up" : "fade-left"}
+            data-aos-delay="200"
+          >
+            <Box sx={{ flex: 1, pr: { xs: 0, md: 4 }, display: { xs: 'none', md: 'block' } }} />
+            
+            <Box 
+              sx={{ 
+                zIndex: 2,
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                bgcolor: 'primary.main',
+                boxShadow: '0 0 0 8px rgba(25, 118, 210, 0.1)',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '1.5rem',
+                mx: { xs: 0, md: 3 }
+              }}
+              data-aos="zoom-in"
+              data-aos-delay="400"
+            >
+              2
+            </Box>
+            
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                justifyContent: { xs: 'center', md: 'flex-start' },
+                pl: { xs: 0, md: 4 },
+                pt: { xs: 2, md: 0 },
+                position: 'relative'
+              }}
+            >
+              <Box
+                sx={{
+                  textAlign: { xs: 'center', md: 'left' },
+                  maxWidth: '300px'
+                }}
+              >
+                <Typography variant="h5" component="span" sx={{ 
+                  fontWeight: 'bold',
+                  mb: 1,
+                  display: 'block'
+                }}>
+                  Set Up Categories
+                </Typography>
+                <Typography variant="body1">
+                  Create custom categories for different types of expenses.
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Step 3 */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              width: '100%',
+              alignItems: 'center'
+            }}
+            data-aos={isMobile ? "fade-up" : "fade-right"}
+            data-aos-delay="400"
+          >
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                justifyContent: { xs: 'center', md: 'flex-end' },
+                pr: { xs: 0, md: 4 },
+                pb: { xs: 2, md: 0 },
+                position: 'relative'
+              }}
+            >
+              <Box
+                sx={{
+                  textAlign: { xs: 'center', md: 'right' },
+                  maxWidth: '300px'
+                }}
+              >
+                <Typography variant="h5" component="span" sx={{ 
+                  fontWeight: 'bold',
+                  mb: 1,
+                  display: 'block'
+                }}>
+                  Track Your Spending
+                </Typography>
+                <Typography variant="body1">
+                  Record expenses and gain insights through analytics.
+                </Typography>
+              </Box>
+            </Box>
+            
+            <Box 
+              sx={{ 
+                zIndex: 2,
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                bgcolor: 'primary.main',
+                boxShadow: '0 0 0 8px rgba(25, 118, 210, 0.1)',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '1.5rem',
+                mx: { xs: 0, md: 3 }
+              }}
+              data-aos="zoom-in"
+              data-aos-delay="600"
+            >
+              3
+            </Box>
+            
+            <Box sx={{ flex: 1, pl: { xs: 0, md: 4 }, display: { xs: 'none', md: 'block' } }} />
+          </Box>
+        </Box>
+        
+        <Box 
+          sx={{ textAlign: 'center', mt: 5 }}
+          data-aos="zoom-in"
+          data-aos-delay="800"
+        >
+          <Button 
+            component={RouterLink}
+            to="/register"
+            variant="contained" 
+            color="primary" 
+            size="large"
+            sx={{ 
+              px: 4, 
+              py: 1.5,
+              borderRadius: '30px',
+              background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
+              boxShadow: '0 4px 20px rgba(25, 118, 210, 0.3)',
+              '&:hover': {
+                boxShadow: '0 6px 25px rgba(25, 118, 210, 0.5)',
+              }
+            }}
+            className="pulse-animation"
+          >
+            Get Started Now
+          </Button>
+        </Box>
+      </Container>
+    </Box>
+  );
+};
+
 const Landing = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -144,7 +430,7 @@ const Landing = () => {
   // Initialize AOS for scrolling animations
   useEffect(() => {
     AOS.init({
-      duration: 700 ,
+      duration: 700,
       easing: 'ease-out',
       once: false,
       mirror: true,
@@ -294,8 +580,7 @@ const Landing = () => {
                       transform: 'perspective(1000px) rotateY(0deg) rotateX(0deg)',
                     }
                   }}
-                >
-                  <img 
+                ><img 
                     src={dashboardImage} 
                     alt="Expense Tracker Dashboard" 
                     style={{ 
@@ -355,6 +640,8 @@ const Landing = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    borderRadius: 2,
+                    overflow: 'hidden',
                     '&:hover': {
                       transform: 'translateY(-5px)',
                       boxShadow: 6
@@ -393,109 +680,8 @@ const Landing = () => {
         </Container>
       </Box>
 
-      {/* How It Works Section */}
-      <Box sx={{ py: 8, bgcolor: 'grey.50' }}>
-        <Container maxWidth="lg">
-          <Box 
-            sx={{ textAlign: 'center', mb: 6 }}
-            data-aos="fade-up"
-          >
-            <Typography 
-              variant="h3" 
-              component="h2" 
-              sx={{ 
-                fontWeight: 'bold',
-                mb: 2
-              }}
-            >
-              How It Works
-            </Typography>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: 'text.secondary',
-                maxWidth: '700px',
-                mx: 'auto'
-              }}
-            >
-              Start managing your expenses in three simple steps
-            </Typography>
-          </Box>
-          
-          <Timeline position={isMobile ? "right" : "alternate"}>
-            <TimelineItem>
-              <TimelineSeparator>
-                <TimelineDot 
-                  color="primary"
-                  data-aos="zoom-in"
-                >
-                  1
-                </TimelineDot>
-                <TimelineConnector data-aos="fade" data-aos-delay="300" />
-              </TimelineSeparator>
-              <TimelineContent data-aos="fade-left">
-                <Typography variant="h5" component="span" sx={{ fontWeight: 'bold' }}>
-                  Create an Account
-                </Typography>
-                <Typography>Sign up for free and set up your profile in seconds.</Typography>
-              </TimelineContent>
-            </TimelineItem>
-            <TimelineItem>
-              <TimelineSeparator>
-                <TimelineDot 
-                  color="primary"
-                  data-aos="zoom-in"
-                  data-aos-delay="400"
-                >
-                  2
-                </TimelineDot>
-                <TimelineConnector data-aos="fade" data-aos-delay="600" />
-              </TimelineSeparator>
-              <TimelineContent data-aos={isMobile ? "fade-left" : "fade-right"} data-aos-delay="400">
-                <Typography variant="h5" component="span" sx={{ fontWeight: 'bold' }}>
-                  Set Up Categories
-                </Typography>
-                <Typography>Create custom categories for different types of expenses.</Typography>
-              </TimelineContent>
-            </TimelineItem>
-            <TimelineItem>
-              <TimelineSeparator>
-                <TimelineDot 
-                  color="primary"
-                  data-aos="zoom-in"
-                  data-aos-delay="800"
-                >
-                  3
-                </TimelineDot>
-              </TimelineSeparator>
-              <TimelineContent data-aos="fade-left" data-aos-delay="800">
-                <Typography variant="h5" component="span" sx={{ fontWeight: 'bold' }}>
-                  Track Your Spending
-                </Typography>
-                <Typography>Record expenses and gain insights through analytics.</Typography>
-              </TimelineContent>
-            </TimelineItem>
-          </Timeline>
-          
-          <Box 
-            sx={{ textAlign: 'center', mt: 4 }}
-            data-aos="zoom-in"
-            data-aos-delay="900"
-          >
-            <Button 
-              component={RouterLink}
-              to="/register"
-              variant="contained" 
-              color="primary" 
-              size="large"
-              sx={{ px: 4, py: 1.5 }}
-              className="pulse-animation"
-            >
-              Get Started Now
-            </Button>
-          </Box>
-        </Container>
-      </Box>
+      {/* How It Works Section - Enhanced and Modern */}
+      <HowItWorksSection />
 
       {/* Development Team Section */}
       <Box sx={{ py: 8 }}>
@@ -536,7 +722,8 @@ const Landing = () => {
                     display: 'flex',
                     flexDirection: { xs: 'column', sm: 'row' },
                     height: '100%',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    borderRadius: 2
                   }}
                 >
                   <CardMedia
@@ -547,6 +734,10 @@ const Landing = () => {
                     }}
                     image={developer.image}
                     alt={developer.name}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${developer.name.replace(' ', '+')}&size=200&background=random`;
+                    }}
                   />
                   <CardContent sx={{ py: 3 }}>
                     <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
@@ -566,6 +757,7 @@ const Landing = () => {
                         href={developer.github}
                         target="_blank"
                         rel="noopener noreferrer"
+                        sx={{ borderRadius: 8 }}
                       >
                         GitHub
                       </Button>
@@ -576,6 +768,7 @@ const Landing = () => {
                         href={developer.linkedin}
                         target="_blank"
                         rel="noopener noreferrer"
+                        sx={{ borderRadius: 8 }}
                       >
                         LinkedIn
                       </Button>
@@ -629,15 +822,18 @@ const Landing = () => {
               variant="contained" 
               color="secondary" 
               size="large"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               data-aos="flip-up"
               data-aos-delay="400"
               sx={{ 
                 px: 5, 
                 py: 1.5,
                 fontSize: '1.1rem',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                borderRadius: '30px',
+                background: 'linear-gradient(45deg, #f48fb1, #ec407a)',
+                boxShadow: '0 4px 20px rgba(236, 64, 122, 0.4)'
               }}
             >
               Sign Up for Free
@@ -709,6 +905,26 @@ const Landing = () => {
         /* Add smooth scrolling to the whole page */
         html {
           scroll-behavior: smooth;
+        }
+        
+        /* Mobile-specific enhancements */
+        @media (max-width: 600px) {
+          /* Improve font rendering */
+          body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+          }
+          
+          /* Ensure touch targets are large enough */
+          button, a {
+            min-height: 44px;
+            min-width: 44px;
+          }
+          
+          /* Optimize scrolling */
+          * {
+            -webkit-overflow-scrolling: touch;
+          }
         }
       `}</style>
     </Box>

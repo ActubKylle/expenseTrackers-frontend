@@ -22,7 +22,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   padding: theme.spacing(0, 2),
-  minHeight: 64,
+  minHeight: 56, // Reduced from 64px
   justifyContent: 'space-between',
   backgroundColor: theme.palette.primary.main,
   color: 'white',
@@ -100,6 +100,8 @@ const StyledAppBar = styled(AppBar)(({ theme, open, miniDrawer }) => ({
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  minHeight: 56, // Reduced from 70px
+  height: 56,     // Reduced from 70px
   boxShadow: 'none',
   backdropFilter: 'blur(8px)',
   borderBottom: '1px solid',
@@ -111,7 +113,8 @@ const StyledAppBar = styled(AppBar)(({ theme, open, miniDrawer }) => ({
 const StyledDrawerHeader = styled(DrawerHeader)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
   padding: theme.spacing(0, 2),
-  minHeight: 70,
+  minHeight: 56, // Reduced from 70px
+  height: 56,     // Added explicit height
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -149,7 +152,10 @@ const SectionHeader = styled(Typography)(({ theme }) => ({
   opacity: 0.8,
 }));
 
-const MainLayout = ({ children }) => {
+// Define which routes should hide the header title
+const hideHeaderRoutes = ['/dashboard', '/expenses', '/categories', '/budgets'];
+
+const MainLayout = ({ children, hideHeader = false }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -161,6 +167,9 @@ const MainLayout = ({ children }) => {
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const [miniDrawer, setMiniDrawer] = useState(false);
   const [pageTitle, setPageTitle] = useState('Dashboard');
+  
+  // Check if the header should be hidden based on the current route
+  const shouldHideHeader = hideHeaderRoutes.includes(location.pathname) || hideHeader;
 
   // Add useEffect to update the page title based on current route
   useEffect(() => {
@@ -309,7 +318,7 @@ const MainLayout = ({ children }) => {
         }}>
           <SavingsIcon sx={{ 
             color: 'white', 
-            fontSize: 28,
+            fontSize: 24, // Reduced from 28
             filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
             animation: 'pulse 2s infinite ease-in-out',
             '@keyframes pulse': {
@@ -322,6 +331,7 @@ const MainLayout = ({ children }) => {
             <Typography variant="h6" sx={{ 
               color: 'white', 
               fontWeight: 700,
+              fontSize: '1.1rem', // Reduced size
               textShadow: '0 2px 4px rgba(0,0,0,0.1)',
               letterSpacing: '0.5px'
             }}>
@@ -353,7 +363,7 @@ const MainLayout = ({ children }) => {
       }} />
 
       <Box sx={{ 
-        height: 'calc(100% - 70px)',
+        height: 'calc(100% - 56px)', // Adjusted from 70px
         overflowY: 'visible', 
         overflowX: 'hidden'
       }}>
@@ -411,15 +421,13 @@ const MainLayout = ({ children }) => {
           </Box>
         ))}
       </Box>
-
-      {/* Remove the user info at the bottom when in mini drawer mode */}
     </>
   );
 
   return (
     <Box sx={{ display: 'flex' }}>
       <StyledAppBar position="fixed" open={open} miniDrawer={miniDrawer}>
-        <Toolbar>
+        <Toolbar sx={{ minHeight: 56, height: 56 }}> {/* Set explicit height */}
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -435,7 +443,7 @@ const MainLayout = ({ children }) => {
               transition: 'all 0.3s ease',
             }}
           >
-            <MenuIcon />
+            <MenuIcon fontSize="small" />
           </IconButton>
 
           {(!open || isMobile) && (
@@ -451,12 +459,13 @@ const MainLayout = ({ children }) => {
                 },
               }}
             >
-              <SavingsIcon sx={{ color: 'white', fontSize: 28 }} />
+              <SavingsIcon sx={{ color: 'white', fontSize: 22 }} />
               <Typography
                 variant="h6"
                 sx={{
                   flexGrow: 1,
                   fontWeight: 600,
+                  fontSize: '1.1rem', // Reduced size
                   color: 'white',
                   letterSpacing: '0.5px',
                   display: 'flex',
@@ -472,7 +481,7 @@ const MainLayout = ({ children }) => {
           <Box sx={{ flexGrow: 1 }} />
 
           {user && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}> {/* Reduced gap */}
               <IconButton
                 color="inherit"
                 aria-label="notifications"
@@ -480,6 +489,7 @@ const MainLayout = ({ children }) => {
                 sx={{
                   bgcolor: 'rgba(255, 255, 255, 0.1)',
                   backdropFilter: 'blur(8px)',
+                  padding: 1, // Reduced padding
                   '&:hover': {
                     bgcolor: 'rgba(255, 255, 255, 0.2)',
                     transform: 'translateY(-2px)',
@@ -493,22 +503,23 @@ const MainLayout = ({ children }) => {
                   sx={{
                     '& .MuiBadge-badge': {
                       fontSize: 10,
-                      height: 18,
-                      minWidth: 18,
+                      height: 16,
+                      minWidth: 16,
+                      padding: 0
                     },
                   }}
                 >
-                  <NotificationsIcon />
+                  <NotificationsIcon fontSize="small" />
                 </Badge>
               </IconButton>
 
               <IconButton
                 onClick={handleMenuClick}
                 sx={{
-                  p: 0.5,
-                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  p: 0.4, // Reduced padding
+                  border: '1.5px solid rgba(255, 255, 255, 0.2)',
                   '&:hover': {
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    border: '1.5px solid rgba(255, 255, 255, 0.3)',
                     transform: 'scale(1.05)',
                   },
                   transition: 'all 0.2s',
@@ -516,11 +527,11 @@ const MainLayout = ({ children }) => {
               >
                 <Avatar
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: 28, // Reduced size 
+                    height: 28, // Reduced size
                     bgcolor: 'primary.light',
                     fontWeight: 600,
-                    fontSize: '0.9rem',
+                    fontSize: '0.8rem', // Reduced font size
                   }}
                 >
                   {getUserInitials()}
@@ -698,33 +709,44 @@ const MainLayout = ({ children }) => {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.enteringScreen,
           }),
-          pt: { xs: 8, sm: 9 },
+          pt: { xs: 7, sm: 8 }, // Reduced from xs: 8, sm: 9 to account for smaller header
         }}
       >
-        {/* Page Title with enhanced styling */}
-        <Box sx={{ mb: 3 }}>
-          <Typography 
-            variant="h4" 
-            component="h1" 
+        {/* Page Title with enhanced styling - now conditionally rendered */}
+        {!shouldHideHeader && (
+          <Box 
             sx={{ 
-              fontWeight: 700,
-              color: 'text.primary',
-              position: 'relative',
-              '&:after': {
-                content: '""',
-                position: 'absolute',
-                bottom: -8,
-                left: 0,
-                width: 60,
-                height: 4,
-                background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-                borderRadius: 2
-              }
+              mb: 3,
+              animation: 'fadeInDown 0.5s ease-out',
+              '@keyframes fadeInDown': {
+                '0%': { opacity: 0, transform: 'translateY(-10px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              },
             }}
           >
-            {pageTitle}
-          </Typography>
-        </Box>
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700,
+                color: 'text.primary',
+                position: 'relative',
+                '&:after': {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: -8,
+                  left: 0,
+                  width: 60,
+                  height: 4,
+                  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                  borderRadius: 2
+                }
+              }}
+            >
+              {pageTitle}
+            </Typography>
+          </Box>
+        )}
 
         {children}
       </Box>
