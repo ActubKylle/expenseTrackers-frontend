@@ -78,29 +78,59 @@ export const addExpense = async (expenseData) => {
 // Update an existing expense
 export const updateExpense = async (id, expenseData) => {
   try {
-    const formData = new FormData();
-    formData.append('amount', expenseData.amount);
-    formData.append('date', expenseData.date);
-    formData.append('description', expenseData.description || '');
-    formData.append('category_id', expenseData.category_id);
-    formData.append('_method', 'PUT'); // Laravel expects this for PUT requests with form data
-
-    if (expenseData.receipt_file) {
+    console.log('Updating expense ID:', id, 'with data:', expenseData);
+    
+    // Determine if we need to use FormData (for file uploads) or regular JSON
+    const hasFile = expenseData.receipt_file && expenseData.receipt_file instanceof File;
+    
+    if (hasFile) {
+      // Use FormData for file uploads
+      const formData = new FormData();
+      
+      // Convert amount to number if it's a string
+      if (expenseData.amount !== undefined) {
+        formData.append('amount', parseFloat(expenseData.amount));
+      }
+      
+      // Add other fields
+      if (expenseData.date !== undefined) {
+        formData.append('date', expenseData.date);
+      }
+      
+      if (expenseData.description !== undefined) {
+        formData.append('description', expenseData.description || '');
+      }
+      
+      if (expenseData.category_id !== undefined) {
+        formData.append('category_id', parseInt(expenseData.category_id, 10));
+      }
+      
+      // Add receipt file
       formData.append('receipt', expenseData.receipt_file);
-    } else if (expenseData.receipt_path) {
-      formData.append('receipt_path', expenseData.receipt_path);
+      
+      const response = await axios.put(`/expenses/${id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      return response.data;
+    } else {
+      // For regular updates without files, use JSON
+      // Create a new object with proper data types
+      const updatedData = {
+        ...expenseData,
+        amount: expenseData.amount !== undefined ? parseFloat(expenseData.amount) : undefined,
+        category_id: expenseData.category_id !== undefined ? parseInt(expenseData.category_id, 10) : undefined
+      };
+      
+      const response = await axios.put(`/expenses/${id}`, updatedData);
+      return response.data;
     }
-
-    const response = await axios.post(`/expenses/${id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-
-    return response.data;
   } catch (error) {
-    console.error(`Error updating expense ${id}:`, error);
+    console.error('Error updating expense:', error.response?.data || error.message);
     throw error;
   }
 };
+
 
 // Delete an expense
 export const deleteExpense = async (id) => {

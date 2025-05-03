@@ -123,16 +123,40 @@ const Categories = () => {
     try {
       setLoading(true);
       
-      // In a real app, you would fetch from API with pagination and search params
+      // Make search call with proper parameters
       const response = await getCategories({
         page: page + 1,
         per_page: rowsPerPage,
-        search: filters.searchTerm || undefined
+        searchTerm: filters.searchTerm ? filters.searchTerm.trim() : undefined
       });
       
       if (response && Array.isArray(response.data)) {
-        setCategories(response.data);
-        setTotalCategories(response.total || response.data.length);
+        // Client-side priority sorting if backend isn't handling it properly
+        let sortedData = [...response.data];
+        
+        if (filters.searchTerm && filters.searchTerm.trim() !== '') {
+          const searchTerm = filters.searchTerm.trim().toLowerCase();
+          
+          // Sort by relevance (exact match, starts with, contains)
+          sortedData.sort((a, b) => {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            
+            // Exact match
+            if (nameA === searchTerm && nameB !== searchTerm) return -1;
+            if (nameB === searchTerm && nameA !== searchTerm) return 1;
+            
+            // Starts with
+            if (nameA.startsWith(searchTerm) && !nameB.startsWith(searchTerm)) return -1;
+            if (nameB.startsWith(searchTerm) && !nameA.startsWith(searchTerm)) return 1;
+            
+            // Default sort by name if both have same relevance
+            return nameA.localeCompare(nameB);
+          });
+        }
+        
+        setCategories(sortedData);
+        setTotalCategories(response.total || sortedData.length);
       } else if (Array.isArray(response)) {
         setCategories(response);
         setTotalCategories(response.length);
@@ -162,27 +186,42 @@ const Categories = () => {
   const handleFilterChange = (field, value) => {
     clearTimeout(searchTimeout);
     
+    // Update the filter state
     setFilters(prev => ({
       ...prev,
       [field]: value
     }));
-
-    // Debounce search
+  
+    // For search term changes
     if (field === 'searchTerm') {
-      const timeoutId = setTimeout(() => {
+      // Special handling for empty search (when clearing the search)
+      if (!value || value.trim() === '') {
+        // Immediately fetch all categories when search is cleared
         setPage(0);
-        fetchCategories();
-      }, 500);
-      setSearchTimeout(timeoutId);
+        const timeoutId = setTimeout(() => {
+          fetchCategories();
+        }, 100); // Very short timeout for immediate response
+        setSearchTimeout(timeoutId);
+      } else {
+        // Normal debounce for non-empty search
+        const timeoutId = setTimeout(() => {
+          setPage(0);
+          fetchCategories();
+        }, 300);
+        setSearchTimeout(timeoutId);
+      }
     }
   };
-
+  
   const handleClearFilters = () => {
     setFilters({
       searchTerm: ''
     });
+    
+    // Immediately fetch all categories when clearing filters
+    setPage(0);
+    fetchCategories();
   };
-
   // Toggle filter visibility with animation
   const handleToggleFilters = () => {
     setShowFilters(prev => !prev);
@@ -346,38 +385,46 @@ const Categories = () => {
       <CardContent sx={{ p: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              variant="outlined"
-              placeholder="Search categories..."
-              value={filters.searchTerm}
-              onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-                endAdornment: filters.searchTerm && (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => handleFilterChange('searchTerm', '')}>
-                      <ClearIcon fontSize="small" />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-                sx: {
-                  borderRadius: 2,
-                  transition: 'all 0.3s',
-                  '&:hover': {
-                    boxShadow: '0 0 8px rgba(0,0,0,0.1)'
-                  },
-                  '&.Mui-focused': {
-                    boxShadow: '0 0 8px rgba(0,0,0,0.2)'
-                  }
-                }
-              }}
-              size="small"
-            />
+          <TextField
+  fullWidth
+  variant="outlined"
+  placeholder="Search categories..."
+  value={filters.searchTerm}
+  onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <SearchIcon />
+      </InputAdornment>
+    ),
+    endAdornment: filters.searchTerm && (
+      <InputAdornment position="end">
+        <IconButton 
+          size="small" 
+          onClick={() => {
+            // This ensures the search is cleared AND data is reloaded
+            handleFilterChange('searchTerm', '');
+            // Force immediate reload
+            setTimeout(() => fetchCategories(), 50);
+          }}
+        >
+          <ClearIcon fontSize="small" />
+        </IconButton>
+      </InputAdornment>
+    ),
+    sx: {
+      borderRadius: 2,
+      transition: 'all 0.3s',
+      '&:hover': {
+        boxShadow: '0 0 8px rgba(0,0,0,0.1)'
+      },
+      '&.Mui-focused': {
+        boxShadow: '0 0 8px rgba(0,0,0,0.2)'
+      }
+    }
+  }}
+  size="small"
+/>
           </Grid>
           <Grid item xs={12} md={6}>
             <Stack direction="row" spacing={2} justifyContent="flex-end">

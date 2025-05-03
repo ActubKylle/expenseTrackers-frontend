@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { 
   TextField, Button, Typography, Link, Box, Alert, IconButton, 
   InputAdornment, Container, Paper, useTheme, Divider, Fade,
-  Grid, Dialog, DialogContent, DialogTitle, DialogActions, Zoom
+  Grid, Dialog, DialogContent, DialogTitle, DialogActions, Zoom,
+  LinearProgress
 } from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -13,7 +14,9 @@ import {
   PersonAdd as PersonAddIcon,
   ArrowBack as ArrowBackIcon,
   CheckCircle as CheckCircleIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Error as ErrorIcon,
+  Info as InfoIcon
 } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";
 import { motion } from "framer-motion";
@@ -59,6 +62,105 @@ const fadeInUpVariant = {
   }
 };
 
+// Password strength checker function
+const checkPasswordStrength = (password) => {
+  // Initialize score
+  let score = 0;
+  
+  // Don't show any strength for empty passwords
+  if (!password) {
+    return {
+      score: 0,
+      feedback: ""
+    };
+  }
+  
+  // Length check
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  
+  // Character variety checks
+  if (/[a-z]/.test(password)) score += 1; // lowercase
+  if (/[A-Z]/.test(password)) score += 1; // uppercase
+  if (/[0-9]/.test(password)) score += 1; // numbers
+  if (/[^a-zA-Z0-9]/.test(password)) score += 1; // special characters
+  
+  // Penalize repeating characters or patterns
+  if (/(.)\1{2,}/.test(password)) score -= 1; // repeating chars (aaa)
+  if (/12345|qwerty|asdfg|password/i.test(password)) score -= 1; // common patterns
+  
+  // Determine strength category and feedback
+  let strength, color, feedback;
+  
+  if (score <= 2) {
+    strength = "Weak";
+    color = "error";
+    feedback = "Try adding numbers, symbols, and varying character types";
+  } else if (score <= 4) {
+    strength = "Moderate";
+    color = "warning";
+    feedback = "Good start! Add more variety for stronger security";
+  } else if (score <= 5) { // Changed from 6 to 5
+    strength = "Strong";
+    color = "info";
+    feedback = "Strong password! Consider adding more length for extra security";
+  } else {
+    strength = "Very Strong";
+    color = "success";
+    feedback = "Excellent password strength!";
+  }
+  
+  // Normalize score to 0-100 for progress bar
+  const normalizedScore = Math.max(0, Math.min(100, Math.floor((score / 6) * 100)));
+  
+  return {
+    score: normalizedScore,
+    strength,
+    color,
+    feedback
+  };
+};
+// Password Strength Indicator Component
+const PasswordStrengthIndicator = ({ password }) => {
+  const { score, strength, color, feedback } = checkPasswordStrength(password);
+  
+  // Don't show indicator for empty passwords
+  if (!password) return null;
+  
+  return (
+    <Box sx={{ mt: 1, mb: 0.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center' }}>
+          <InfoIcon fontSize="inherit" sx={{ mr: 0.5 }} />
+          Password strength:
+        </Typography>
+        <Typography 
+          variant="caption" 
+          sx={{ fontWeight: 600 }}
+          color={color}
+        >
+          {strength}
+        </Typography>
+      </Box>
+      <LinearProgress 
+        variant="determinate" 
+        value={score} 
+        color={color}
+        sx={{ 
+          height: 6, 
+          borderRadius: 3,
+          '& .MuiLinearProgress-bar': {
+            transition: 'transform 0.4s ease'
+          }
+        }}
+      />
+      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+        {feedback}
+      </Typography>
+    </Box>
+  );
+};
+
 // Transition for modal
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Zoom ref={ref} {...props} />;
@@ -79,6 +181,20 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [passwordMatchStatus, setPasswordMatchStatus] = useState(null);
+
+  // Check if passwords match when either password or confirmPassword changes
+  useEffect(() => {
+    if (confirmPassword) {
+      if (password === confirmPassword) {
+        setPasswordMatchStatus("match");
+      } else {
+        setPasswordMatchStatus("mismatch");
+      }
+    } else {
+      setPasswordMatchStatus(null);
+    }
+  }, [password, confirmPassword]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -176,7 +292,7 @@ const Register = () => {
         flexDirection: 'column',
         backgroundImage: `linear-gradient(120deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
         position: 'relative',
-        // overflow: 'hidden'
+        overflow: 'hidden'
       }}
     >
       {/* Success Modal */}
@@ -327,7 +443,6 @@ const Register = () => {
             backdropFilter: 'blur(10px)',
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
             position: 'relative',
-            // overflow: 'hidden',
             maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column'
@@ -432,7 +547,6 @@ const Register = () => {
             sx={{ 
               position: 'relative', 
               zIndex: 1, 
-              // overflow: 'auto', 
               flexGrow: 1,
               display: 'flex',
               flexDirection: 'column' 
@@ -576,6 +690,8 @@ const Register = () => {
                     }}
                     size="small"
                   />
+                  {/* Password strength indicator */}
+                  <PasswordStrengthIndicator password={password} />
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
@@ -590,7 +706,7 @@ const Register = () => {
                     autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    error={!!errors.confirmPassword}
+                    error={!!errors.confirmPassword || (passwordMatchStatus === "mismatch")}
                     helperText={errors.confirmPassword || ""}
                     InputProps={{
                       endAdornment: (
@@ -623,6 +739,26 @@ const Register = () => {
                     }}
                     size="small"
                   />
+                  {/* Password match indicator */}
+                  {passwordMatchStatus && confirmPassword && (
+                    <Box sx={{ mt: 1, mb: 0.5, display: 'flex', alignItems: 'center' }}>
+                      {passwordMatchStatus === "match" ? (
+                        <>
+                          <CheckCircleIcon color="success" fontSize="small" sx={{ mr: 0.5 }} />
+                          <Typography variant="caption" color="success.main">
+                            Passwords match
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <ErrorIcon color="error" fontSize="small" sx={{ mr: 0.5 }} />
+                          <Typography variant="caption" color="error">
+                            Passwords don't match
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                  )}
                 </Grid>
               </Grid>
             </Box>
@@ -646,6 +782,7 @@ const Register = () => {
                   boxShadow: 2,
                   position: 'relative',
                   overflow: 'hidden',
+
                   '&::after': {
                     content: '""',
                     position: 'absolute',
