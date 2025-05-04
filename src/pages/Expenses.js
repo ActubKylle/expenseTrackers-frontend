@@ -465,6 +465,7 @@ const Expenses = () => {
         category_id: parseInt(formData.category_id, 10),
         receipt_path: formData.receipt_path || null, // Include receipt_path
       };
+      console.log("Sending expense data:", expenseData); // Log expense data being sent  
 
       await addExpense(expenseData);
       handleCloseDialog();

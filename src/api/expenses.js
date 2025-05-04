@@ -52,29 +52,44 @@ export const getExpense = async (id) => {
 // Add a new expense
 export const addExpense = async (expenseData) => {
   try {
-    const formData = new FormData();
-    formData.append('amount', expenseData.amount);
-    formData.append('date', expenseData.date);
-    formData.append('description', expenseData.description || '');
-    formData.append('category_id', expenseData.category_id);
-
-    if (expenseData.receipt_file) {
+    // Check if we have a file or a URL for the receipt
+    if (expenseData.receipt_file && expenseData.receipt_file instanceof File) {
+      // Handle file upload with FormData
+      const formData = new FormData();
+      formData.append('amount', expenseData.amount);
+      formData.append('date', expenseData.date);
+      formData.append('description', expenseData.description || '');
+      formData.append('category_id', expenseData.category_id);
       formData.append('receipt', expenseData.receipt_file);
-    } else if (expenseData.receipt_path) {
-      formData.append('receipt_path', expenseData.receipt_path);
+
+      const response = await axios.post('/expenses', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      return response.data;
+    } else {
+      // Handle regular JSON data with receipt_path if present
+      const payload = {
+        amount: parseFloat(expenseData.amount),
+        date: expenseData.date,
+        description: expenseData.description || '',
+        category_id: parseInt(expenseData.category_id, 10),
+        receipt_path: expenseData.receipt_path || null
+      };
+
+      // Ensure receipt_path is trimmed to avoid whitespace issues
+      if (payload.receipt_path) {
+        payload.receipt_path = payload.receipt_path.trim();
+      }
+
+      const response = await axios.post('/expenses', payload);
+      return response.data;
     }
-
-    const response = await axios.post('/expenses', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-
-    return response.data;
   } catch (error) {
     console.error('Error adding expense:', error.response || error.message);
     throw error;
   }
 };
-
 // Update an existing expense
 export const updateExpense = async (id, expenseData) => {
   try {
