@@ -2,12 +2,16 @@ import axios from './axios';
 
 export const getCategories = async (params = {}) => {
   try {
-    // Pass the searchTerm as a query parameter
+    // Pass any query parameters
     const response = await axios.get('/categories', { 
       params: {
-        searchTerm: params.searchTerm
+        searchTerm: params.searchTerm,
+        page: params.page,
+        per_page: params.per_page
       } 
     });
+    
+    console.log('Categories API response:', response.data); // Add this line to debug
     
     // Ensure we're returning an array
     if (response.data && Array.isArray(response.data)) {
@@ -26,9 +30,17 @@ export const getCategories = async (params = {}) => {
     return [];
   }
 };
+
+
 export const addCategory = async (categoryData) => {
   try {
-    const response = await axios.post('/categories', categoryData);
+    // Make sure is_default is explicitly set to false
+    const data = {
+      ...categoryData,
+      is_default: false
+    };
+    
+    const response = await axios.post('/categories', data);
     return response.data;
   } catch (error) {
     console.error('Error adding category:', error);
@@ -38,7 +50,14 @@ export const addCategory = async (categoryData) => {
 
 export const updateCategory = async (id, categoryData) => {
   try {
-    const response = await axios.put(`/categories/${id}`, categoryData);
+    // Make sure we're not changing the is_default status
+    const data = {
+      ...categoryData
+    };
+    // Don't include is_default in the update data
+    delete data.is_default;
+    
+    const response = await axios.put(`/categories/${id}`, data);
     return response.data;
   } catch (error) {
     console.error(`Error updating category ${id}:`, error);

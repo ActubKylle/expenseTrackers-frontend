@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -8,9 +8,9 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-// Fix the import path if needed 
 import { ExpenseProvider } from "./contexts/ExpensesContext";
-
+import { NotificationProvider } from "./contexts/NotificationContext";
+import notificationService from "./services/NotificationService";
 // Pages
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -22,6 +22,28 @@ import Budgets from "./pages/Budgets";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import LoadingScreen from "./components/LoadingScreen";
+
+// Component to initialize the notification service when user is authenticated
+const NotificationServiceInitializer = ({ children }) => {
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    // Start notification service when user logs in
+    if (user) {
+      console.log("Starting notification service");
+      notificationService.start();
+      
+      // Clean up when component unmounts
+      return () => {
+        console.log("Stopping notification service");
+        notificationService.stop();
+      };
+    }
+  }, [user]);
+  
+  return children;
+};
+
 // Protected route component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -36,7 +58,6 @@ const ProtectedRoute = ({ children }) => {
       />
     );
   }
-
 
   if (!user) {
     return <Navigate to="/landing" replace />;
@@ -58,7 +79,7 @@ const theme = createTheme({
 
 function AppRoutes() {
   const { user } = useAuth();
-  
+
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
@@ -89,7 +110,7 @@ function AppRoutes() {
         }
       />
 
-<Route
+      <Route
         path="/budgets"
         element={
           <ProtectedRoute>
@@ -98,7 +119,7 @@ function AppRoutes() {
         }
       />
 
-<Route
+      <Route
         path="/settings"
         element={
           <ProtectedRoute>
@@ -107,8 +128,7 @@ function AppRoutes() {
         }
       />
 
-      
-<Route
+      <Route
         path="/profile"
         element={
           <ProtectedRoute>
@@ -117,7 +137,16 @@ function AppRoutes() {
         }
       />
       {/* Add other routes as needed */}
-      <Route path="*" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/" replace />} />
+      <Route
+        path="*"
+        element={
+          user ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Navigate to="/" replace />
+          )
+        }
+      />
     </Routes>
   );
 }
@@ -128,9 +157,13 @@ function App() {
       <CssBaseline />
       <Router>
         <AuthProvider>
-          <ExpenseProvider>
-            <AppRoutes />
-          </ExpenseProvider>
+          <NotificationProvider>
+            <NotificationServiceInitializer>
+              <ExpenseProvider>
+                <AppRoutes />
+              </ExpenseProvider>
+            </NotificationServiceInitializer>
+          </NotificationProvider>
         </AuthProvider>
       </Router>
     </ThemeProvider>

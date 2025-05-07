@@ -1224,136 +1224,73 @@ const Dashboard = () => {
   const renderExpenseDistribution = () => (
     <Paper 
       sx={{
+        ...cardStyles,
         p: 3,
-        boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-        borderRadius: 2,
         height: '100%',
-        background: 'white'
+        display: 'flex',
+        flexDirection: 'column'
       }}
+      data-aos="fade-up"
+      data-aos-delay="500"
     >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 500, color: 'text.primary' }}>
+          <Typography variant="h6" sx={{ fontWeight: 500 }}>
             Expense Distribution
           </Typography>
-          <Tooltip title="See how your spending is distributed across different categories" arrow placement="top">
+          <Tooltip title="See which categories account for most of your spending" arrow placement="top">
             <InfoIcon color="info" fontSize="small" sx={{ ml: 1, opacity: 0.7, cursor: 'help' }} />
           </Tooltip>
         </Box>
       </Box>
       
       <Box sx={{ 
-        height: 280,
+        flexGrow: 1,
+        height: '280px',
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        mb: 3
+        justifyContent: 'center'
       }}>
         {pieChartData.labels.length > 0 ? (
-          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-            <Pie data={pieChartData} options={{
-              ...pieChartOptions,
-              plugins: {
-                ...pieChartOptions.plugins,
-                legend: {
-                  position: 'bottom',
-                  labels: {
-                    usePointStyle: true,
-                    padding: 15,
-                    boxWidth: 8,
-                    font: {
-                      size: 11
-                    }
-                  }
-                }
-              },
-              cutout: '50%' // Makes it a donut chart
-            }} />
-          </div>
+          <Pie data={pieChartData} options={pieChartOptions} />
         ) : (
           <Box display="flex" alignItems="center" justifyContent="center" height="100%" flexDirection="column">
             <CategoryIcon sx={{ fontSize: 60, opacity: 0.3, mb: 2, color: 'text.secondary' }} />
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" color="textSecondary">
               No expense data available
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="textSecondary">
               Add expenses to see your spending distribution
             </Typography>
           </Box>
         )}
       </Box>
       
-      {pieChartData.labels.length > 0 && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
-            Category Breakdown
-          </Typography>
-          <Box sx={{ maxHeight: 200, overflowY: 'auto', pr: 1 }}>
-            {summaryData?.expenses_by_category
-              ?.sort((a, b) => b.total - a.total)
-              .map((category, index) => (
-                <Box 
-                  key={index} 
-                  sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    mb: 1.5,
-                    pb: 1,
-                    borderBottom: index < summaryData.expenses_by_category.length - 1 ? '1px solid' : 'none',
-                    borderColor: 'divider'
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box 
-                      sx={{ 
-                        width: 10, 
-                        height: 10, 
-                        borderRadius: '50%', 
-                        bgcolor: category.category.color,
-                        mr: 1.5
-                      }} 
-                    />
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {category.category.name}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      ₱{category.total.toFixed(2)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {((category.total / summaryData.total_expenses) * 100).toFixed(1)}%
-                    </Typography>
-                  </Box>
-                </Box>
-              ))
-            }
-          </Box>
-        </Box>
-      )}
-      
+      {/* Chart Legend Explanation */}
       {pieChartData.labels.length > 0 && (
         <Box 
           sx={{ 
-            mt: 3, 
+            mt: 2, 
             p: 2, 
             borderRadius: 2, 
-            bgcolor: 'rgba(25, 118, 210, 0.05)',
+            bgcolor: 'background.paper',
             border: '1px solid',
-            borderColor: 'rgba(25, 118, 210, 0.1)'
+            borderColor: 'divider'
           }}
         >
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: theme.palette.primary.main }}>
-            Tip: Budget Allocation
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            How to Use This Chart
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Focus on reducing expenses in your largest categories for the biggest impact on your finances. Consider setting budget limits for categories that exceed 20% of your total spending.
+            Larger segments represent categories where you spend more. 
+            Focus on reducing expenses in your largest categories for the biggest impact on your finances.
           </Typography>
         </Box>
       )}
     </Paper>
   );
+
   // Function to get filter title
   const getTimeFilterTitle = () => {
     switch(timeFilter) {
@@ -1495,261 +1432,229 @@ const renderContent = () => {
     <>
       {/* New Summary Cards - Matching Image Design with Dynamic Data */}
       <Grid container spacing={3} mb={4}>
-  {/* Total Expenses Card */}
-  <Grid item xs={12} sm={6} md={3}>
-    <Card sx={{ 
-      borderRadius: 2, 
-      background: 'linear-gradient(135deg, #FF9F9F 0%, #FF5F7E 100%)',
-      boxShadow: '0 4px 20px rgba(255, 95, 126, 0.3)',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <CardContent sx={{ position: 'relative', padding: 3, color: 'white', zIndex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="medium" sx={{ opacity: 0.9, mb: 0.5 }}>
-          Total Expenses
-        </Typography>
-        
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-          ₱{(summaryData?.total_expenses || 0).toFixed(2)}
-        </Typography>
-        
-        {totalExpensesTrend !== 0 && (
-          <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
-            {totalExpensesTrend > 0 ? <TrendingUpIcon fontSize="small" sx={{ mr: 0.5 }} /> : <TrendingDownIcon fontSize="small" sx={{ mr: 0.5 }} />}
-            {totalExpensesTrend > 0 ? 'Increased' : 'Decreased'} by {Math.abs(totalExpensesTrend).toFixed(1)}%
-          </Typography>
-        )}
-        
-        {/* Icon in top right */}
-        <IconButton 
-          sx={{ 
-            position: 'absolute', 
-            top: 16, 
-            right: 16, 
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            p: 1,
-            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
-          }}
-        >
-          <ShowChartIcon sx={{ color: 'white', fontSize: 20 }} />
-        </IconButton>
-        
-        {/* Decorative circles */}
-        <Box sx={{
-          position: 'absolute',
-          top: -30,
-          right: -30,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          bottom: -40,
-          right: 30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-      </CardContent>
-    </Card>
-  </Grid>
-  
-  {/* Average Monthly Card */}
-  <Grid item xs={12} sm={6} md={3}>
-    <Card sx={{ 
-      borderRadius: 2, 
-      background: 'linear-gradient(135deg, #7BB5FF 0%, #5F8FFF 100%)',
-      boxShadow: '0 4px 20px rgba(95, 143, 255, 0.3)',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <CardContent sx={{ position: 'relative', padding: 3, color: 'white', zIndex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="medium" sx={{ opacity: 0.9, mb: 0.5 }}>
-          Average Monthly
-        </Typography>
-        
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-          ₱{(monthlyAnalysis?.averageSpending || 0).toFixed(2)}
-        </Typography>
-        
-        <Typography variant="body2">
-          vs previous period
-        </Typography>
-        
-        {/* Icon in top right */}
-        <IconButton 
-          sx={{ 
-            position: 'absolute', 
-            top: 16, 
-            right: 16, 
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            p: 1,
-            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
-          }}
-        >
-          <DateRangeIcon sx={{ color: 'white', fontSize: 20 }} />
-        </IconButton>
-        
-        {/* Decorative circles */}
-        <Box sx={{
-          position: 'absolute',
-          top: -30,
-          right: -30,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          bottom: -40,
-          right: 30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-      </CardContent>
-    </Card>
-  </Grid>
-  
-  {/* Highest Category Card */}
-  <Grid item xs={12} sm={6} md={3}>
-    <Card sx={{ 
-      borderRadius: 2, 
-      background: 'linear-gradient(135deg, #FF9F7F 0%, #FC7B4D 100%)',
-      boxShadow: '0 4px 20px rgba(252, 123, 77, 0.3)',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <CardContent sx={{ position: 'relative', padding: 3, color: 'white', zIndex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="medium" sx={{ opacity: 0.9, mb: 0.5 }}>
-          Highest Category
-        </Typography>
-        
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-          ₱{highestCategory.total.toFixed(2)}
-        </Typography>
-        
-        <Typography variant="body2" noWrap sx={{ maxWidth: '80%' }}>
-          {highestCategory.category.name || 'No categories yet'}
-        </Typography>
-        
-        {/* Icon in top right */}
-        <IconButton 
-          sx={{ 
-            position: 'absolute', 
-            top: 16, 
-            right: 16, 
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            p: 1,
-            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
-          }}
-        >
-          <AssessmentIcon sx={{ color: 'white', fontSize: 20 }} />
-        </IconButton>
-        
-        {/* Decorative circles */}
-        <Box sx={{
-          position: 'absolute',
-          top: -30,
-          right: -30,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          bottom: -40,
-          right: 30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-      </CardContent>
-    </Card>
-  </Grid>
-  
-  {/* Active Categories Card */}
-  <Grid item xs={12} sm={6} md={3}>
-    <Card sx={{ 
-      borderRadius: 2, 
-      background: 'linear-gradient(135deg, #7FFFD4 0%, #64DFBD 100%)',
-      boxShadow: '0 4px 20px rgba(100, 223, 189, 0.3)',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <CardContent sx={{ position: 'relative', padding: 3, color: 'white', zIndex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="medium" sx={{ opacity: 0.9, mb: 0.5 }}>
-          Active Categories
-        </Typography>
-        
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-          {summaryData?.expenses_by_category?.length || 0}
-        </Typography>
-        
-        <Typography variant="body2">
-          Total Categories
-        </Typography>
-        
-        {/* Icon in top right */}
-        <IconButton 
-          sx={{ 
-            position: 'absolute', 
-            top: 16, 
-            right: 16, 
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            p: 1,
-            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
-          }}
-        >
-          <CategoryIcon sx={{ color: 'white', fontSize: 20 }} />
-        </IconButton>
-        
-        {/* Decorative circles */}
-        <Box sx={{
-          position: 'absolute',
-          top: -30,
-          right: -30,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          bottom: -40,
-          right: 30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-      </CardContent>
-    </Card>
-  </Grid>
-</Grid>
+        {/* Total Expenses Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            borderRadius: 2, 
+            background: 'white',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+            borderLeft: '4px solid #1976d2',
+            height: '100%'
+          }}>
+            <CardContent sx={{ position: 'relative', padding: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="subtitle1" color="text.secondary" fontWeight="medium">
+                  Total Expenses <InfoIcon sx={{ fontSize: 16, ml: 0.5, color: '#1976d2', verticalAlign: 'text-bottom' }} />
+                </Typography>
+                <Box sx={{ 
+                  bgcolor: 'rgba(25, 118, 210, 0.1)', 
+                  p: 1, 
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <MonetizationOnIcon sx={{ color: '#1976d2', fontSize: 24 }} />
+                </Box>
+              </Box>
+              
+              <Typography variant="h4" fontWeight="bold" color="text.primary">
+                ₱{(summaryData?.total_expenses || 0).toFixed(2)}
+              </Typography>
+              
+              {totalExpensesTrend !== 0 && (
+                <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
+                  <Chip 
+                    label={`${totalExpensesTrend > 0 ? '+' : ''}${Math.abs(totalExpensesTrend).toFixed(1)}%`}
+                    size="small"
+                    sx={{ 
+                      bgcolor: totalExpensesTrend > 0 ? '#f44336' : '#4caf50', 
+                      color: 'white', 
+                      height: 24,
+                      fontWeight: 'medium',
+                      '& .MuiChip-label': { px: 1, display: 'flex', alignItems: 'center' }
+                    }}
+                    icon={totalExpensesTrend > 0 
+                      ? <TrendingUpIcon style={{ color: 'white', fontSize: 16 }} /> 
+                      : <TrendingDownIcon style={{ color: 'white', fontSize: 16 }} />}
+                  />
+                </Box>
+              )}
+              
+              <Box sx={{ 
+                position: 'absolute', 
+                bottom: 16, 
+                right: 16, 
+                left: 16, 
+                opacity: 0.3 
+              }}>
+                <svg height="40" width="100%" viewBox="0 0 100 25">
+                  <polyline
+                    fill="none"
+                    stroke="#1976d2"
+                    strokeWidth="1"
+                    points="0,20 20,15 40,10 60,20 80,5 100,10"
+                  />
+                </svg>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      
+        {/* Average Monthly Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            borderRadius: 2, 
+            background: 'white',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+            borderLeft: '4px solid #1976d2',
+            height: '100%'
+          }}>
+            <CardContent sx={{ position: 'relative', padding: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="subtitle1" color="text.secondary" fontWeight="medium">
+                  Average Monthly <InfoIcon sx={{ fontSize: 16, ml: 0.5, color: '#1976d2', verticalAlign: 'text-bottom' }} />
+                </Typography>
+                <Box sx={{ 
+                  bgcolor: 'rgba(25, 118, 210, 0.1)', 
+                  p: 1, 
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <AccountBalanceIcon sx={{ color: '#1976d2', fontSize: 24 }} />
+                </Box>
+              </Box>
+              
+              <Typography variant="h4" fontWeight="bold" color="text.primary">
+                ₱{(monthlyAnalysis?.averageSpending || 0).toFixed(2)}
+              </Typography>
+              
+              <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {summaryData?.trends?.length === 1 
+                    ? "Based on 1 month of data" 
+                    : `Based on ${summaryData?.trends?.length || 0} months of data`}
+                </Typography>
+              </Box>
+              
+              <Box sx={{ 
+                position: 'absolute', 
+                bottom: 16, 
+                right: 16, 
+                left: 16, 
+                opacity: 0.3 
+              }}>
+                <svg height="40" width="100%" viewBox="0 0 100 25">
+                  <polyline
+                    fill="none"
+                    stroke="#1976d2"
+                    strokeWidth="1"
+                    points="0,15 20,10 40,15 60,5 80,10 100,15"
+                  />
+                </svg>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      
+        {/* Highest Category Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            borderRadius: 2, 
+            background: 'white',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+            borderLeft: '4px solid #ed6c02',
+            height: '100%'
+          }}>
+            <CardContent sx={{ position: 'relative', padding: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="subtitle1" color="text.secondary" fontWeight="medium">
+                  Highest Category <InfoIcon sx={{ fontSize: 16, ml: 0.5, color: '#ed6c02', verticalAlign: 'text-bottom' }} />
+                </Typography>
+                <Box sx={{ 
+                  bgcolor: 'rgba(237, 108, 2, 0.1)', 
+                  p: 1, 
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <AssessmentIcon sx={{ color: '#ed6c02', fontSize: 24 }} />
+                </Box>
+              </Box>
+              
+              <Typography variant="h4" fontWeight="bold" color="text.primary">
+                ₱{highestCategory.total.toFixed(2)}
+              </Typography>
+              
+              <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {highestCategory.category.name || 'No categories yet'}
+                </Typography>
+              </Box>
+              
+              <Box sx={{ 
+                position: 'absolute', 
+                bottom: 16, 
+                right: 16, 
+                left: 16, 
+                opacity: 0.3 
+              }}>
+                <svg height="40" width="100%" viewBox="0 0 100 25">
+                  <polyline
+                    fill="none"
+                    stroke="#ed6c02"
+                    strokeWidth="1"
+                    points="0,20 20,15 40,10 60,5 80,10 100,15"
+                  />
+                </svg>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      
+        {/* Active Categories Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <Card sx={{ 
+            borderRadius: 2, 
+            background: 'white',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+            borderLeft: '4px solid #2e7d32',
+            height: '100%'
+          }}>
+            <CardContent sx={{ position: 'relative', padding: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="subtitle1" color="text.secondary" fontWeight="medium">
+                  Active Categories <InfoIcon sx={{ fontSize: 16, ml: 0.5, color: '#2e7d32', verticalAlign: 'text-bottom' }} />
+                </Typography>
+                <Box sx={{ 
+                  bgcolor: 'rgba(46, 125, 50, 0.1)', 
+                  p: 1, 
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <CategoryIcon sx={{ color: '#2e7d32', fontSize: 24 }} />
+                </Box>
+              </Box>
+              
+              <Typography variant="h4" fontWeight="bold" color="text.primary">
+                {summaryData?.expenses_by_category?.length || 0}
+              </Typography>
+              
+              <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Total Categories
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           {renderMonthlyTrends()}

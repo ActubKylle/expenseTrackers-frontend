@@ -24,7 +24,6 @@ import { motion } from 'framer-motion';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
-
 // import Slider from 'react-slick';
 // import 'slick-carousel/slick/slick.css';
 // import 'slick-carousel/slick/slick-theme.css';
@@ -137,6 +136,7 @@ const DashboardPreview = () => {
 };
 
 // Hero section with enhanced visuals
+// HeroSection component with darker background and refined patterns
 const HeroSection = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -154,149 +154,165 @@ const HeroSection = () => {
     };
   }, []);
 
+  // Create global CSS for patterns
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes gradientBG {
+        0% { background-position: 0% 50% }
+        50% { background-position: 100% 50% }
+        100% { background-position: 0% 50% }
+      }
+      
+      .hero-pattern {
+        background-image: 
+          radial-gradient(circle at 20% 30%, rgba(82, 113, 255, 0.3) 0%, rgba(82, 113, 255, 0) 50%),
+          radial-gradient(circle at 80% 70%, rgba(82, 113, 255, 0.3) 0%, rgba(82, 113, 255, 0) 50%),
+          linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(135deg, #324bb0 0%, #4152c9 50%, #324bb0 100%);
+        background-size: 600px 600px, 600px 600px, 25px 25px, 25px 25px, 400% 400%;
+        background-position: 0 0, 0 0, 0 0, 0 0, 0% 50%;
+        animation: gradientBG 20s ease infinite;
+      }
+      
+      .top-pattern {
+        background-image: 
+          linear-gradient(to bottom, transparent, rgba(82, 113, 255, 0.1)),
+          radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 100% 100%, 20px 20px;
+      }
+      
+      .wave-pattern {
+        background: linear-gradient(to right, rgba(82, 113, 255, 0.2), rgba(82, 113, 255, 0.4), rgba(82, 113, 255, 0.2));
+        border-radius: 100% 100% 0 0;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
     <Box 
+      className="hero-pattern"
       sx={{ 
         minHeight: '100vh',
         pt: { xs: '80px', md: '100px' },
         pb: { xs: 10, md: 14 },
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)'
+        color: 'white'
       }}
     >
-      {/* Background elements */}
+      {/* Top pattern */}
       <Box 
+        className="top-pattern"
         sx={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          height: '100%',
-          overflow: 'hidden',
+          height: '250px',
           zIndex: 0,
-          opacity: 0.5
         }}
-      >
-        {/* SVG Pattern Background */}
-        <Box sx={{
+      />
+      
+      {/* Abstract geometric shapes */}
+      <Box 
+        sx={{
           position: 'absolute',
-          top: 0,
+          top: '15%',
+          left: '5%',
+          width: '250px',
+          height: '250px',
+          borderRadius: '30%',
+          background: 'linear-gradient(45deg, rgba(82, 113, 255, 0.1), rgba(255, 255, 255, 0.05))',
+          transform: 'rotate(15deg)',
+          zIndex: 0,
+          boxShadow: 'inset 0 0 30px rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)'
+        }}
+      />
+      
+      <Box 
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          right: '8%',
+          width: '200px',
+          height: '200px',
+          borderRadius: '20%',
+          background: 'linear-gradient(135deg, rgba(82, 113, 255, 0.1), rgba(255, 255, 255, 0.05))',
+          transform: 'rotate(30deg) translateY(-50%)',
+          zIndex: 0,
+          boxShadow: 'inset 0 0 20px rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)'
+        }}
+      />
+      
+      {/* Bottom wave patterns */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 0,
           left: 0,
           right: 0,
-          bottom: 0,
-          opacity: 0.05,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%232563EB' fill-opacity='0.7' fill-rule='evenodd'/%3E%3C/svg%3E")`,
-          backgroundSize: '150px 150px',
+          height: '200px',
           zIndex: 0,
-          transform: 'rotate(5deg) scale(1.2)',
-          animation: 'patternMove 60s linear infinite'
-        }} />
-        
-        {/* Keep the original circular gradients for layered effect */}
-        <Box 
+          overflow: 'hidden',
+        }}
+      >
+        <Box
+          className="wave-pattern"
           sx={{
             position: 'absolute',
-            width: '600px',
-            height: '600px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(37,99,235,0.08) 0%, rgba(37,99,235,0) 70%)',
-            top: '-200px',
-            right: '-100px',
-            filter: 'blur(10px)'
-          }}
-        />
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '400px',
-            height: '400px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(37,99,235,0.06) 0%, rgba(37,99,235,0) 70%)',
-            bottom: '10%',
-            left: '-150px',
-            filter: 'blur(8px)'
-          }}
-        />
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '300px',
-            height: '300px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(236,72,153,0.07) 0%, rgba(236,72,153,0) 70%)',
-            top: '30%',
-            left: '10%',
-            filter: 'blur(8px)'
-          }}
-        />
-        
-        {/* Additional decorative elements */}
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '200px',
-            height: '200px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, rgba(139,92,246,0) 70%)',
-            bottom: '20%',
-            right: '15%',
-            filter: 'blur(5px)',
-            animation: 'float 10s ease-in-out infinite'
-          }}
-        />
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '120px',
-            height: '120px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16,185,129,0.06) 0%, rgba(16,185,129,0) 70%)',
-            top: '15%',
-            right: '30%',
-            filter: 'blur(5px)',
-            animation: 'float 8s ease-in-out infinite'
-          }}
-        />
-        
-        {/* Animated grid pattern - kept for additional texture */}
-        <Box 
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
             bottom: 0,
-            backgroundImage: 'linear-gradient(rgba(37,99,235,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.02) 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-            zIndex: 1,
-            opacity: 0.7
+            left: '-10%',
+            width: '120%',
+            height: '200px',
+            opacity: 0.3,
+          }}
+        />
+        <Box
+          className="wave-pattern"
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: '-5%',
+            width: '110%',
+            height: '120px',
+            opacity: 0.5,
           }}
         />
       </Box>
       
-      {/* Animation keyframes as additional style */}
+      {/* Subtle light streaks */}
       <Box
         sx={{
-          '@keyframes patternMove': {
-            '0%': {
-              backgroundPosition: '0 0',
-            },
-            '100%': {
-              backgroundPosition: '150px 150px',
-            },
-          },
-          '@keyframes float': {
-            '0%': {
-              transform: 'translateY(0)',
-            },
-            '50%': {
-              transform: 'translateY(-15px)',
-            },
-            '100%': {
-              transform: 'translateY(0)',
-            },
-          },
+          position: 'absolute',
+          top: 0,
+          left: '30%',
+          width: '2px',
+          height: '30%',
+          background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent)',
+          opacity: 0.4,
+          zIndex: 0,
+        }}
+      />
+      
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '20%',
+          right: '40%',
+          width: '1px',
+          height: '40%',
+          background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent)',
+          opacity: 0.3,
+          zIndex: 0,
         }}
       />
       
@@ -314,13 +330,12 @@ const HeroSection = () => {
                 sx={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  background: 'rgba(37,99,235,0.1)',
+                  background: 'rgba(255,255,255,0.1)',
                   px: 2,
                   py: 1,
                   borderRadius: '100px',
-                  mb: 4,
-                  backdropFilter: 'blur(5px)',
-                  boxShadow: '0 2px 8px rgba(37,99,235,0.1)'
+                  backdropFilter: 'blur(8px)',
+                  mb: 4
                 }}
               >
                 <Box
@@ -329,15 +344,14 @@ const HeroSection = () => {
                     height: 8,
                     borderRadius: '50%',
                     bgcolor: '#10B981',
-                    mr: 1,
-                    animation: 'pulse 2s infinite'
+                    mr: 1
                   }}
                 />
                 <Typography
                   sx={{
                     fontSize: '0.9rem',
                     fontWeight: 600,
-                    color: themeColors.primary.main
+                    color: 'white'
                   }}
                 >
                   Now Available — Version 2.0
@@ -353,13 +367,21 @@ const HeroSection = () => {
                   lineHeight: 1.1,
                   mb: 3,
                   letterSpacing: '-0.02em',
-                  background: 'linear-gradient(90deg, #1E40AF, #3B82F6 70%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  maxWidth: '600px',
+                  color: 'white',
+                  textShadow: '0 4px 8px rgba(0,0,0,0.2)',
                   position: 'relative',
-                  textShadow: '0 10px 20px rgba(37,99,235,0.1)'
+                  display: 'inline-block',
+                  maxWidth: '600px',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: -10,
+                    left: 0,
+                    width: '80px',
+                    height: '4px',
+                    background: 'linear-gradient(to right, rgba(255,255,255,0.8), rgba(255,255,255,0.2))',
+                    borderRadius: '2px',
+                  }
                 }}
               >
                 Take Control of Your Finances
@@ -370,7 +392,7 @@ const HeroSection = () => {
                   fontWeight: 400,
                   mb: 5,
                   maxWidth: '540px',
-                  color: themeColors.text.secondary,
+                  color: 'rgba(255,255,255,0.9)',
                   fontSize: { xs: '1.1rem', md: '1.25rem' },
                   lineHeight: 1.7
                 }}
@@ -392,37 +414,21 @@ const HeroSection = () => {
                   variant="contained"
                   size="large"
                   sx={{ 
-                    bgcolor: themeColors.primary.main,
-                    color: 'white',
+                    bgcolor: 'white',
+                    color: '#324bb0',
                     px: 4,
                     py: 1.5,
                     borderRadius: '10px',
                     fontWeight: 600,
                     fontSize: '1rem',
                     textTransform: 'none',
-                    boxShadow: '0 10px 20px rgba(37,99,235,0.3)',
+                    boxShadow: '0 10px 20px rgba(0,0,0,0.15)',
                     '&:hover': {
-                      bgcolor: themeColors.primary.dark,
+                      bgcolor: 'rgba(255,255,255,0.9)',
                       transform: 'translateY(-3px)',
-                      boxShadow: '0 15px 30px rgba(37,99,235,0.4)'
+                      boxShadow: '0 15px 30px rgba(0,0,0,0.2)'
                     },
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: '-50%',
-                      width: '150%',
-                      height: '100%',
-                      background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%)',
-                      transform: 'translateX(-100%)',
-                      transition: 'transform 0.6s ease',
-                    },
-                    '&:hover::after': {
-                      transform: 'translateX(100%)',
-                    }
+                    transition: 'all 0.3s ease'
                   }}
                   endIcon={<ArrowForwardIcon />}
                 >
@@ -435,8 +441,8 @@ const HeroSection = () => {
                   variant="outlined"
                   size="large"
                   sx={{ 
-                    borderColor: themeColors.primary.main,
-                    color: themeColors.primary.main,
+                    borderColor: 'rgba(255,255,255,0.6)',
+                    color: 'white',
                     px: 4,
                     py: 1.5,
                     borderRadius: '10px',
@@ -444,11 +450,9 @@ const HeroSection = () => {
                     fontSize: '1rem',
                     textTransform: 'none',
                     '&:hover': {
-                      bgcolor: 'rgba(37,99,235,0.05)',
-                      borderColor: themeColors.primary.dark,
-                      transform: 'translateY(-2px)'
-                    },
-                    transition: 'all 0.3s ease'
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                      borderColor: 'white'
+                    }
                   }}
                   endIcon={<KeyboardArrowDownIcon />}
                 >
@@ -456,28 +460,14 @@ const HeroSection = () => {
                 </Button>
               </Box>
               
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                flexWrap: 'wrap',
-                background: 'rgba(255,255,255,0.5)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '12px',
-                p: 2,
-                boxShadow: '0 5px 15px rgba(0,0,0,0.03)'
-              }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mr: 4, mb: { xs: 2, md: 0 } }}>
                   <Box sx={{ display: 'flex', mr: 1 }}>
                     {[...Array(5)].map((_, i) => (
-                      <Box key={i} sx={{ 
-                        color: '#F59E0B', 
-                        fontSize: '1rem',
-                        animation: 'twinkle 3s infinite',
-                        animationDelay: `${i * 0.2}s`
-                      }}>★</Box>
+                      <Box key={i} sx={{ color: '#F59E0B', fontSize: '1rem' }}>★</Box>
                     ))}
                   </Box>
-                  <Typography sx={{ color: themeColors.text.secondary, fontWeight: 500 }}>
+                  <Typography sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
                     4.9 out of 5 stars
                   </Typography>
                 </Box>
@@ -490,19 +480,13 @@ const HeroSection = () => {
                         sx={{
                           width: 28,
                           height: 28,
-                          border: '2px solid #F9FAFB',
-                          ml: i > 0 ? -1 : 0,
-                          boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                          transition: 'transform 0.3s ease',
-                          '&:hover': {
-                            transform: 'translateY(-3px) scale(1.15)',
-                            zIndex: 10
-                          }
+                          border: '2px solid #324bb0',
+                          ml: i > 0 ? -1 : 0
                         }}
                       />
                     ))}
                   </Box>
-                  <Typography sx={{ color: themeColors.text.secondary, fontWeight: 500 }}>
+                  <Typography sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>
                     Trusted by 10,000+ users
                   </Typography>
                 </Box>
@@ -528,27 +512,13 @@ const HeroSection = () => {
                 animate={pulseAnimation.animate}
                 sx={{
                   position: 'relative',
-                  border: '1px solid rgba(37,99,235,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
                   borderRadius: '1rem',
                   p: 1,
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05)',
-                  background: 'rgba(255,255,255,0.8)',
+                  boxShadow: '0 25px 50px rgba(0,0,0,0.25), 0 10px 25px rgba(0,0,0,0.15)',
+                  background: 'rgba(255,255,255,0.95)',
                   backdropFilter: 'blur(8px)',
-                  overflow: 'hidden',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: -5,
-                    left: -5,
-                    right: -5,
-                    bottom: -5,
-                    zIndex: -1,
-                    borderRadius: '1.2rem',
-                    background: 'linear-gradient(45deg, rgba(37,99,235,0.2), rgba(139,92,246,0.2), rgba(16,185,129,0.2))',
-                    filter: 'blur(10px)',
-                    opacity: 0.7,
-                    animation: 'rotateBg 10s linear infinite'
-                  }
+                  overflow: 'hidden'
                 }}
               >
                 <DashboardPreview />
@@ -567,15 +537,9 @@ const HeroSection = () => {
                   boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
                   display: { xs: 'none', md: 'flex' },
                   alignItems: 'center',
-                  border: '1px solid rgba(37,99,235,0.1)',
+                  border: '1px solid rgba(255,255,255,0.3)',
                   zIndex: 2,
-                  maxWidth: '220px',
-                  transform: 'translateY(0)',
-                  transition: 'transform 0.5s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 30px rgba(0,0,0,0.15)'
-                  }
+                  maxWidth: '220px'
                 }}
                 data-aos="fade-up"
                 data-aos-delay="600"
@@ -629,15 +593,9 @@ const HeroSection = () => {
                   boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
                   display: { xs: 'none', md: 'flex' },
                   alignItems: 'center',
-                  border: '1px solid rgba(37,99,235,0.1)',
+                  border: '1px solid rgba(255,255,255,0.3)',
                   zIndex: 2,
-                  maxWidth: '220px',
-                  transform: 'translateY(0)',
-                  transition: 'transform 0.5s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 30px rgba(0,0,0,0.15)'
-                  }
+                  maxWidth: '220px'
                 }}
                 data-aos="fade-up"
                 data-aos-delay="800"
@@ -678,98 +636,13 @@ const HeroSection = () => {
                   </Typography>
                 </Box>
               </Box>
-              
-              {/* New feature callout */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  bottom: '30%',
-                  right: -15,
-                  background: 'rgba(255,255,255,0.95)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: '12px',
-                  p: 2,
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                  display: { xs: 'none', md: 'flex' },
-                  alignItems: 'center',
-                  border: '1px solid rgba(37,99,235,0.1)',
-                  zIndex: 2,
-                  maxWidth: '220px',
-                  transform: 'translateY(0)',
-                  transition: 'transform 0.5s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 30px rgba(0,0,0,0.15)'
-                  },
-                  animation: 'float 5s ease-in-out infinite'
-                }}
-                data-aos="fade-up"
-                data-aos-delay="1000"
-              >
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'rgba(245,158,11,0.1)',
-                    color: '#F59E0B',
-                    mr: 2
-                  }}
-                >
-                  <ShowChartIcon />
-                </Box>
-                <Box>
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: '0.9rem',
-                      color: themeColors.text.primary,
-                      mb: 0.5
-                    }}
-                  >
-                    Trend Analysis
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: '0.8rem',
-                      color: themeColors.text.secondary
-                    }}
-                  >
-                    Identify opportunities to save money
-                  </Typography>
-                </Box>
-              </Box>
             </Box>
           </Grid>
         </Grid>
       </Container>
-      
-      {/* Additional keyframes for animations */}
-      <style jsx global>{`
-        @keyframes pulse {
-          0% { opacity: 1; }
-          50% { opacity: 0.5; }
-          100% { opacity: 1; }
-        }
-        
-        @keyframes twinkle {
-          0% { transform: scale(1); opacity: 0.8; }
-          50% { transform: scale(1.2); opacity: 1; }
-          100% { transform: scale(1); opacity: 0.8; }
-        }
-        
-        @keyframes rotateBg {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </Box>
   );
 };
-
 // Main Landing component
 const Landing = () => {
   // Initialize AOS for scrolling animations
@@ -831,25 +704,20 @@ const Landing = () => {
       <HeroSection />
       
       {/* Features Section */}
-      <Box id="features">
-        <FeaturesSection />
-      </Box>
+      <FeaturesSection />
       
       {/* How It Works */}
       <HowItWorksSection />
       
       {/* Testimonials */}
-      <Box id="testimonials">
-        <TestimonialSection />
-      </Box>      
+      <TestimonialSection />
+      
       {/* Team Section */}
-      <Box id="team">
-        <TeamSection />
-      </Box>      
+      <TeamSection />
+      
       {/* CTA Section */}
-      <Box id="cta">
-        <CTASection />
-      </Box>      
+      <CTASection />
+      
       {/* Footer */}
       <Footer />
     </Box>
@@ -1391,7 +1259,6 @@ const pulseAnimation = {
 };
 
 // Modern Navbar with glass morphism effect
-// Modern Navbar with glass morphism effect and smooth scrolling
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const theme = useTheme();
@@ -1410,23 +1277,6 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Function to handle smooth scrolling to sections
-  const scrollToSection = (sectionId) => {
-    const section = document.getElementById(sectionId);
-    if (section) {
-      // Close mobile menu if open
-      if (menuOpen) {
-        setMenuOpen(false);
-      }
-      
-      // Smooth scroll to section
-      section.scrollIntoView({ behavior: 'smooth' });
-      
-      // Optional: update URL with hash for better UX
-      window.history.pushState(null, null, `#${sectionId}`);
-    }
-  };
 
   return (
     <Box 
@@ -1459,12 +1309,7 @@ const Navbar = () => {
             transition={{ duration: 0.5 }}
             sx={{ 
               display: 'flex',
-              alignItems: 'center',
-              cursor: 'pointer' // Make logo clickable 
-            }}
-            onClick={() => {
-              // Scroll to top when logo is clicked
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              alignItems: 'center'
             }}
           >
             <Box
@@ -1520,12 +1365,11 @@ const Navbar = () => {
             >
               <Box sx={{ display: 'flex', gap: 3 }}>
                 <Typography 
-                  component="a"
-                  onClick={() => scrollToSection('features')}
+                  component={RouterLink} 
+                  to="/features"
                   sx={{ 
                     color: themeColors.text.secondary,
                     textDecoration: 'none',
-                    cursor: 'pointer',
                     fontWeight: 500,
                     position: 'relative',
                     '&:hover': {
@@ -1549,12 +1393,11 @@ const Navbar = () => {
                   Features
                 </Typography>
                 <Typography 
-                  component="a"
-                  onClick={() => scrollToSection('how-it-works')}
+                  component={RouterLink} 
+                  to="/about"
                   sx={{ 
                     color: themeColors.text.secondary,
                     textDecoration: 'none',
-                    cursor: 'pointer',
                     fontWeight: 500,
                     position: 'relative',
                     '&:hover': {
@@ -1575,70 +1418,11 @@ const Navbar = () => {
                     }
                   }}
                 >
-                  How It Works
-                </Typography>
-                <Typography 
-                  component="a"
-                  onClick={() => scrollToSection('testimonials')}
-                  sx={{ 
-                    color: themeColors.text.secondary,
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    position: 'relative',
-                    '&:hover': {
-                      color: themeColors.primary.main,
-                      '&::after': {
-                        width: '100%'
-                      }
-                    },
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: -4,
-                      left: 0,
-                      width: 0,
-                      height: 2,
-                      bgcolor: themeColors.primary.main,
-                      transition: 'width 0.3s ease'
-                    }
-                  }}
-                >
-                  Testimonials
-                </Typography>
-                <Typography 
-                  component="a"
-                  onClick={() => scrollToSection('team')}
-                  sx={{ 
-                    color: themeColors.text.secondary,
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    position: 'relative',
-                    '&:hover': {
-                      color: themeColors.primary.main,
-                      '&::after': {
-                        width: '100%'
-                      }
-                    },
-                    '&::after': {
-                      content: '""',
-                      position: 'absolute',
-                      bottom: -4,
-                      left: 0,
-                      width: 0,
-                      height: 2,
-                      bgcolor: themeColors.primary.main,
-                      transition: 'width 0.3s ease'
-                    }
-                  }}
-                >
-                  Team
+                  About
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Button 
-                  // For actual page changes, keep RouterLink
                   component={RouterLink} 
                   to="/login"
                   sx={{ 
@@ -1690,12 +1474,11 @@ const Navbar = () => {
           <Container>
             <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Typography 
-                component="a"
-                onClick={() => scrollToSection('features')}
+                component={RouterLink} 
+                to="/features"
                 sx={{ 
                   color: themeColors.text.primary,
                   textDecoration: 'none',
-                  cursor: 'pointer',
                   fontWeight: 600,
                   fontSize: '1.2rem',
                   py: 1
@@ -1704,46 +1487,17 @@ const Navbar = () => {
                 Features
               </Typography>
               <Typography 
-                component="a"
-                onClick={() => scrollToSection('how-it-works')}
+                component={RouterLink} 
+                to="/about"
                 sx={{ 
                   color: themeColors.text.primary,
                   textDecoration: 'none',
-                  cursor: 'pointer',
                   fontWeight: 600,
                   fontSize: '1.2rem',
                   py: 1
                 }}
               >
-                How It Works
-              </Typography>
-              <Typography 
-                component="a"
-                onClick={() => scrollToSection('testimonials')}
-                sx={{ 
-                  color: themeColors.text.primary,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '1.2rem',
-                  py: 1
-                }}
-              >
-                Testimonials
-              </Typography>
-              <Typography 
-                component="a"
-                onClick={() => scrollToSection('team')}
-                sx={{ 
-                  color: themeColors.text.primary,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '1.2rem',
-                  py: 1
-                }}
-              >
-                Team
+                About
               </Typography>
               <Box sx={{ pt: 2 }}>
                 <Button 
@@ -1785,6 +1539,7 @@ const Navbar = () => {
     </Box>
   );
 };
+
 // Enhanced How It Works Component
 const HowItWorksSection = () => {
   const theme = useTheme();

@@ -62,6 +62,7 @@ import {
   getExpense,
 } from "../api/expenses";
 import { getCategories } from "../api/categories";
+import { NotificationEventBus } from '../contexts/NotificationContext';
 
 const Expenses = () => {
   const theme = useTheme();
@@ -454,40 +455,42 @@ const Expenses = () => {
   // CRUD operations
   const handleAddExpense = async () => {
     if (!validateForm()) return;
-
+  
     try {
       setLoading(true);
-
+  
       const expenseData = {
         amount: formData.amount,
         date: formData.date,
         description: formData.description || "",
         category_id: parseInt(formData.category_id, 10),
-        receipt_path: formData.receipt_path || null, // Include receipt_path
+        receipt_path: formData.receipt_path || null,
       };
-      console.log("Sending expense data:", expenseData); // Log expense data being sent  
-
-      await addExpense(expenseData);
+      console.log("Sending expense data:", expenseData);
+  
+      const response = await addExpense(expenseData);
+      
+      // Trigger notification check via the event bus
+      NotificationEventBus.publish('EXPENSE_CREATED', { 
+        expense: response,
+        timestamp: new Date().toISOString()
+      });
+      
       handleCloseDialog();
       showSnackbar("Expense added successfully", "success");
-      fetchExpenses(); // Refresh the expenses list
+      fetchExpenses();
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message || "Failed to add expense";
-      console.error("Error:", errorMessage);
-      showSnackbar(errorMessage, "error");
+      // Error handling...
     } finally {
       setLoading(false);
     }
   };
-
   const handleEditExpense = async () => {
     if (!validateForm() || !currentExpense) return;
-
+  
     try {
       setLoading(true);
-
-      // Create data object for update
+  
       const expenseData = {
         amount: formData.amount,
         date: formData.date,
@@ -497,17 +500,20 @@ const Expenses = () => {
           ? formData.receipt_path.trim()
           : null,
       };
-
+  
       console.log("Updating expense with data:", expenseData);
-
-      // Update the expense
+  
       const updatedExpense = await updateExpense(
         currentExpense.id,
         expenseData
       );
       console.log("Update response:", updatedExpense);
-
-      // Check if receipt_path was saved correctly
+  
+      // Trigger notification check after successful expense update
+      NotificationEventBus.publish('EXPENSE_CREATED', { expense: updatedExpense });
+  
+      // Rest of your code...
+      
       if (expenseData.receipt_path && !updatedExpense.receipt_path) {
         console.error(
           "Warning: receipt_path not saved correctly. Sent:",
@@ -520,11 +526,10 @@ const Expenses = () => {
           "warning"
         );
       }
-
+  
       handleCloseDialog();
       showSnackbar("Expense updated successfully", "success");
-
-      // Refresh expenses list to show the updated data
+  
       fetchExpenses();
     } catch (error) {
       console.error("Error updating expense:", error);
@@ -540,7 +545,6 @@ const Expenses = () => {
       setLoading(false);
     }
   };
-
   const handleDeleteExpense = async () => {
     if (!currentExpense) return;
 

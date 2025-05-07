@@ -7,8 +7,12 @@ export const login = async (credentials) => {
 
 export const register = async (userData) => {
   const response = await axios.post('/register', userData);
-  return response.data;
+  return {
+    ...response.data,
+    success: true
+  };
 };
+
 
 export const logout = async () => {
   const response = await axios.post('/logout');

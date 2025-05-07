@@ -5,7 +5,7 @@ import {
   DialogContent, DialogContentText, DialogTitle, TextField, MenuItem,
   Grid, CircularProgress, TablePagination, Chip, InputAdornment,
   Card, CardContent, useTheme, Snackbar, Alert, FormControl, InputLabel,
-  Select, Stack
+  Select, Stack, Fade, Zoom
 } from '@mui/material';
 import { 
   Add as AddIcon, 
@@ -14,27 +14,46 @@ import {
   Receipt as ReceiptIcon,
   Search as SearchIcon,
   Clear as ClearIcon,
-  FilterList as FilterIcon
+  FilterList as FilterIcon,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import { format, parseISO } from 'date-fns';
 import MainLayout from '../layouts/MainLayout';
-import { exportExpensesToCSV, exportExpensesToPDF } from '../utils/exportUtils';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import { getExpenses, addExpense, updateExpense, deleteExpense } from '../api/expenses';
-import { getCategories } from '../api/categories';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+
+import { getExpenses, addExpense, updateExpense, deleteExpense, getExpense } from '../api/expenses';
+import { getCategories } from '../api/categories';
 
 const Expenses = () => {
   const theme = useTheme();
 
+  // Initialize AOS
+  useEffect(() => {
+    AOS.init({
+      duration: 800,
+      once: false,
+      mirror: true,
+      easing: 'ease-out-cubic',
+    });
+    
+    // Refresh AOS when the component updates
+    return () => {
+      AOS.refresh();
+    };
+  }, []);
+
+  // State for expenses data
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [totalExpenses, setTotalExpenses] = useState(0);
+
+  // State for pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // State for filtering and searching
   const [filters, setFilters] = useState({
     category: '',
     dateFrom: '',
@@ -43,85 +62,100 @@ const Expenses = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
+  
+  // State for form dialogs
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [openViewDialog, setOpenViewDialog] = useState(false);
   const [currentExpense, setCurrentExpense] = useState(null);
   const [formData, setFormData] = useState({
     amount: '',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
     description: '',
     category_id: '',
     receipt_path: null
   });
   const [formErrors, setFormErrors] = useState({});
+  
+  // State for notifications
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
     severity: 'success'
   });
 
-  useEffect(() => {
-    AOS.init({
-      duration: 800,
-      easing: 'ease-out-cubic',
-      once: true,
-      offset: 50,
-      delay: 50,
-      mirror: false,
-      anchorPlacement: 'top-bottom',
-      disable: window.innerWidth < 768
-    });
-
-    const handleResize = () => {
-      AOS.refresh();
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      AOS.refresh();
-    }
-  }, [loading]);
-
+  // Fetch expenses on component mount
   useEffect(() => {
     fetchExpenses();
   }, [page, rowsPerPage, filters]);
 
+  // Refresh AOS when expenses are loaded
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        AOS.refresh();
+      }, 100);
+    }
+  }, [loading, expenses]);
+
+  // Fetch categories dynamically
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await getCategories();
-        setCategories(response);
+        const categoriesData = await getCategories();
+        // Ensure categories is always an array
+        if (Array.isArray(categoriesData)) {
+          setCategories(categoriesData);
+        } else {
+          console.error('Categories data is not an array:', categoriesData);
+          setCategories([]); // Set to empty array as fallback
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
         showSnackbar('Failed to load categories', 'error');
+        setCategories([]); // Set to empty array on error
       }
     };
-
+  
     fetchCategories();
   }, []);
-
+  
+  // Also update any render functions that map over categories
+  // For example, in your Select component:
+  {Array.isArray(categories) && categories.length > 0 ? (
+    categories.map((category) => (
+      <MenuItem key={category.id} value={category.id}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              bgcolor: category.color
+            }}
+          />
+          {category.name}
+        </Box>
+      </MenuItem>
+    ))
+  ) : (
+    <MenuItem disabled>No categories available</MenuItem>
+  )}
+  // Function to fetch expenses
   const fetchExpenses = async () => {
     try {
       setLoading(true);
+      
       const params = {
         page: page + 1,
         per_page: rowsPerPage,
-        category_id: filters.category || undefined,
-        date_from: filters.dateFrom || undefined,
-        date_to: filters.dateTo || undefined,
-        search: filters.searchTerm || undefined,
-        sort_by: 'date',
-        sort_order: 'desc'
+        // Other parameters
       };
+      
       const response = await getExpenses(params);
+      
+      // Make sure to only work with expenses that belong to the current user
       if (response && Array.isArray(response.data)) {
         setExpenses(response.data);
         setTotalExpenses(response.total || response.data.length);
@@ -133,6 +167,7 @@ const Expenses = () => {
         setExpenses([]);
         setTotalExpenses(0);
       }
+      
     } catch (error) {
       console.error('Error fetching expenses:', error);
       showSnackbar('Failed to load expenses', 'error');
@@ -142,7 +177,7 @@ const Expenses = () => {
       setLoading(false);
     }
   };
-
+  // Add cleanup for search timeout
   useEffect(() => {
     return () => {
       if (searchTimeout) {
@@ -151,6 +186,7 @@ const Expenses = () => {
     };
   }, [searchTimeout]);
 
+  // Handle pagination change
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -160,10 +196,12 @@ const Expenses = () => {
     setPage(0);
   };
 
+  // Add validateDateFilters function before filter handlers
   const validateDateFilters = () => {
     if (filters.dateFrom && filters.dateTo) {
       const fromDate = new Date(filters.dateFrom);
       const toDate = new Date(filters.dateTo);
+      
       if (fromDate > toDate) {
         showSnackbar('From date cannot be after To date', 'error');
         return false;
@@ -172,12 +210,16 @@ const Expenses = () => {
     return true;
   };
 
+  // Enhanced filter handlers
   const handleFilterChange = (field, value) => {
     clearTimeout(searchTimeout);
+    
     setFilters(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // Debounce search
     if (field === 'searchTerm') {
       const timeoutId = setTimeout(() => {
         setPage(0);
@@ -196,16 +238,24 @@ const Expenses = () => {
     });
   };
 
+  // Toggle filter visibility with animation
   const handleToggleFilters = () => {
     setShowFilters(prev => !prev);
+    // Refresh AOS to make animations work with newly visible elements
+    setTimeout(() => {
+      AOS.refresh();
+    }, 100);
   };
 
+  // Form handlers
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // Clear error for this field if any
     if (formErrors[name]) {
       setFormErrors(prev => ({
         ...prev,
@@ -216,23 +266,28 @@ const Expenses = () => {
 
   const validateForm = () => {
     const errors = {};
+    
     if (!formData.amount || isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
       errors.amount = 'Please enter a valid amount';
     }
+    
     if (!formData.date) {
       errors.date = 'Please select a date';
     }
+    
     if (!formData.category_id) {
       errors.category_id = 'Please select a category';
     }
+    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  // Dialog handlers
   const handleOpenAddDialog = () => {
     setFormData({
       amount: '',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
       description: '',
       category_id: '',
       receipt_path: null
@@ -241,43 +296,132 @@ const Expenses = () => {
     setOpenAddDialog(true);
   };
 
-  const handleOpenEditDialog = (expense) => {
-    setCurrentExpense(expense);
-    setFormData({
-      amount: expense.amount.toString(),
-      date: expense.date,
-      description: expense.description || '',
-      category_id: expense.category_id,
-      receipt_path: expense.receipt_path
-    });
+ // In your Expenses component
+ const handleOpenEditDialog = async (expense) => {
+  try {
+    console.log('Opening edit dialog for expense:', expense);
+    
+    // First check if the expense belongs to the current user
+    const userData = JSON.parse(localStorage.getItem('user'));
+    
+    // If the expense already has user_id property, check it
+    if (expense.user_id && expense.user_id !== userData.id) {
+      showSnackbar('You are not authorized to edit this expense', 'error');
+      return;
+    }
+    
+    // If receipt_path is undefined, we might need to fetch more data
+    if (expense.receipt_path === undefined) {
+      try {
+        console.log('Fetching complete expense data for editing...');
+        const detailedExpense = await getExpense(expense.id);
+        console.log('Detailed expense for editing:', detailedExpense);
+        setCurrentExpense(detailedExpense);
+        setFormData({
+          amount: detailedExpense.amount.toString(),
+          date: detailedExpense.date,
+          description: detailedExpense.description || '',
+          category_id: detailedExpense.category_id,
+          receipt_path: detailedExpense.receipt_path || ''
+        });
+      } catch (fetchError) {
+        console.error('Error fetching expense details for edit:', fetchError);
+        // Still proceed with the edit using the available data
+        setCurrentExpense(expense);
+        setFormData({
+          amount: expense.amount.toString(),
+          date: expense.date,
+          description: expense.description || '',
+          category_id: expense.category_id,
+          receipt_path: ''
+        });
+      }
+    } else {
+      // Use the existing expense data
+      setCurrentExpense(expense);
+      setFormData({
+        amount: expense.amount.toString(),
+        date: expense.date,
+        description: expense.description || '',
+        category_id: expense.category_id,
+        receipt_path: expense.receipt_path || ''
+      });
+    }
+    
     setFormErrors({});
     setOpenEditDialog(true);
-  };
+  } catch (error) {
+    console.error('Error preparing expense edit:', error);
+    showSnackbar('Failed to prepare expense edit', 'error');
+  }
+};
 
   const handleOpenDeleteDialog = (expense) => {
     setCurrentExpense(expense);
     setOpenDeleteDialog(true);
   };
 
+  // New function to handle viewing an expense
+ // Improved handleOpenViewDialog function
+const handleOpenViewDialog = async (expense) => {
+  try {
+    setLoading(true);
+    console.log('Opening view dialog for expense:', expense);
+    
+    // If receipt_path is undefined, we need to load the full expense
+    if (expense.receipt_path === undefined || expense.category === undefined) {
+      console.log('Fetching detailed expense data...');
+      // Fetch the expense with its related category
+      try {
+        const detailedExpense = await getExpense(expense.id);
+        console.log('Detailed expense data received:', detailedExpense);
+        setCurrentExpense(detailedExpense);
+        setOpenViewDialog(true);
+      } catch (fetchError) {
+        console.error('Error fetching expense details:', fetchError);
+        showSnackbar('Failed to load expense details', 'error');
+      }
+    } else {
+      // We already have all the expense details, use that directly
+      console.log('Using existing expense data with receipt_path:', expense.receipt_path);
+      setCurrentExpense(expense);
+      setOpenViewDialog(true);
+    }
+  } catch (error) {
+    console.error('Error opening view dialog:', error);
+    showSnackbar('Failed to load expense details', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
   const handleCloseDialog = () => {
     setOpenAddDialog(false);
     setOpenEditDialog(false);
     setOpenDeleteDialog(false);
+    setOpenViewDialog(false);
     setCurrentExpense(null);
   };
 
+  // CRUD operations
   const handleAddExpense = async () => {
     if (!validateForm()) return;
+  
     try {
       setLoading(true);
+      
       const expenseData = {
-        ...formData,
-        category_id: parseInt(formData.category_id, 10)
+        amount: formData.amount,
+        date: formData.date,
+        description: formData.description || '',
+        category_id: parseInt(formData.category_id, 10),
+        receipt_path: formData.receipt_path || null // Include receipt_path
       };
+      
       await addExpense(expenseData);
       handleCloseDialog();
       showSnackbar('Expense added successfully', 'success');
-      fetchExpenses();
+      fetchExpenses(); // Refresh the expenses list
+      
     } catch (error) {
       const errorMessage = error.response?.data?.message || 'Failed to add expense';
       console.error('Error:', errorMessage);
@@ -289,28 +433,55 @@ const Expenses = () => {
 
   const handleEditExpense = async () => {
     if (!validateForm() || !currentExpense) return;
+    
     try {
       setLoading(true);
-      await updateExpense(currentExpense.id, formData);
+      
+      // Create data object for update
+      const expenseData = {
+        amount: formData.amount,
+        date: formData.date,
+        description: formData.description || '',
+        category_id: parseInt(formData.category_id, 10),
+        receipt_path: formData.receipt_path ? formData.receipt_path.trim() : null
+      };
+      
+      console.log('Updating expense with data:', expenseData);
+      
+      // Update the expense
+      const updatedExpense = await updateExpense(currentExpense.id, expenseData);
+      console.log('Update response:', updatedExpense);
+      
       handleCloseDialog();
       showSnackbar('Expense updated successfully', 'success');
+      
+      // Refresh expenses list to show the updated data
       fetchExpenses();
+      
     } catch (error) {
       console.error('Error updating expense:', error);
-      showSnackbar('Failed to update expense', 'error');
+      if (error.response && error.response.status === 403) {
+        showSnackbar('You do not have permission to edit this expense', 'error');
+      } else {
+        showSnackbar('Failed to update expense', 'error');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+
   const handleDeleteExpense = async () => {
     if (!currentExpense) return;
+    
     try {
       setLoading(true);
+      
       await deleteExpense(currentExpense.id);
       handleCloseDialog();
       showSnackbar('Expense deleted successfully', 'success');
-      fetchExpenses();
+      fetchExpenses(); // Refresh the expenses list
+      
     } catch (error) {
       console.error('Error deleting expense:', error);
       showSnackbar('Failed to delete expense', 'error');
@@ -319,6 +490,7 @@ const Expenses = () => {
     }
   };
 
+  // Show snackbar notification
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({
       open: true,
@@ -334,6 +506,7 @@ const Expenses = () => {
     }));
   };
 
+  // Format date for display
   const formatDate = (dateString) => {
     try {
       const date = parseISO(dateString);
@@ -343,13 +516,40 @@ const Expenses = () => {
     }
   };
 
+  // Function to get image URL for receipt
+ // Function to get image URL for receipt
+ const getReceiptImageUrl = (receiptPath) => {
+  // If there's no receipt path, return null
+  if (!receiptPath) return null;
+  
+  // Trim any whitespace that might have been accidentally added
+  const trimmedPath = receiptPath.trim();
+  
+  // If trimmed path is empty, return null
+  if (!trimmedPath) return null;
+
+  // Check if the receipt path is already a full URL (with more complete validation)
+  if (trimmedPath.match(/^https?:\/\//i)) {
+    return trimmedPath;
+  }
+  
+  // Otherwise, append the storage path
+  // Make sure API URL is defined
+  if (!process.env.REACT_APP_API_URL) {
+    console.error('REACT_APP_API_URL is not defined');
+    return trimmedPath; // Return the path as is if API URL is not defined
+  }
+  
+  return `${process.env.REACT_APP_API_URL}/storage/${trimmedPath}`;
+};
+
   const renderFilters = () => (
     <Card 
-      sx={{ mb: 3, boxShadow: 2 }} 
-      data-aos="fade-down"
-      data-aos-duration="800"
+      sx={{ mb: 3, boxShadow: 3, borderRadius: 2, overflow: 'hidden' }}
+      data-aos="fade-up"
+      data-aos-delay="100"
     >
-      <CardContent>
+      <CardContent sx={{ p: 3 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} md={6}>
             <TextField
@@ -370,7 +570,17 @@ const Expenses = () => {
                       <ClearIcon fontSize="small" />
                     </IconButton>
                   </InputAdornment>
-                )
+                ),
+                sx: {
+                  borderRadius: 2,
+                  transition: 'all 0.3s',
+                  '&:hover': {
+                    boxShadow: '0 0 8px rgba(0,0,0,0.1)'
+                  },
+                  '&.Mui-focused': {
+                    boxShadow: '0 0 8px rgba(0,0,0,0.2)'
+                  }
+                }
               }}
               size="small"
             />
@@ -382,256 +592,153 @@ const Expenses = () => {
                 onClick={handleToggleFilters}
                 startIcon={<FilterIcon />}
                 size="medium"
+                sx={{
+                  borderRadius: 8,
+                  px: 2,
+                  transition: 'all 0.3s',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: 2
+                  }
+                }}
               >
                 {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<FileDownloadIcon />}
-                onClick={() => 
-                ('csv')}
-                size="medium"
-              >
-                Export CSV
               </Button>
             </Stack>
           </Grid>
         </Grid>
+
         {showFilters && (
-          <Box sx={{ mt: 3, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={3}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={filters.category}
-                    label="Category"
-                    onChange={(e) => handleFilterChange('category', e.target.value)}
-                  >
-                    <MenuItem value="">All Categories</MenuItem>
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box
-                            sx={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: '50%',
-                              bgcolor: category.color
-                            }}
-                          />
-                          {category.name}
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <TextField
-                  fullWidth
-                  label="From Date"
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <TextField
-                  fullWidth
-                  label="To Date"
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                  InputLabelProps={{ shrink: true }}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <Stack direction="row" spacing={1}>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      if (validateDateFilters()) {
-                        setPage(0);
-                        fetchExpenses();
-                      }
-                    }}
+          <Fade in={showFilters} timeout={500}>
+            <Box 
+              sx={{ 
+                mt: 3, 
+                p: 3, 
+                bgcolor: 'background.paper', 
+                borderRadius: 2, 
+                border: '1px solid', 
+                borderColor: 'divider',
+                boxShadow: 1
+              }}
+              data-aos="fade-down"
+            >
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} md={3} data-aos="fade-right" data-aos-delay="100">
+                  <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      value={filters.category}
+                      label="Category"
+                      onChange={(e) => handleFilterChange('category', e.target.value)}
+                    >
+                      <MenuItem value="">All Categories</MenuItem>
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box
+                              sx={{
+                                width: 10,
+                                height: 10,
+                                borderRadius: '50%',
+                                bgcolor: category.color
+                              }}
+                            />
+                            {category.name}
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={3} data-aos="fade-right" data-aos-delay="200">
+                  <TextField
                     fullWidth
-                  >
-                    Apply Filters
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={handleClearFilters}
+                    label="From Date"
+                    type="date"
+                    value={filters.dateFrom}
+                    onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    size="small"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3} data-aos="fade-right" data-aos-delay="300">
+                  <TextField
                     fullWidth
-                  >
-                    Clear
-                  </Button>
-                </Stack>
+                    label="To Date"
+                    type="date"
+                    value={filters.dateTo}
+                    onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    size="small"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3} data-aos="fade-right" data-aos-delay="400">
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        if (validateDateFilters()) {
+                          setPage(0);
+                          fetchExpenses();
+                        }
+                      }}
+                      fullWidth
+                      sx={{
+                        borderRadius: 8,
+                        py: 1,
+                        boxShadow: 2,
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: 4
+                        }
+                      }}
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={handleClearFilters}
+                      fullWidth
+                      sx={{
+                        borderRadius: 8,
+                        py: 1,
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: 2
+                        }
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </Stack>
+                </Grid>
               </Grid>
-            </Grid>
-          </Box>
+            </Box>
+          </Fade>
         )}
       </CardContent>
     </Card>
   );
 
-  const renderTable = () => (
-    <Paper 
-      sx={{ width: '100%', mb: 2, boxShadow: 2 }} 
-      data-aos="fade-up"
-      data-aos-duration="1000"
-    >
-      <TableContainer>
-        <Table sx={{ minWidth: 650 }} aria-label="expenses table">
-          <TableHead data-aos="fade-in" data-aos-delay="200">
-            <TableRow sx={{ backgroundColor: theme.palette.grey[100] }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="right">Amount</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }} align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow> 
-                <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : expenses && expenses.length > 0 ? (
-              expenses.map((expense, index) => (
-                <TableRow 
-                  key={expense.id}
-                  hover
-                  data-aos="fade-left"
-                  data-aos-delay={100 + (index % 10) * 50}
-                  data-aos-offset={50}
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">
-                    {formatDate(expense.date)}
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={expense.category?.name || 'Unknown'}
-                      size="small"
-                      sx={{ 
-                        bgcolor: expense.category?.color || theme.palette.primary.light,
-                        color: theme.palette.getContrastText(expense.category?.color || theme.palette.primary.light)
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {expense.description || '-'}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography 
-                      variant="body2" 
-                      sx={{ fontWeight: 'medium', fontSize: '0.9rem' }}
-                    >
-                      ₱{parseFloat(expense.amount).toFixed(2)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={1} justifyContent="flex-end">
-                      <IconButton 
-                        size="small" 
-                        color="primary"
-                        onClick={() => handleOpenEditDialog(expense)}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => handleOpenDeleteDialog(expense)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                  <Typography variant="body1" color="textSecondary">
-                    No expenses found
-                  </Typography>
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<AddIcon />} 
-                    sx={{ mt: 2 }}
-                    onClick={handleOpenAddDialog}
-                  >
-                    Add your first expense
-                  </Button>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <Box 
-          data-aos="fade-up"
-          data-aos-delay="100"
-          data-aos-offset="0"
-        >
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={totalExpenses || 0}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Box>
-      </TableContainer>
-    </Paper>
-  );
-
-  const DialogWithAnimation = ({ open, onClose, title, content, actions }) => (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      TransitionProps={{
-        onEntered: () => {
-          setTimeout(() => AOS.refresh(), 100);
-        }
-      }}
-    >
-      <DialogTitle data-aos="fade-down" data-aos-duration="500">
-        {title}
-      </DialogTitle>
-      <DialogContent data-aos="fade-up" data-aos-duration="500" data-aos-delay="100">
-        {content}
-      </DialogContent>
-      <DialogActions data-aos="fade-up" data-aos-duration="500" data-aos-delay="200">
-        {actions}
-      </DialogActions>
-    </Dialog>
-  );
-
   return (
     <MainLayout>
-      <Box 
-        sx={{ mb: 4, px: 1 }} 
-        data-aos="fade-right"
-        data-aos-duration="1000"
-      >
+      <Box sx={{ mb: 4, px: 1 }} data-aos="fade-down">
         <Typography 
           variant="h4" 
-          component="h1"
-          data-aos="fade-down"
-          data-aos-delay="200"
+          component="h1" 
+          gutterBottom
           sx={{ 
-            fontWeight: 500,
-            fontSize: { xs: '1.8rem', md: '2.125rem' }
+            fontWeight: 600,
+            fontSize: { xs: '1.8rem', md: '2.125rem' },
+            backgroundImage: 'linear-gradient(45deg, #2196F3, #3f51b5)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 1
           }}
         >
           Expenses
@@ -639,17 +746,19 @@ const Expenses = () => {
         <Typography 
           variant="subtitle1" 
           color="textSecondary"
-          data-aos="fade-up"
-          data-aos-delay="300"
           sx={{ mb: 2 }}
+          data-aos="fade-up"
+          data-aos-delay="100"
         >
-          Manage and track your expenses
+          Manage and track your expenses with ease
         </Typography>
       </Box>
+
+      {/* Add Expense Button */}
       <Box 
         sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}
         data-aos="fade-left"
-        data-aos-delay="400"
+        data-aos-delay="200"
       >
         <Button
           variant="contained"
@@ -660,25 +769,231 @@ const Expenses = () => {
             fontWeight: 500,
             textTransform: 'none',
             px: 3,
-            py: 1,
-            borderRadius: 2,
-            boxShadow: 2,
+            py: 1.2,
+            borderRadius: 8,
+            boxShadow: 3,
+            background: 'linear-gradient(45deg, #2196F3, #3f51b5)',
+            transition: 'all 0.3s ease',
             '&:hover': {
-              boxShadow: 3,
+              boxShadow: 5,
+              transform: 'translateY(-2px)'
             }
           }}
         >
           Add Expense
         </Button>
       </Box>
+
+      {/* Filters with animation */}
       {renderFilters()}
-      {renderTable()}
-      <DialogWithAnimation
-        open={openAddDialog}
-        onClose={handleCloseDialog}
-        title="Add New Expense"
-        content={(
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+
+      {/* Expenses Table */}
+      <Paper 
+        sx={{ 
+          width: '100%', 
+          mb: 2, 
+          boxShadow: 3, 
+          borderRadius: 2,
+          overflow: 'hidden'
+        }}
+        data-aos="fade-up"
+        data-aos-delay="300"
+      >
+        <TableContainer>
+          <Table sx={{ minWidth: 650 }} aria-label="expenses table">
+            <TableHead>
+              <TableRow sx={{ backgroundColor: theme.palette.primary.main + '15' }}>
+                <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }} align="right">Amount</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }} align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : expenses && expenses.length > 0 ? (
+                expenses.map((expense, index) => ( 
+                  
+                  <TableRow 
+                    key={expense.id}
+                    hover
+                    sx={{ 
+                      '&:last-child td, &:last-child th': { border: 0 },
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: theme.palette.primary.main + '05',
+                        transform: 'translateY(-2px)',
+                        boxShadow: 1
+                      }
+                    }}
+                  >
+                    <TableCell component="th" scope="row">
+                      {formatDate(expense.date)}
+                    </TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={expense.category?.name || 'Unknown'}
+                        size="small"
+                        sx={{ 
+                          bgcolor: expense.category?.color || theme.palette.primary.light,
+                          color: theme.palette.getContrastText(expense.category?.color || theme.palette.primary.light),
+                          fontWeight: 500,
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            transform: 'scale(1.05)'
+                          }
+
+                          
+                        }}
+                      />
+
+                      
+                    </TableCell>
+                    <TableCell>
+                      {expense.description || '-'}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontWeight: 'medium', 
+                          fontSize: '0.9rem',
+                          fontFamily: 'monospace',
+                          letterSpacing: 0.5
+                        }}
+                      >
+                        ₱{parseFloat(expense.amount).toFixed(2)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                        <IconButton 
+                          size="small" 
+                          color="info"
+                          onClick={() => handleOpenViewDialog(expense)}
+                          sx={{
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              backgroundColor: theme.palette.info.main + '20'
+                            }
+                          }}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          color="primary"
+                          onClick={() => handleOpenEditDialog(expense)}
+                          sx={{
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              backgroundColor: theme.palette.primary.main + '20'
+                            }
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          onClick={() => handleOpenDeleteDialog(expense)}
+                          sx={{
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              backgroundColor: theme.palette.error.main + '20'
+                            }
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                    <Box data-aos="fade-up">
+                      <Typography variant="body1" color="textSecondary" sx={{ mb: 2 }}>
+                        No expenses found
+                      </Typography>
+                      <Button 
+                        variant="outlined" 
+                        startIcon={<AddIcon />} 
+                        sx={{ 
+                          mt: 1,
+                          borderRadius: 8,
+                          px: 3,
+                          py: 1,
+                          transition: 'all 0.3s',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: 2
+                          }
+                        }}
+                        onClick={handleOpenAddDialog}
+                      >
+                        Add your first expense
+                      </Button>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={totalExpenses || 0}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          sx={{
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+              margin: 0,
+            },
+            '.MuiTablePagination-select': {
+              paddingTop: 0,
+              paddingBottom: 0,
+            }
+          }}
+        />
+      </Paper>
+
+      {/* Add Expense Dialog with animation */}
+      <Dialog 
+        open={openAddDialog} 
+        onClose={handleCloseDialog} 
+        maxWidth="sm" 
+        fullWidth
+        TransitionComponent={Zoom}
+        transitionDuration={400}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: 5,
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <Box sx={{ background: 'linear-gradient(45deg, #2196F3, #3f51b5)', py: 1 }}>
+          <DialogTitle sx={{ color: 'white', fontSize: '1.2rem' }}>
+            Add New Expense
+          </DialogTitle>
+        </Box>
+        <DialogContent sx={{ mt: 2 }}>
+          <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
@@ -691,8 +1006,10 @@ const Expenses = () => {
                 helperText={formErrors.amount}
                 InputProps={{
                   startAdornment: <InputAdornment position="start">₱</InputAdornment>,
+                  sx: { borderRadius: 2 }
                 }}
                 required
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -707,6 +1024,7 @@ const Expenses = () => {
                 error={!!formErrors.date}
                 helperText={formErrors.date}
                 required
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -718,10 +1036,21 @@ const Expenses = () => {
                   value={formData.category_id}
                   label="Category"
                   onChange={handleInputChange}
+                  sx={{ borderRadius: 2 }}
                 >
                   {categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
-                      {category.name}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box                       
+                            sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            bgcolor: category.color
+                          }}
+                        />
+                        {category.name}
+                      </Box>
                     </MenuItem>
                   ))}
                 </Select>
@@ -741,196 +1070,704 @@ const Expenses = () => {
                 rows={2}
                 value={formData.description}
                 onChange={handleInputChange}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Receipt Image URL (Optional)"
-                name="receipt_path"
-                value={formData.receipt_path || ''}
-                onChange={handleInputChange}
-                placeholder="https://example.com/receipt.jpg"
-              />
-            </Grid>
-          </Grid>
-        )}
-        actions={(
-          <>
-            <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
-            <Button 
-              onClick={handleAddExpense} 
-              variant="contained" 
-              color="primary"
-              disabled={loading}
-            >
-              {loading ? 'Saving...' : 'Save Expense'}
-            </Button>
-          </>
-        )}
+            <TextField
+    fullWidth
+    label="Receipt Image URL (Optional)"
+    name="receipt_path"
+    value={formData.receipt_path || ''}
+    onChange={handleInputChange}
+    placeholder="https://example.com/receipt.jpg"
+    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+    InputProps={{
+      startAdornment: (
+        <InputAdornment position="start">
+          <ReceiptIcon fontSize="small" color="action" />
+        </InputAdornment>
+      ),
+    }}
+  />
+
+   {/* Preview */}
+   {formData.receipt_path && (
+    <Box sx={{ 
+      mt: 2, 
+      p: 2, 
+      border: '1px solid', 
+      borderColor: 'divider',
+      borderRadius: 2,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }}>
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+        Receipt Preview:
+      </Typography>
+      <Box 
+        component="img"
+        src={getReceiptImageUrl(formData.receipt_path)}
+        alt="Receipt Preview"
+        sx={{ 
+          maxWidth: '100%', 
+          maxHeight: 200,
+          objectFit: 'contain',
+          borderRadius: 1
+        }}
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = '/placeholder-image.png';
+          showSnackbar('Invalid image URL. Please enter a direct link to an image file.', 'warning');
+        }}
       />
-      <DialogWithAnimation
-        open={openEditDialog}
+    </Box>
+  )}
+
+{formData.receipt_path && (
+  <Grid item xs={12}>
+    <Box sx={{ 
+      mt: 1, 
+      p: 2, 
+      border: '1px dashed', 
+      borderColor: 'divider',
+      borderRadius: 2,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }}>
+      <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+        Receipt Preview:
+      </Typography>
+      <Box 
+        component="img"
+        src={getReceiptImageUrl(formData.receipt_path)}
+        alt="Receipt Preview"
+        sx={{ 
+          maxWidth: '100%', 
+          maxHeight: 200,
+          objectFit: 'contain',
+          borderRadius: 1
+        }}
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = '/placeholder-image.png';
+          showSnackbar('Invalid image URL. Please enter a direct link to an image file.', 'warning');
+        }}
+      />
+    </Box>
+  </Grid>
+)}
+</Grid>
+          </Grid>
+        </DialogContent>
+ 
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button 
+            onClick={handleCloseDialog} 
+            color="inherit"
+            sx={{
+              borderRadius: 8,
+              px: 3,
+              transition: 'all 0.2s',
+              '&:hover': {
+                backgroundColor: theme.palette.grey[200]
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleAddExpense} 
+            variant="contained" 
+            color="primary"
+            disabled={loading}
+            sx={{
+              borderRadius: 8,
+              px: 3,
+              background: 'linear-gradient(45deg, #2196F3, #3f51b5)',
+              transition: 'all 0.3s',
+              boxShadow: 2,
+              '&:hover': {
+                boxShadow: 4,
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            {loading ? 'Saving...' : 'Save Expense'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Expense Dialog with animation */}
+     <Dialog 
+  open={openEditDialog} 
+  onClose={handleCloseDialog} 
+  maxWidth="sm" 
+  fullWidth
+  TransitionComponent={Zoom}
+  transitionDuration={400}
+  PaperProps={{
+    sx: {
+      borderRadius: 3,
+      boxShadow: 5,
+      overflow: 'hidden'
+    }
+  }}
+>
+  <Box sx={{ background: 'linear-gradient(45deg, #4CAF50, #2E7D32)', py: 1 }}>
+    <DialogTitle sx={{ color: 'white', fontSize: '1.2rem' }}>
+      Edit Expense
+    </DialogTitle>
+  </Box>
+  <DialogContent sx={{ mt: 2 }}>
+    <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Amount"
+          name="amount"
+          type="number"
+          value={formData.amount}
+          onChange={handleInputChange}
+          error={!!formErrors.amount}
+          helperText={formErrors.amount}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">₱</InputAdornment>,
+            sx: { borderRadius: 2 }
+          }}
+          required
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          fullWidth
+          label="Date"
+          name="date"
+          type="date"
+          value={formData.date}
+          onChange={handleInputChange}
+          InputLabelProps={{ shrink: true }}
+          error={!!formErrors.date}
+          helperText={formErrors.date}
+          required
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <FormControl fullWidth error={!!formErrors.category_id} required>
+          <InputLabel id="category-edit-label">Category</InputLabel>
+          <Select
+            labelId="category-edit-label"
+            name="category_id"
+            value={formData.category_id}
+            label="Category"
+            onChange={handleInputChange}
+            sx={{ borderRadius: 2 }}
+          >
+            {categories.map((category) => (
+              <MenuItem key={category.id} value={category.id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      bgcolor: category.color
+                    }}
+                  />
+                  {category.name}
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+          {formErrors.category_id && (
+            <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+              {formErrors.category_id}
+            </Typography>
+          )}
+        </FormControl>
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Description (Optional)"
+          name="description"
+          multiline
+          rows={2}
+          value={formData.description}
+          onChange={handleInputChange}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Receipt Image URL (Optional)"
+          name="receipt_path"
+          value={formData.receipt_path || ''}
+          onChange={handleInputChange}
+          placeholder="https://example.com/receipt.jpg"
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <ReceiptIcon fontSize="small" color="action" />
+              </InputAdornment>
+            ),
+          }}
+        />
+        
+        {/* Receipt Preview */}
+        {formData.receipt_path && (
+          <Box sx={{ 
+            mt: 2, 
+            p: 2, 
+            border: '1px solid', 
+            borderColor: 'divider',
+            borderRadius: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+              Receipt Preview:
+            </Typography>
+            <Box 
+              component="img"
+              src={getReceiptImageUrl(formData.receipt_path)}
+              alt="Receipt Preview"
+              sx={{ 
+                maxWidth: '100%', 
+                maxHeight: 200,
+                objectFit: 'contain',
+                borderRadius: 1
+              }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/placeholder-image.png';
+                showSnackbar('Invalid image URL. Please enter a direct link to an image file.', 'warning');
+              }}
+            />
+          </Box>
+        )}
+      </Grid>
+    </Grid>
+  </DialogContent>
+
+
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+    <Button 
+      onClick={handleCloseDialog} 
+      color="inherit"
+      sx={{
+        borderRadius: 8,
+        px: 3,
+        transition: 'all 0.2s',
+        '&:hover': {
+          backgroundColor: theme.palette.grey[200]
+        }
+      }}
+    >
+      Cancel
+    </Button>
+    <Button 
+      onClick={handleEditExpense} 
+      variant="contained" 
+      color="primary"
+      disabled={loading}
+      sx={{
+        borderRadius: 8,
+        px: 3,
+        background: 'linear-gradient(45deg, #4CAF50, #2E7D32)',
+        transition: 'all 0.3s',
+        boxShadow: 2,
+        '&:hover': {
+          boxShadow: 4,
+          transform: 'translateY(-2px)'
+        }
+      }}
+    >
+      {loading ? 'Updating...' : 'Update Expense'}
+    </Button>
+  </DialogActions>
+</Dialog>
+
+      
+      {/* Delete Confirmation Dialog with animation */}
+      <Dialog 
+        open={openDeleteDialog} 
         onClose={handleCloseDialog}
-        title="Edit Expense"
-        content={(
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Amount"
-                name="amount"
-                type="number"
-                value={formData.amount}
-                onChange={handleInputChange}
-                error={!!formErrors.amount}
-                helperText={formErrors.amount}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">₱</InputAdornment>,
-                }}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Date"
-                name="date"
-                type="date"
-                value={formData.date}
-                onChange={handleInputChange}
-                InputLabelProps={{ shrink: true }}
-                error={!!formErrors.date}
-                helperText={formErrors.date}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth error={!!formErrors.category_id} required>
-                <InputLabel id="category-edit-label">Category</InputLabel>
-                <Select
-                  labelId="category-edit-label"
-                  name="category_id"
-                  value={formData.category_id}
-                  label="Category"
-                  onChange={handleInputChange}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {formErrors.category_id && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                    {formErrors.category_id}
+        TransitionComponent={Zoom}
+        transitionDuration={300}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: 5,
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <Box sx={{ background: 'linear-gradient(45deg, #f44336, #d32f2f)', py: 1 }}>
+          <DialogTitle sx={{ color: 'white', fontSize: '1.2rem' }}>
+            Confirm Delete
+          </DialogTitle>
+        </Box>
+        <DialogContent sx={{ mt: 1, px: 3 }}>
+          <DialogContentText sx={{ mb: 2 }}>
+            Are you sure you want to delete this expense? This action cannot be undone.
+          </DialogContentText>
+          {currentExpense && (
+            <Box 
+              sx={{ 
+                mt: 2, 
+                p: 2.5, 
+                bgcolor: 'background.paper', 
+                borderRadius: 2, 
+                border: '1px solid', 
+                borderColor: theme.palette.grey[200],
+                boxShadow: 1,
+                transition: 'all 0.3s',
+                '&:hover': {
+                  boxShadow: 2,
+                  borderColor: theme.palette.grey[300]
+                }
+              }}
+            >
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="textSecondary">Date:</Typography>
+                  <Typography variant="body1" sx={{ fontSize: '1rem', mt: 0.5 }}>
+                    {formatDate(currentExpense.date)}
                   </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="textSecondary">Amount:</Typography>
+                  <Typography variant="body1" fontWeight="medium" sx={{ fontSize: '1rem', mt: 0.5 }}>
+                    ₱{parseFloat(currentExpense.amount).toFixed(2)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="textSecondary">Category:</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: currentExpense.category?.color || theme.palette.primary.main
+                      }}
+                    />
+                    <Typography variant="body1" sx={{ fontSize: '1rem' }}>
+                      {currentExpense.category?.name || 'Unknown'}
+                    </Typography>
+                  </Box>
+                </Grid>
+                {currentExpense.description && (
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="textSecondary">Description:</Typography>
+                    <Typography variant="body1" sx={{ fontSize: '1rem', mt: 0.5 }}>
+                      {currentExpense.description}
+                    </Typography>
+                  </Grid>
                 )}
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description (Optional)"
-                name="description"
-                multiline
-                rows={2}
-                value={formData.description}
-                onChange={handleInputChange}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Receipt Image URL (Optional)"
-                name="receipt_path"
-                value={formData.receipt_path || ''}
-                onChange={handleInputChange}
-                placeholder="https://example.com/receipt.jpg"
-              />
-            </Grid>
-          </Grid>
-        )}
-        actions={(
-          <>
-            <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
-            <Button 
-              onClick={handleEditExpense} 
-              variant="contained" 
-              color="primary"
-              disabled={loading}
-            >
-              {loading ? 'Updating...' : 'Update Expense'}
-            </Button>
-          </>
-        )}
-      />
-      <DialogWithAnimation
-        open={openDeleteDialog}
-        onClose={handleCloseDialog}
-        title="Confirm Delete"
-        content={(
-          <>
-            <DialogContentText>
-              Are you sure you want to delete this expense? This action cannot be undone.
-            </DialogContentText>
-            {currentExpense && (
-              <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">Date:</Typography>
-                    <Typography variant="body1">
+              </Grid>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button 
+            onClick={handleCloseDialog} 
+            color="inherit"
+            sx={{
+              borderRadius: 8,
+              px: 3,
+              transition: 'all 0.2s',
+              '&:hover': {
+                backgroundColor: theme.palette.grey[200]
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeleteExpense} 
+            variant="contained" 
+            color="error"
+            disabled={loading}
+            sx={{
+              borderRadius: 8,
+              px: 3,
+              background: 'linear-gradient(45deg, #f44336, #d32f2f)',
+              transition: 'all 0.3s',
+              boxShadow: 2,
+              '&:hover': {
+                boxShadow: 4,
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            {loading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+    {/* View Expense Dialog with receipt preview - FIXED VERSION */}
+<Dialog 
+  open={openViewDialog} 
+  onClose={handleCloseDialog} 
+  maxWidth="md" 
+  fullWidth
+  TransitionComponent={Zoom}
+  transitionDuration={400}
+  PaperProps={{
+    sx: {
+      borderRadius: 3,
+      boxShadow: 5,
+      overflow: 'hidden'
+    }
+  }}
+>
+  <Box sx={{ background: 'linear-gradient(45deg, #3f51b5, #2196F3)', py: 1 }}>
+    <DialogTitle sx={{ color: 'white', fontSize: '1.2rem' }}>
+      Expense Details
+    </DialogTitle>
+  </Box>
+  {currentExpense ? (
+    <>
+      <DialogContent sx={{ mt: 2, p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={currentExpense.receipt_path ? 6 : 12}>
+            <Card sx={{ boxShadow: 2, borderRadius: 2, height: '100%' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+                  Expense Information
+                </Typography>
+
+                <Grid container spacing={2} sx={{ mt: 1 }}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      Date
+                    </Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 500, mt: 0.5 }}>
                       {formatDate(currentExpense.date)}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="textSecondary">Amount:</Typography>
-                    <Typography variant="body1" fontWeight="medium">
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="textSecondary">
+                      Amount
+                    </Typography>
+                    <Typography variant="body1" sx={{ 
+                      fontWeight: 600, 
+                      mt: 0.5, 
+                      color: theme.palette.success.dark,
+                      fontSize: '1.1rem'
+                    }}>
                       ₱{parseFloat(currentExpense.amount).toFixed(2)}
                     </Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="body2" color="textSecondary">Category:</Typography>
-                    <Typography variant="body1">
-                      {currentExpense.category?.name || 'Unknown'}
+                    <Box sx={{ mt: 1 }}>
+                      <Typography variant="body2" color="textSecondary">
+                        Category
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                        <Box
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: '50%',
+                            bgcolor: currentExpense.category?.color || theme.palette.primary.main,
+                            mr: 1
+                          }}
+                        />
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {currentExpense.category?.name || 'Unknown'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="textSecondary">
+                      Description
+                    </Typography>
+                    <Typography variant="body1" sx={{ mt: 0.5, lineHeight: 1.6 }}>
+                      {currentExpense.description || 'No description provided'}
                     </Typography>
                   </Grid>
-                  {currentExpense.description && (
-                    <Grid item xs={12}>
-                      <Typography variant="body2" color="textSecondary">Description:</Typography>
-                      <Typography variant="body1">{currentExpense.description}</Typography>
-                    </Grid>
-                  )}
+
+                  {/* Add this to debug receipt path */}
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="textSecondary">
+                      Receipt URL
+                    </Typography>
+                    <Typography variant="body1" sx={{ mt: 0.5, lineHeight: 1.6, wordBreak: "break-all" }}>
+                      {currentExpense.receipt_path || 'No receipt provided'}
+                    </Typography>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant="body2" color="textSecondary">
+                        Created At
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 400, fontStyle: 'italic' }}>
+                        {currentExpense.created_at ? formatDate(currentExpense.created_at) : 'Unknown'}
+                      </Typography>
+                    </Box>
+                    {currentExpense.updated_at && currentExpense.updated_at !== currentExpense.created_at && (
+                      <Box sx={{ mt: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="body2" color="textSecondary">
+                          Last Updated
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 400, fontStyle: 'italic' }}>
+                          {formatDate(currentExpense.updated_at)}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Grid>
                 </Grid>
-              </Box>
-            )}
-          </>
-        )}
-        actions={(
-          <>
-            <Button onClick={handleCloseDialog} color="inherit">Cancel</Button>
-            <Button 
-              onClick={handleDeleteExpense} 
-              variant="contained" 
-              color="error"
-              disabled={loading}
-            >
-              {loading ? 'Deleting...' : 'Delete'}
-            </Button>
-          </>
-        )}
-      />
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          {currentExpense.receipt_path && (
+            <Grid item xs={12} md={6}>
+              <Card sx={{ boxShadow: 2, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+                    Receipt
+                  </Typography>
+                  
+                  <Box sx={{ 
+                    mt: 2, 
+                    flexGrow: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    position: 'relative'
+                  }}>
+                    {/* Check if the receipt URL exists */}
+                    {currentExpense.receipt_path ? (
+                      <>
+                        <Box 
+                          component="img"
+                          src={getReceiptImageUrl(currentExpense.receipt_path)}
+                          alt="Receipt"
+                          sx={{ 
+                            width: '100%', 
+                            maxHeight: 300,
+                            objectFit: 'contain',
+                            borderRadius: 1,
+                            boxShadow: 2
+                          }}
+                          onError={(e) => {
+                            console.error('Failed to load image:', getReceiptImageUrl(currentExpense.receipt_path));
+                            e.target.onerror = null; 
+                            e.target.src = '/placeholder-image.png';
+                            showSnackbar('Failed to load receipt image', 'warning');
+                          }}
+                        />
+                        
+                        <Button
+                          variant="outlined"
+                          startIcon={<ReceiptIcon />}
+                          sx={{ 
+                            mt: 2,
+                            borderRadius: 8,
+                            px: 3,
+                            py: 1,
+                            transition: 'all 0.3s',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: 2
+                            }
+                          }}
+                          onClick={() => window.open(getReceiptImageUrl(currentExpense.receipt_path), '_blank')}
+                        >
+                          View Full Size
+                        </Button>
+                      </>
+                    ) : (
+                      <Typography variant="body1" color="textSecondary" sx={{ py: 4 }}>
+                        No receipt image available
+                      </Typography>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
+        </Grid>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button
+          onClick={() => handleOpenEditDialog(currentExpense)}
+          variant="outlined"
+          color="primary"
+          startIcon={<EditIcon />}
+          sx={{
+            borderRadius: 8,
+            px: 3,
+            mr: 1,
+            transition: 'all 0.2s',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: 2
+            }
+          }}
+        >
+          Edit
+        </Button>
+        <Button
+          onClick={handleCloseDialog}
+          variant="contained"
+          sx={{
+            borderRadius: 8,
+            px: 3,
+            background: 'linear-gradient(45deg, #3f51b5, #2196F3)',
+            transition: 'all 0.3s',
+            boxShadow: 2,
+            '&:hover': {
+              boxShadow: 4,
+              transform: 'translateY(-2px)'
+            }
+          }}
+        >
+          Close
+        </Button>
+      </DialogActions>
+    </>
+  ) : (
+    <DialogContent sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+      <CircularProgress />
+    </DialogContent>
+  )}
+</Dialog>
+      {/* Snackbar for notifications with animation */}
       <Snackbar 
         open={snackbar.open} 
-        autoHideDuration={6000} 
+        autoHideDuration={4000} 
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        TransitionComponent={Fade}
       >
         <Alert 
           onClose={handleCloseSnackbar} 
           severity={snackbar.severity} 
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: 3,
+            '& .MuiAlert-message': {
+              fontSize: '0.95rem'
+            }
+          }}
         >
           {snackbar.message}
         </Alert>
@@ -940,3 +1777,4 @@ const Expenses = () => {
 };
 
 export default Expenses;
+                        

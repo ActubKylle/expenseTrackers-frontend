@@ -1,23 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   AppBar, Toolbar, IconButton, Typography, Drawer, Divider, 
   List, ListItem, ListItemIcon, ListItemText, Box, useTheme, useMediaQuery, 
-  Menu, MenuItem, Avatar, Badge, Paper, Button
+  Menu, MenuItem, Avatar, Badge, Paper, Button, CircularProgress,
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+  Tooltip, Stack
 } from '@mui/material';
 import { 
   Menu as MenuIcon, Dashboard, Category, 
   AccountCircle, Logout, BarChart, ChevronLeft, ChevronRight,
   Savings as SavingsIcon, Notifications as NotificationsIcon,
-  AccountBalanceWallet
+  AccountBalanceWallet, ErrorOutline as ErrorOutlineIcon,
+  WarningAmber as WarningAmberIcon, InfoOutlined as InfoOutlinedIcon,
+  NotificationsNone as NotificationsNoneIcon, NotificationsOff as NotificationsOffIcon,
+  Delete as DeleteIcon, DeleteSweep as DeleteAllIcon, Check as CheckIcon
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Swal from 'sweetalert2';
+import { getNotifications, getUnreadCount, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications } from '../api/notifications';
+import NotificationEventBus from '../contexts/NotificationEventBus';
 
+// Define drawer dimensions
 const drawerWidth = 280;
 const miniDrawerWidth = 80;
 
+// Define which routes should hide the header title
+const hideHeaderRoutes = ['/dashboard', '/expenses', '/categories', '/budgets'];
+
+// Define styled components
 const DrawerHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
@@ -152,15 +164,15 @@ const SectionHeader = styled(Typography)(({ theme }) => ({
   opacity: 0.8,
 }));
 
-// Define which routes should hide the header title
-const hideHeaderRoutes = ['/dashboard', '/expenses', '/categories', '/budgets'];
-
 const MainLayout = ({ children, hideHeader = false }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Add the audioRef definition
+  const audioRef = useRef(null);
 
   const [open, setOpen] = useState(!isMobile);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -168,10 +180,252 @@ const MainLayout = ({ children, hideHeader = false }) => {
   const [miniDrawer, setMiniDrawer] = useState(false);
   const [pageTitle, setPageTitle] = useState('Dashboard');
   
+  // Notification state
+  const [notifications, setNotifications] = useState([]);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  
+  // State for delete dialogs
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState(null);
+  
   // Check if the header should be hidden based on the current route
   const shouldHideHeader = hideHeaderRoutes.includes(location.pathname) || hideHeader;
 
-  // Add useEffect to update the page title based on current route
+  // Function to fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      setNotificationLoading(true);
+      const response = await getNotifications({ per_page: 10 });
+      setNotifications(response.data || []);
+      
+      // Update unread count
+      const countResponse = await getUnreadCount();
+      setNotificationCount(countResponse.total || 0);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setNotificationLoading(false);
+    }
+  };
+
+  // Function to handle marking a notification as read
+  const handleNotificationRead = async (id) => {
+    try {
+      await markAsRead(id);
+      // Update notifications
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notification => 
+          notification.id === id 
+            ? { ...notification, is_read: true } 
+            : notification
+        )
+      );
+      // Decrement unread count
+      setNotificationCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  // Function to mark all as read
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+      // Update all notifications to read
+      setNotifications(prevNotifications => 
+        prevNotifications.map(notification => ({ ...notification, is_read: true }))
+      );
+      // Reset unread count
+      setNotificationCount(0);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
+  // Handle notification deletion
+  const handleDeleteClick = (e, notification) => {
+    e.stopPropagation(); // Prevent notification click event
+    setNotificationToDelete(notification);
+    setDeleteDialogOpen(true);
+  };
+  
+  // Function to delete a notification
+  const handleDeleteNotification = async () => {
+    if (!notificationToDelete) return;
+    
+    try {
+      await deleteNotification(notificationToDelete.id);
+      
+      // Update the notifications list by removing the deleted notification
+      setNotifications(prev => prev.filter(n => n.id !== notificationToDelete.id));
+      
+      // Update unread count if needed
+      if (!notificationToDelete.is_read) {
+        setNotificationCount(prev => Math.max(0, prev - 1));
+      }
+      
+      setNotificationToDelete(null);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'Failed to delete notification',
+        icon: 'error',
+        timer: 2000
+      });
+    }
+  };
+  
+  // Function to delete all notifications
+  const handleDeleteAllNotifications = async () => {
+    try {
+      await deleteAllNotifications();
+      
+      // Clear the notifications list
+      setNotifications([]);
+      setNotificationCount(0);
+      setDeleteAllDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting all notifications:', error);
+      Swal.fire({
+        title: 'Error',
+        text: 'Failed to delete all notifications',
+        icon: 'error',
+        timer: 2000
+      });
+    }
+  };
+
+  // Preload notification sound for better playback performance
+  useEffect(() => {
+    // Create audio element if it doesn't exist yet
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      
+      // Try a couple different paths to find the audio file
+      // This helps solve path issues depending on your project structure
+      const possiblePaths = [
+        '/notification.mp3',
+        '/sounds/notification.mp3',
+        '/assets/sounds/notification.mp3',
+        '/audio/notification.mp3',
+        process.env.PUBLIC_URL + '/notification.mp3'
+      ];
+      
+      // Test loading the audio file from different paths
+      const testAudio = (paths, index = 0) => {
+        if (index >= paths.length) {
+          console.error('Could not find notification sound file');
+          return;
+        }
+        
+        audioRef.current.src = paths[index];
+        audioRef.current.volume = 0.5;
+        
+        // Try to load the audio file
+        audioRef.current.addEventListener('error', () => {
+          console.log(`Audio file not found at ${paths[index]}, trying next path...`);
+          testAudio(paths, index + 1);
+        }, { once: true });
+        
+        // Preload audio
+        audioRef.current.load();
+      };
+      
+      testAudio(possiblePaths);
+      
+      // Define enableAudio function
+      const enableAudio = () => {
+        // Try to play and immediately pause to enable audio
+        audioRef.current.play().then(() => {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          console.log('Audio enabled for future notifications');
+        }).catch(e => {
+          console.log('Audio still not enabled, will try again on next interaction');
+        });
+      };
+      
+      // Add the listener to multiple interaction events
+      document.addEventListener('click', enableAudio, { once: true });
+      document.addEventListener('touchstart', enableAudio, { once: true });
+      document.addEventListener('keydown', enableAudio, { once: true });
+      
+      return () => {
+        // Cleanup event listeners when component unmounts
+        document.removeEventListener('click', enableAudio);
+        document.removeEventListener('touchstart', enableAudio);
+        document.removeEventListener('keydown', enableAudio);
+      };
+    }
+  }, []);
+
+  // Function to play notification sound
+  const playNotificationSound = () => {
+    if (!audioRef.current) return;
+    
+    // Reset the audio to the beginning
+    audioRef.current.currentTime = 0;
+    
+    // Play the sound
+    audioRef.current.play().catch(e => {
+      console.log('Audio play failed: Browser requires user interaction first');
+    });
+  };
+
+  // Subscribe to notification events for real-time updates
+  useEffect(() => {
+    // Function to handle new notifications
+    const handleNewNotification = (data) => {
+      console.log("New notification received in MainLayout:", data);
+      
+      // Play notification sound
+      playNotificationSound();
+      
+      // Fetch the latest notifications
+      fetchNotifications();
+    };
+    
+    // Subscribe to the NEW_NOTIFICATIONS event
+    const unsubscribe = NotificationEventBus.subscribe('NEW_NOTIFICATIONS', handleNewNotification);
+    
+    // Cleanup subscription when component unmounts
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Fetch notifications when notification drawer opens
+  useEffect(() => {
+    if (notificationAnchorEl) {
+      fetchNotifications();
+    }
+  }, [notificationAnchorEl]);
+
+  // Poll for new notifications periodically
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await getUnreadCount();
+        setNotificationCount(response.total || 0);
+      } catch (error) {
+        console.error('Error fetching notification count:', error);
+      }
+    };
+
+    // Initial fetch
+    fetchUnreadCount();
+
+    // Set up polling every minute
+    const interval = setInterval(fetchUnreadCount, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  // Keep your existing useEffect for page title updates
   useEffect(() => {
     let currentTitle = "Expense Tracker";
     let currentPageTitle = "Dashboard";
@@ -199,6 +453,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
     setPageTitle(currentPageTitle);
   }, [location.pathname]);
 
+  // Keep your existing drawer open/close handlers
   const handleDrawerOpen = () => {
     setOpen(true);
   };
@@ -227,6 +482,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
     setAnchorEl(event.currentTarget);
   };
 
+  // Add the logout handler
   const handleLogout = async () => {
     handleMenuClose();
     const result = await Swal.fire({
@@ -248,8 +504,6 @@ const MainLayout = ({ children, hideHeader = false }) => {
         timer: 1500,
         showConfirmButton: false
       });
-  
-      // navigate('/register ');
     }
   };
 
@@ -287,6 +541,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
            (path !== '/dashboard' && location.pathname.startsWith(path));
   };
 
+  // Get user initials function
   const getUserInitials = () => {
     if (!user) return 'U';
     
@@ -305,7 +560,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
     return 'U';
   };
 
-  // Enhanced drawer content with better transitions and visual effects
+  // Define the drawerContent variable
   const drawerContent = (
     <>
       <StyledDrawerHeader>
@@ -427,7 +682,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
   return (
     <Box sx={{ display: 'flex' }}>
       <StyledAppBar position="fixed" open={open} miniDrawer={miniDrawer}>
-        <Toolbar sx={{ minHeight: 56, height: 56 }}> {/* Set explicit height */}
+        <Toolbar sx={{ minHeight: 56, height: 56 }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
@@ -465,7 +720,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
                 sx={{
                   flexGrow: 1,
                   fontWeight: 600,
-                  fontSize: '1.1rem', // Reduced size
+                  fontSize: '1.1rem',
                   color: 'white',
                   letterSpacing: '0.5px',
                   display: 'flex',
@@ -481,7 +736,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
           <Box sx={{ flexGrow: 1 }} />
 
           {user && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}> {/* Reduced gap */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <IconButton
                 color="inherit"
                 aria-label="notifications"
@@ -489,7 +744,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
                 sx={{
                   bgcolor: 'rgba(255, 255, 255, 0.1)',
                   backdropFilter: 'blur(8px)',
-                  padding: 1, // Reduced padding
+                  padding: 1,
                   '&:hover': {
                     bgcolor: 'rgba(255, 255, 255, 0.2)',
                     transform: 'translateY(-2px)',
@@ -498,7 +753,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
                 }}
               >
                 <Badge
-                  badgeContent={3}
+                  badgeContent={notificationCount}
                   color="error"
                   sx={{
                     '& .MuiBadge-badge': {
@@ -516,7 +771,7 @@ const MainLayout = ({ children, hideHeader = false }) => {
               <IconButton
                 onClick={handleMenuClick}
                 sx={{
-                  p: 0.4, // Reduced padding
+                  p: 0.4,
                   border: '1.5px solid rgba(255, 255, 255, 0.2)',
                   '&:hover': {
                     border: '1.5px solid rgba(255, 255, 255, 0.3)',
@@ -527,82 +782,302 @@ const MainLayout = ({ children, hideHeader = false }) => {
               >
                 <Avatar
                   sx={{
-                    width: 28, // Reduced size 
-                    height: 28, // Reduced size
+                    width: 28,
+                    height: 28,
                     bgcolor: 'primary.light',
                     fontWeight: 600,
-                    fontSize: '0.8rem', // Reduced font size
+                    fontSize: '0.8rem',
                   }}
                 >
                   {getUserInitials()}
                 </Avatar>
               </IconButton>
 
+              {/* Enhanced Notification Menu with Delete Options */}
               <Menu
                 anchorEl={notificationAnchorEl}
                 open={Boolean(notificationAnchorEl)}
                 onClose={handleNotificationClose}
                 PaperProps={{
                   sx: {
-                    width: 320,
-                    maxHeight: 400,
+                    width: 360,
+                    maxHeight: 480,
                     mt: 1.5,
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                    borderRadius: '12px',
-                    '& .MuiList-root': {
-                      padding: '8px',
-                    },
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    border: '1px solid',
+                    borderColor: 'divider',
                   }
                 }}
                 transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
               >
-                <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: '8px 8px 0 0' }}>
-                  <Typography variant="subtitle1" fontWeight={600} color="primary.dark">
-                    Notifications
+                {/* Modern Gradient Header with Actions */}
+                <Box sx={{ 
+                  p: 2, 
+                  background: 'linear-gradient(135deg, #3a8dff 0%, #1565c0 100%)', 
+                  color: 'white',
+                  borderRadius: '16px 16px 0 0', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+                }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    fontSize: '1.1rem' 
+                  }}>
+                    <span role="img" aria-label="bell">🔔</span> Notifications
                   </Typography>
+                  
+                  <Stack direction="row" spacing={1}>
+                    {notificationCount > 0 && (
+                      <Tooltip title="Mark all as read">
+                        <Button 
+                          size="small" 
+                          onClick={handleMarkAllAsRead}
+                          sx={{ 
+                            color: 'white', 
+                            textTransform: 'none',
+                            background: 'rgba(255,255,255,0.15)',
+                            borderRadius: '12px',
+                            minWidth: 'auto',
+                            p: 0.75,
+                            '&:hover': {
+                              background: 'rgba(255,255,255,0.25)',
+                            }
+                          }}
+                        >
+                          <CheckIcon fontSize="small" />
+                        </Button>
+                      </Tooltip>
+                    )}
+                    
+                    {notifications.length > 0 && (
+                      <Tooltip title="Delete all notifications">
+                        <Button 
+                          size="small" 
+                          onClick={() => setDeleteAllDialogOpen(true)}
+                          sx={{ 
+                            color: 'white', 
+                            textTransform: 'none',
+                            background: 'rgba(255,255,255,0.15)',
+                            borderRadius: '12px',
+                            minWidth: 'auto',
+                            p: 0.75,
+                            '&:hover': {
+                              background: 'rgba(255,70,70,0.25)',
+                            }
+                          }}
+                        >
+                          <DeleteAllIcon fontSize="small" />
+                        </Button>
+                      </Tooltip>
+                    )}
+                  </Stack>
                 </Box>
-                <MenuItem 
-                  onClick={handleNotificationClose}
-                  sx={{ 
-                    borderRadius: '8px', 
-                    my: 1,
-                    transition: 'all 0.2s',
-                    '&:hover': { 
-                      bgcolor: 'primary.light', 
-                      transform: 'translateX(4px)' 
-                    } 
-                  }}
-                >
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="subtitle2">Budget Alert</Typography>
+                
+                {/* Loading State */}
+                {notificationLoading ? (
+                  <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <CircularProgress size={28} />
                     <Typography variant="body2" color="text.secondary">
-                      You've reached 90% of your Food budget (₱3,000)
+                      Loading your updates...
                     </Typography>
                   </Box>
-                </MenuItem>
-                <Divider />
-                <MenuItem 
-                  onClick={handleNotificationClose}
-                  sx={{ 
-                    borderRadius: '8px', 
-                    my: 1,
-                    transition: 'all 0.2s',
-                    '&:hover': { 
-                      bgcolor: 'primary.light',
-                      transform: 'translateX(4px)' 
-                    } 
-                  }}
-                >
-                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                    <Typography variant="subtitle2">New Feature</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Try our new budget planning tool!
+                ) : notifications.length > 0 ? (
+                  // Notification List
+                  <List sx={{ py: 1, px: 0 }}>
+                    {notifications.map((notification) => (
+                      <ListItem 
+                        key={notification.id} 
+                        onClick={() => {
+                          if (!notification.is_read) {
+                            handleNotificationRead(notification.id);
+                          }
+                          handleNotificationClose();
+                          
+                          // Handle navigation based on notification type if needed
+                          if (notification.type && notification.type.startsWith('budget_') && notification.related_id) {
+                            navigate('/budgets');
+                          }
+                        }}
+                        sx={{ 
+                          px: 2,
+                          py: 1.5,
+                          borderBottom: '1px solid',
+                          borderColor: 'rgba(0,0,0,0.05)',
+                          transition: 'all 0.2s',
+                          cursor: 'pointer',
+                          bgcolor: notification.is_read ? 'transparent' : 'rgba(25, 118, 210, 0.08)',
+                          '&:hover': { 
+                            bgcolor: 'rgba(25, 118, 210, 0.12)',
+                            transform: 'translateX(4px)'
+                          },
+                          '&:last-child': {
+                            borderBottom: 'none'
+                          }
+                        }}
+                        disablePadding
+                      >
+                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
+                          {/* Notification Icon with Emoji */}
+                          <Box sx={{ mr: 2, mt: 0.5 }}>
+                            {notification.type && notification.type.includes('exceeded') ? (
+                              <Avatar sx={{ 
+                                bgcolor: 'error.light', 
+                                width: 36, 
+                                height: 36,
+                                boxShadow: '0 3px 8px rgba(211, 47, 47, 0.3)'
+                              }}>
+                                <span role="img" aria-label="alert" style={{ fontSize: '18px' }}>⚠️</span>
+                              </Avatar>
+                            ) : notification.type && notification.type.includes('warning') ? (
+                              <Avatar sx={{ 
+                                bgcolor: 'warning.light', 
+                                width: 36, 
+                                height: 36,
+                                boxShadow: '0 3px 8px rgba(237, 108, 2, 0.3)'
+                              }}>
+                                <span role="img" aria-label="warning" style={{ fontSize: '18px' }}>📊</span>
+                              </Avatar>
+                            ) : notification.type && notification.type.includes('approaching') ? (
+                              <Avatar sx={{ 
+                                bgcolor: 'info.light', 
+                                width: 36, 
+                                height: 36,
+                                boxShadow: '0 3px 8px rgba(2, 136, 209, 0.3)'
+                              }}>
+                                <span role="img" aria-label="info" style={{ fontSize: '18px' }}>📈</span>
+                              </Avatar>
+                            ) : (
+                              <Avatar sx={{ 
+                                bgcolor: 'primary.light', 
+                                width: 36, 
+                                height: 36,
+                                boxShadow: '0 3px 8px rgba(25, 118, 210, 0.3)'
+                              }}>
+                                <span role="img" aria-label="notification" style={{ fontSize: '18px' }}>📌</span>
+                              </Avatar>
+                            )}
+                          </Box>
+                          
+                          {/* Notification Content */}
+                          <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, overflow: 'hidden' }}>
+                            <Typography 
+                              variant="subtitle2" 
+                              fontWeight={notification.is_read ? 500 : 700}
+                              sx={{ 
+                                mb: 0.5,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                color: notification.is_read ? 'text.primary' : 'primary.dark',
+                                fontSize: '0.9rem'
+                              }}
+                            >
+                              {notification.title}
+                              {!notification.is_read && (
+                                <Box 
+                                  component="span" 
+                                  sx={{ 
+                                    display: 'inline-block',
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: '50%',
+                                    bgcolor: 'primary.main',
+                                    ml: 1,
+                                    position: 'relative',
+                                    top: -2
+                                  }}
+                                />
+                              )}
+                            </Typography>
+                            
+                            <Typography 
+                              variant="body2" 
+                              color="text.secondary" 
+                              sx={{ 
+                                mb: 1,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                lineHeight: 1.4,
+                                fontSize: '0.85rem'
+                              }}
+                            >
+                              {notification.message}
+                            </Typography>
+                            
+                            <Box sx={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}>
+                              <Typography 
+                                variant="caption" 
+                                color="text.secondary"
+                                sx={{
+                                  fontSize: '0.7rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5
+                                }}
+                              >
+                                <span role="img" aria-label="time" style={{ fontSize: '0.7rem', opacity: 0.7 }}>🕒</span>
+                                {new Date(notification.created_at).toLocaleString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </Typography>
+                              
+                              {/* Delete button */}
+                              <Tooltip title="Delete notification">
+                                <IconButton 
+                                  size="small"
+                                  onClick={(e) => handleDeleteClick(e, notification)}
+                                  sx={{ 
+                                    color: 'text.secondary',
+                                    opacity: 0.6,
+                                    '&:hover': { 
+                                      color: 'error.main',
+                                      opacity: 1
+                                    }
+                                  }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  // Empty State
+                  <Box sx={{ p: 4, textAlign: 'center' }}>
+                    <Box sx={{ fontSize: '3rem', mb: 2 }}>
+                      <span role="img" aria-label="no notifications">🔕</span>
+                    </Box>
+                    <Typography variant="h6" color="text.primary" sx={{ mb: 1 }}>
+                      All caught up!
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+                      You'll see budget alerts and important updates here
                     </Typography>
                   </Box>
-                </MenuItem>
+                )}
               </Menu>
 
+              {/* User Menu */}
               <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
@@ -668,6 +1143,113 @@ const MainLayout = ({ children, hideHeader = false }) => {
                   Logout
                 </MenuItem>
               </Menu>
+
+              {/* Delete Confirmation Dialog */}
+              <Dialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                PaperProps={{
+                  sx: {
+                    borderRadius: 3,
+                    boxShadow: 5,
+                  }
+                }}
+              >
+                <DialogTitle sx={{ 
+                  pb: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1 
+                }}>
+                  <DeleteIcon color="error" />
+                  Delete Notification
+                </DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    Are you sure you want to delete this notification?
+                  </DialogContentText>
+                  {notificationToDelete && (
+                    <Box sx={{ 
+                      mt: 2, 
+                      p: 2, 
+                      bgcolor: 'background.paper',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'divider' 
+                    }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        {notificationToDelete.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {notificationToDelete.message}
+                      </Typography>
+                    </Box>
+                  )}
+                </DialogContent>
+                <DialogActions>
+                  <Button 
+                    onClick={() => setDeleteDialogOpen(false)}
+                    color="inherit"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleDeleteNotification}
+                    color="error"
+                    variant="contained"
+                    startIcon={<DeleteIcon />}
+                  >
+                    Delete
+                  </Button>
+                </DialogActions>
+              </Dialog>
+              
+              {/* Delete All Confirmation Dialog */}
+              <Dialog
+                open={deleteAllDialogOpen}
+                onClose={() => setDeleteAllDialogOpen(false)}
+                PaperProps={{
+                  sx: {
+                    borderRadius: 3,
+                    boxShadow: 5,
+                  }
+                }}
+              >
+                <DialogTitle sx={{ 
+                  pb: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  color: 'error.main'
+                }}>
+                  <DeleteAllIcon color="error" />
+                  Delete All Notifications
+                </DialogTitle>
+                <DialogContent>
+                  <DialogContentText paragraph>
+                    Are you sure you want to delete all notifications? This action cannot be undone.
+                  </DialogContentText>
+                  <Typography variant="body2" color="text.secondary">
+                    You will lose all notification history including budget alerts and system messages.
+                  </Typography>
+                </DialogContent>
+                <DialogActions>
+                  <Button 
+                    onClick={() => setDeleteAllDialogOpen(false)}
+                    color="inherit"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleDeleteAllNotifications}
+                    color="error"
+                    variant="contained"
+                    startIcon={<DeleteAllIcon />}
+                  >
+                    Delete All
+                  </Button>
+                </DialogActions>
+              </Dialog>
             </Box>
           )}
         </Toolbar>

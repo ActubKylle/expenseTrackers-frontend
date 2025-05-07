@@ -1,0 +1,170 @@
+/* Testimonials.css */
+
+/* Card animations and transitions */
+.testimonial-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.testimonial-card {
+  position: absolute;
+  width: 100%;
+  transition: all 0.5s ease;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.testimonial-card.active {
+  opacity: 1;
+  transform: scale(1) translateX(0);
+  z-index: 3;
+}
+
+.testimonial-card.prev {
+  opacity: 0;
+  transform: translateX(-100px) scale(0.9);
+  z-index: 2;
+}
+
+.testimonial-card.next {
+  opacity: 0;
+  transform: translateX(100px) scale(0.9);
+  z-index: 1;
+}
+
+/* Indicator dots */
+.indicator-dots {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+  gap: 8px;
+}
+
+.indicator-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(37,99,235,0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.indicator-dot.active {
+  background-color: #2563EB;
+}
+
+/* Progress bar animation */
+.progress-container {
+  width: 100%;
+  height: 4px;
+  background-color: rgba(37,99,235,0.1);
+  border-radius: 2px;
+  margin-top: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #2563EB;
+  transform-origin: left;
+  animation: progress 5s linear;
+}
+
+@keyframes progress {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+/* Avatar styling */
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.avatar-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  object-fit: cover;
+}
+
+/* Text styling */
+.testimonial-name {
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #1F2937;
+  margin-bottom: 4px;
+}
+
+.testimonial-position {
+  color: #2563EB;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 16px;
+}
+
+.testimonial-quote {
+  color: #4B5563;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  font-style: italic;
+  margin-bottom: 20px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.rating-container {
+  display: flex;
+  justify-content: center;
+  color: #F59E0B;
+  font-size: 1.2rem;
+  margin-top: 12px;
+}
+
+.rating-star {
+  margin: 0 2px;
+}
+
+/* Auto-sliding card animation */
+@keyframes cardSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  10%, 90% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+}
+
+/* For smaller screens */
+@media (max-width: 768px) {
+  .testimonial-container {
+    height: 450px;
+  }
+  
+  .testimonial-quote {
+    font-size: 1rem;
+  }
+}
