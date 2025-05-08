@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://expense-tracker.test/api'; 
+const API_URL = 'https://expense.dftools.site/api'; 
 const axiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
