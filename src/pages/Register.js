@@ -1,22 +1,38 @@
 import React, { useState, useEffect } from "react";
-import { 
-  TextField, Button, Typography, Link, Box, Alert, IconButton, 
-  InputAdornment, Container, Paper, useTheme, Divider, Fade,
-  Grid, Dialog, DialogContent, DialogTitle, DialogActions, Zoom,
-  LinearProgress
+import {
+  TextField,
+  Button,
+  Typography,
+  Link,
+  Box,
+  Alert,
+  IconButton,
+  InputAdornment,
+  Container,
+  Paper,
+  useTheme,
+  Divider,
+  Fade,
+  Grid,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Zoom,
+  LinearProgress,
 } from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { 
-  Savings as SavingsIcon, 
-  Visibility, 
-  VisibilityOff, 
+import {
+  Savings as SavingsIcon,
+  Visibility,
+  VisibilityOff,
   PersonAdd as PersonAddIcon,
   ArrowBack as ArrowBackIcon,
   CheckCircle as CheckCircleIcon,
   Close as CloseIcon,
   Error as ErrorIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
 } from "@mui/icons-material";
 import CircularProgress from "@mui/material/CircularProgress";
 import { motion } from "framer-motion";
@@ -35,9 +51,9 @@ const containerVariants = {
     transition: {
       when: "beforeChildren",
       staggerChildren: 0.2,
-      duration: 0.4
-    }
-  }
+      duration: 0.4,
+    },
+  },
 };
 
 const itemVariants = {
@@ -45,53 +61,53 @@ const itemVariants = {
   visible: {
     y: 0,
     opacity: 1,
-    transition: { duration: 0.3 }
-  }
+    transition: { duration: 0.3 },
+  },
 };
 
 const fadeInUpVariant = {
   hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
+  visible: {
+    y: 0,
     opacity: 1,
-    transition: { 
-      type: "spring", 
+    transition: {
+      type: "spring",
       stiffness: 100,
-      damping: 10
-    }
-  }
+      damping: 10,
+    },
+  },
 };
 
 // Password strength checker function
 const checkPasswordStrength = (password) => {
   // Initialize score
   let score = 0;
-  
+
   // Don't show any strength for empty passwords
   if (!password) {
     return {
       score: 0,
-      feedback: ""
+      feedback: "",
     };
   }
-  
+
   // Length check
   if (password.length >= 8) score += 1;
   if (password.length >= 12) score += 1;
-  
+
   // Character variety checks
   if (/[a-z]/.test(password)) score += 1; // lowercase
   if (/[A-Z]/.test(password)) score += 1; // uppercase
   if (/[0-9]/.test(password)) score += 1; // numbers
   if (/[^a-zA-Z0-9]/.test(password)) score += 1; // special characters
-  
+
   // Penalize repeating characters or patterns
   if (/(.)\1{2,}/.test(password)) score -= 1; // repeating chars (aaa)
   if (/12345|qwerty|asdfg|password/i.test(password)) score -= 1; // common patterns
-  
+
   // Determine strength category and feedback
   let strength, color, feedback;
-  
+
   if (score <= 2) {
     strength = "Weak";
     color = "error";
@@ -100,61 +116,69 @@ const checkPasswordStrength = (password) => {
     strength = "Moderate";
     color = "warning";
     feedback = "Good start! Add more variety for stronger security";
-  } else if (score <= 5) { // Changed from 6 to 5
+  } else if (score <= 5) {
+    // Changed from 6 to 5
     strength = "Strong";
     color = "info";
-    feedback = "Strong password! Consider adding more length for extra security";
+    feedback =
+      "Strong password! Consider adding more length for extra security";
   } else {
     strength = "Very Strong";
     color = "success";
     feedback = "Excellent password strength!";
   }
-  
+
   // Normalize score to 0-100 for progress bar
-  const normalizedScore = Math.max(0, Math.min(100, Math.floor((score / 6) * 100)));
-  
+  const normalizedScore = Math.max(
+    0,
+    Math.min(100, Math.floor((score / 6) * 100))
+  );
+
   return {
     score: normalizedScore,
     strength,
     color,
-    feedback
+    feedback,
   };
 };
 // Password Strength Indicator Component
 const PasswordStrengthIndicator = ({ password }) => {
   const { score, strength, color, feedback } = checkPasswordStrength(password);
-  
+
   // Don't show indicator for empty passwords
   if (!password) return null;
-  
+
   return (
     <Box sx={{ mt: 1, mb: 0.5 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+        <Typography
+          variant="caption"
+          sx={{ display: "flex", alignItems: "center" }}
+        >
           <InfoIcon fontSize="inherit" sx={{ mr: 0.5 }} />
           Password strength:
         </Typography>
-        <Typography 
-          variant="caption" 
-          sx={{ fontWeight: 600 }}
-          color={color}
-        >
+        <Typography variant="caption" sx={{ fontWeight: 600 }} color={color}>
           {strength}
         </Typography>
       </Box>
-      <LinearProgress 
-        variant="determinate" 
-        value={score} 
+      <LinearProgress
+        variant="determinate"
+        value={score}
         color={color}
-        sx={{ 
-          height: 6, 
+        sx={{
+          height: 6,
           borderRadius: 3,
-          '& .MuiLinearProgress-bar': {
-            transition: 'transform 0.4s ease'
-          }
+          "& .MuiLinearProgress-bar": {
+            transition: "transform 0.4s ease",
+          },
         }}
       />
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ mt: 0.5, display: "block" }}
+      >
         {feedback}
       </Typography>
     </Box>
@@ -198,35 +222,35 @@ const Register = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!firstName.trim()) {
       newErrors.firstName = "First name is required";
     }
-    
+
     if (!lastName.trim()) {
       newErrors.lastName = "Last name is required";
     }
-    
+
     if (!email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = "Email is invalid";
     }
-    
+
     // Trim passwords before validation to avoid whitespace issues
     const trimmedPassword = password.trim();
     const trimmedConfirmPassword = confirmPassword.trim();
-    
+
     if (!trimmedPassword) {
       newErrors.password = "Password is required";
     } else if (trimmedPassword.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
     }
-    
+
     if (trimmedPassword !== trimmedConfirmPassword) {
       newErrors.confirmPassword = "Passwords don't match";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -242,17 +266,17 @@ const Register = () => {
         // Trim password before submission
         const trimmedPassword = password.trim();
         // Add password_confirmation field to match Laravel's validation requirement
-        await register({ 
-          name, 
-          email, 
+        await register({
+          name,
+          email,
           password: trimmedPassword,
-          password_confirmation: trimmedPassword 
+          password_confirmation: trimmedPassword,
         });
-        
+
         // Success state
         setSuccess(true);
         setShowSuccessModal(true);
-        
+
         // Redirect to dashboard after brief delay
         setTimeout(() => {
           setShowSuccessModal(false);
@@ -261,7 +285,7 @@ const Register = () => {
       } catch (err) {
         setErrors({
           ...errors,
-          general: err.response?.data?.message || "Failed to register"
+          general: err.response?.data?.message || "Failed to register",
         });
         setLoading(false);
       }
@@ -287,12 +311,12 @@ const Register = () => {
       animate="visible"
       variants={containerVariants}
       sx={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
         backgroundImage: `linear-gradient(120deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-        position: 'relative',
-        overflow: 'hidden'
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       {/* Success Modal */}
@@ -307,27 +331,29 @@ const Register = () => {
             borderRadius: 2,
             boxShadow: 24,
             maxWidth: 400,
-            mx: 2
-          }
+            mx: 2,
+          },
         }}
       >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          backgroundColor: theme.palette.success.main, 
-          color: 'white',
-          py: 1.5
-        }}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            backgroundColor: theme.palette.success.main,
+            color: "white",
+            py: 1.5,
+          }}
+        >
           <CheckCircleIcon sx={{ mr: 1 }} />
           Registration Successful
           <IconButton
             aria-label="close"
             onClick={handleCloseSuccessModal}
             sx={{
-              position: 'absolute',
+              position: "absolute",
               right: 8,
               top: 8,
-              color: 'white'
+              color: "white",
             }}
             size="small"
           >
@@ -341,20 +367,20 @@ const Register = () => {
           <Typography variant="body2" color="text.secondary">
             You are now being redirected to the dashboard.
           </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
             <CircularProgress size={30} color="success" />
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseSuccessModal} 
-            variant="contained" 
+          <Button
+            onClick={handleCloseSuccessModal}
+            variant="contained"
             color="success"
             fullWidth
-            sx={{ 
-              borderRadius: 1.5, 
+            sx={{
+              borderRadius: 1.5,
               py: 1,
-              fontWeight: 600
+              fontWeight: 600,
             }}
           >
             Go to Dashboard
@@ -363,26 +389,28 @@ const Register = () => {
       </Dialog>
 
       {/* Background pattern */}
-      <Box sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        opacity: 0.05,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
-      }} />
-      
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.05,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+        }}
+      />
+
       {/* Header */}
-      <MotionBox 
-        component="header" 
+      <MotionBox
+        component="header"
         variants={itemVariants}
-        sx={{ 
+        sx={{
           py: 1.5,
           px: 3,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
         <MotionTypography
@@ -390,20 +418,20 @@ const Register = () => {
           component={RouterLink}
           to="/"
           sx={{
-            fontWeight: 'bold',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            textDecoration: 'none',
-            '&:hover': {
-              opacity: 0.9
-            }
+            fontWeight: "bold",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            textDecoration: "none",
+            "&:hover": {
+              opacity: 0.9,
+            },
           }}
           whileHover={{ scale: 1.05 }}
         >
           <SavingsIcon sx={{ mr: 1, fontSize: 24 }} /> Expense Tracker
         </MotionTypography>
-        
+
         <MotionButton
           component={RouterLink}
           to="/"
@@ -411,13 +439,13 @@ const Register = () => {
           variant="outlined"
           size="small"
           startIcon={<ArrowBackIcon />}
-          sx={{ 
-            color: 'white',
-            borderColor: 'rgba(255,255,255,0.5)',
-            '&:hover': {
-              borderColor: 'white',
-              backgroundColor: 'rgba(255,255,255,0.1)'
-            }
+          sx={{
+            color: "white",
+            borderColor: "rgba(255,255,255,0.5)",
+            "&:hover": {
+              borderColor: "white",
+              backgroundColor: "rgba(255,255,255,0.1)",
+            },
           }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -426,30 +454,33 @@ const Register = () => {
         </MotionButton>
       </MotionBox>
 
-      <Container maxWidth="sm" sx={{ 
-        display: 'flex', 
-        flexGrow: 1, 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        py: 2 
-      }}>
+      <Container
+        maxWidth="sm"
+        sx={{
+          display: "flex",
+          flexGrow: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          py: 2,
+        }}
+      >
         <MotionPaper
           variants={fadeInUpVariant}
           elevation={24}
-          sx={{ 
-            width: '100%',
+          sx={{
+            width: "100%",
             p: 3,
             borderRadius: 2,
-            backdropFilter: 'blur(10px)',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            position: 'relative',
-            maxHeight: '90vh',
-            display: 'flex',
-            flexDirection: 'column'
+            backdropFilter: "blur(10px)",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            position: "relative",
+            maxHeight: "90vh",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {/* Decorative bubble animations */}
-          <Box sx={{ position: 'absolute', top: 0, right: 0, opacity: 0.1 }}>
+          <Box sx={{ position: "absolute", top: 0, right: 0, opacity: 0.1 }}>
             {[...Array(2)].map((_, i) => (
               <Box
                 key={i}
@@ -457,45 +488,47 @@ const Register = () => {
                 animate={{
                   y: [0, -20, 0],
                   opacity: [0.7, 1, 0.7],
-                  scale: [1, 1.1, 1]
+                  scale: [1, 1.1, 1],
                 }}
                 transition={{
                   duration: 3 + i,
                   repeat: Infinity,
-                  repeatType: 'reverse',
-                  ease: 'easeInOut',
-                  delay: i * 0.8
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                  delay: i * 0.8,
                 }}
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   width: 15 + i * 20,
                   height: 15 + i * 20,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   background: theme.palette.primary.main,
                   right: 20 - i * 15,
-                  top: 10 + i * 10
+                  top: 10 + i * 10,
                 }}
               />
             ))}
           </Box>
-          
-          <Box sx={{ textAlign: 'center', mb: 2, position: 'relative', zIndex: 1 }}>
+
+          <Box
+            sx={{ textAlign: "center", mb: 2, position: "relative", zIndex: 1 }}
+          >
             <MotionBox
-              animate={{ 
+              animate={{
                 rotate: [0, 5, -5, 5, 0],
               }}
-              transition={{ 
+              transition={{
                 duration: 2,
                 repeat: Infinity,
-                repeatType: 'reverse',
-                ease: 'easeInOut',
-                repeatDelay: 3
+                repeatType: "reverse",
+                ease: "easeInOut",
+                repeatDelay: 3,
               }}
               sx={{ mb: 1 }}
             >
               <SavingsIcon color="primary" sx={{ fontSize: 36 }} />
             </MotionBox>
-            
+
             <MotionTypography
               variant="h5"
               component="h1"
@@ -505,7 +538,7 @@ const Register = () => {
             >
               Create an Account
             </MotionTypography>
-            
+
             <MotionTypography
               variant="body2"
               color="text.secondary"
@@ -519,20 +552,20 @@ const Register = () => {
           <Fade in={!!errors.general} timeout={500}>
             <Box sx={{ mb: 2 }}>
               {errors.general && (
-                <Alert 
-                  severity="error" 
-                  sx={{ 
+                <Alert
+                  severity="error"
+                  sx={{
                     borderRadius: 2,
                     py: 0.5,
-                    animation: 'pulse 1.5s infinite',
-                    '@keyframes pulse': {
-                      '0%, 100%': {
-                        boxShadow: '0 0 0 0 rgba(211, 47, 47, 0.4)'
+                    animation: "pulse 1.5s infinite",
+                    "@keyframes pulse": {
+                      "0%, 100%": {
+                        boxShadow: "0 0 0 0 rgba(211, 47, 47, 0.4)",
                       },
-                      '50%': {
-                        boxShadow: '0 0 0 8px rgba(211, 47, 47, 0)'
-                      }
-                    }
+                      "50%": {
+                        boxShadow: "0 0 0 8px rgba(211, 47, 47, 0)",
+                      },
+                    },
                   }}
                 >
                   {errors.general}
@@ -541,15 +574,15 @@ const Register = () => {
             </Box>
           </Fade>
 
-          <Box 
-            component="form" 
-            onSubmit={handleSubmit} 
-            sx={{ 
-              position: 'relative', 
-              zIndex: 1, 
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{
+              position: "relative",
+              zIndex: 1,
               flexGrow: 1,
-              display: 'flex',
-              flexDirection: 'column' 
+              display: "flex",
+              flexDirection: "column",
             }}
           >
             <Box sx={{ flexGrow: 1, pr: 1, mr: -1 }}>
@@ -569,22 +602,22 @@ const Register = () => {
                     error={!!errors.firstName}
                     helperText={errors.firstName || ""}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
+                      "& .MuiOutlinedInput-root": {
+                        "&.Mui-focused fieldset": {
                           borderWidth: 2,
                         },
-                        '&:hover fieldset': {
+                        "&:hover fieldset": {
                           borderColor: theme.palette.primary.main,
                         },
                       },
                     }}
                     InputProps={{
-                      sx: { borderRadius: 1.5 }
+                      sx: { borderRadius: 1.5 },
                     }}
                     size="small"
                   />
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <TextField
                     variant="outlined"
@@ -599,22 +632,22 @@ const Register = () => {
                     error={!!errors.lastName}
                     helperText={errors.lastName || ""}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
+                      "& .MuiOutlinedInput-root": {
+                        "&.Mui-focused fieldset": {
                           borderWidth: 2,
                         },
-                        '&:hover fieldset': {
+                        "&:hover fieldset": {
                           borderColor: theme.palette.primary.main,
                         },
                       },
                     }}
                     InputProps={{
-                      sx: { borderRadius: 1.5 }
+                      sx: { borderRadius: 1.5 },
                     }}
                     size="small"
                   />
                 </Grid>
-                
+
                 <Grid item xs={12}>
                   <TextField
                     variant="outlined"
@@ -629,22 +662,22 @@ const Register = () => {
                     error={!!errors.email}
                     helperText={errors.email || ""}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
+                      "& .MuiOutlinedInput-root": {
+                        "&.Mui-focused fieldset": {
                           borderWidth: 2,
                         },
-                        '&:hover fieldset': {
+                        "&:hover fieldset": {
                           borderColor: theme.palette.primary.main,
                         },
                       },
                     }}
                     InputProps={{
-                      sx: { borderRadius: 1.5 }
+                      sx: { borderRadius: 1.5 },
                     }}
                     size="small"
                   />
                 </Grid>
-                
+
                 <Grid item xs={12} sm={6}>
                   <TextField
                     variant="outlined"
@@ -665,25 +698,29 @@ const Register = () => {
                           <IconButton
                             onClick={togglePasswordVisibility}
                             edge="end"
-                            sx={{ 
+                            sx={{
                               color: theme.palette.text.secondary,
-                              transition: 'transform 0.2s',
-                              '&:hover': { transform: 'scale(1.1)' }
+                              transition: "transform 0.2s",
+                              "&:hover": { transform: "scale(1.1)" },
                             }}
                             size="small"
                           >
-                            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                            {showPassword ? (
+                              <VisibilityOff fontSize="small" />
+                            ) : (
+                              <Visibility fontSize="small" />
+                            )}
                           </IconButton>
                         </InputAdornment>
                       ),
-                      sx: { borderRadius: 1.5 }
+                      sx: { borderRadius: 1.5 },
                     }}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
+                      "& .MuiOutlinedInput-root": {
+                        "&.Mui-focused fieldset": {
                           borderWidth: 2,
                         },
-                        '&:hover fieldset': {
+                        "&:hover fieldset": {
                           borderColor: theme.palette.primary.main,
                         },
                       },
@@ -706,7 +743,10 @@ const Register = () => {
                     autoComplete="new-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    error={!!errors.confirmPassword || (passwordMatchStatus === "mismatch")}
+                    error={
+                      !!errors.confirmPassword ||
+                      passwordMatchStatus === "mismatch"
+                    }
                     helperText={errors.confirmPassword || ""}
                     InputProps={{
                       endAdornment: (
@@ -714,25 +754,29 @@ const Register = () => {
                           <IconButton
                             onClick={toggleConfirmPasswordVisibility}
                             edge="end"
-                            sx={{ 
+                            sx={{
                               color: theme.palette.text.secondary,
-                              transition: 'transform 0.2s',
-                              '&:hover': { transform: 'scale(1.1)' }
+                              transition: "transform 0.2s",
+                              "&:hover": { transform: "scale(1.1)" },
                             }}
                             size="small"
                           >
-                            {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                            {showConfirmPassword ? (
+                              <VisibilityOff fontSize="small" />
+                            ) : (
+                              <Visibility fontSize="small" />
+                            )}
                           </IconButton>
                         </InputAdornment>
                       ),
-                      sx: { borderRadius: 1.5 }
+                      sx: { borderRadius: 1.5 },
                     }}
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
+                      "& .MuiOutlinedInput-root": {
+                        "&.Mui-focused fieldset": {
                           borderWidth: 2,
                         },
-                        '&:hover fieldset': {
+                        "&:hover fieldset": {
                           borderColor: theme.palette.primary.main,
                         },
                       },
@@ -741,17 +785,32 @@ const Register = () => {
                   />
                   {/* Password match indicator */}
                   {passwordMatchStatus && confirmPassword && (
-                    <Box sx={{ mt: 1, mb: 0.5, display: 'flex', alignItems: 'center' }}>
+                    <Box
+                      sx={{
+                        mt: 1,
+                        mb: 0.5,
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
                       {passwordMatchStatus === "match" ? (
                         <>
-                          <CheckCircleIcon color="success" fontSize="small" sx={{ mr: 0.5 }} />
+                          <CheckCircleIcon
+                            color="success"
+                            fontSize="small"
+                            sx={{ mr: 0.5 }}
+                          />
                           <Typography variant="caption" color="success.main">
                             Passwords match
                           </Typography>
                         </>
                       ) : (
                         <>
-                          <ErrorIcon color="error" fontSize="small" sx={{ mr: 0.5 }} />
+                          <ErrorIcon
+                            color="error"
+                            fontSize="small"
+                            sx={{ mr: 0.5 }}
+                          />
                           <Typography variant="caption" color="error">
                             Passwords don't match
                           </Typography>
@@ -771,46 +830,52 @@ const Register = () => {
                 color="primary"
                 size="medium"
                 disabled={loading}
-                startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <PersonAddIcon />}
+                startIcon={
+                  loading ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <PersonAddIcon />
+                  )
+                }
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                sx={{ 
+                sx={{
                   py: 1,
                   fontWeight: 600,
                   letterSpacing: 0.5,
                   borderRadius: 2,
                   boxShadow: 2,
-                  position: 'relative',
-                  overflow: 'hidden',
+                  position: "relative",
+                  overflow: "hidden",
 
-                  '&::after': {
+                  "&::after": {
                     content: '""',
-                    position: 'absolute',
+                    position: "absolute",
                     top: 0,
-                    left: '-100%',
-                    width: '200%',
-                    height: '100%',
+                    left: "-100%",
+                    width: "200%",
+                    height: "100%",
                     background: `linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)`,
-                    animation: 'ripple 2s infinite'
+                    animation: "ripple 2s infinite",
                   },
-                  '@keyframes ripple': {
-                    '0%': { left: '-100%' },
-                    '100%': { left: '100%' }
-                  }
+                  "@keyframes ripple": {
+                    "0%": { left: "-100%" },
+                    "100%": { left: "100%" },
+                  },
                 }}
               >
                 {loading ? "Creating Account..." : "Register Now"}
               </MotionButton>
 
-              <Box sx={{ position: 'relative', my: 2 }}>
+              <Box sx={{ position: "relative", my: 2 }}>
                 <Divider>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
-                    sx={{ 
-                      fontSize: '0.75rem',
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{
+                      fontSize: "0.75rem",
                       px: 1,
-                      backgroundColor: 'white'
+                      backgroundColor: "white",
                     }}
                   >
                     OR
@@ -818,34 +883,34 @@ const Register = () => {
                 </Divider>
               </Box>
 
-              <Box 
-                sx={{ 
-                  textAlign: 'center', 
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              <Box
+                sx={{
+                  textAlign: "center",
+                  backgroundColor: "rgba(255, 255, 255, 0.8)",
                   py: 1.5,
-                  borderRadius: 1
+                  borderRadius: 1,
                 }}
               >
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
+                <Typography
+                  variant="body2"
+                  sx={{
                     fontWeight: 500,
-                    color: theme.palette.text.primary
+                    color: theme.palette.text.primary,
                   }}
                 >
                   Already have an account?{" "}
-                  <Link 
-                    component={RouterLink} 
-                    to="/login" 
+                  <Link
+                    component={RouterLink}
+                    to="/login"
                     variant="body2"
                     color="primary"
-                    sx={{ 
+                    sx={{
                       fontWeight: 700,
-                      textDecoration: 'none',
-                      '&:hover': { 
-                        textDecoration: 'underline',
-                        color: theme.palette.primary.dark
-                      }
+                      textDecoration: "none",
+                      "&:hover": {
+                        textDecoration: "underline",
+                        color: theme.palette.primary.dark,
+                      },
                     }}
                   >
                     Sign In

@@ -41,26 +41,51 @@ export const NotificationProvider = ({ children }) => {
   const notificationsCache = useRef(new Map());
   const pollingRef = useRef(null);
   
+  // Track deleted notifications to prevent them from reappearing
+  const deletedNotificationIds = useRef(new Set());
+  // Track notifications that have been processed already
+  const processedNotificationIds = useRef(new Set());
+  
+  // Reset tracking when user changes
+  useEffect(() => {
+    if (user) {
+      // Reset tracking sets when user logs in/changes
+      deletedNotificationIds.current.clear();
+      processedNotificationIds.current.clear();
+    }
+  }, [user]);
+  
   // Function to fetch all notifications
   const fetchAllNotifications = async (force = false) => {
     if (!user) return;
     
     try {
       const response = await getNotifications();
-      const notificationsData = response.data || [];
       
-      // Process notifications to detect new ones
+      // Filter out notifications that have been deleted
+      const filteredNotificationsData = (response.data || []).filter(
+        notif => !deletedNotificationIds.current.has(notif.id)
+      );
+      
+      // Process notifications to detect new ones, excluding deleted ones
       const existingIds = new Set(notificationsCache.current.keys());
-      const newNotifications = notificationsData.filter(notif => !existingIds.has(notif.id));
+      const newNotifications = filteredNotificationsData.filter(notif => 
+        !existingIds.has(notif.id) && !processedNotificationIds.current.has(notif.id)
+      );
       
-      // Update cache with all notifications
+      // Add all current IDs to the processed set
+      filteredNotificationsData.forEach(notif => {
+        processedNotificationIds.current.add(notif.id);
+      });
+      
+      // Update cache with filtered notifications
       notificationsCache.current.clear();
-      notificationsData.forEach(notif => {
+      filteredNotificationsData.forEach(notif => {
         notificationsCache.current.set(notif.id, notif);
       });
       
-      setNotifications(notificationsData);
-      const newUnreadCount = notificationsData.filter(notif => !notif.is_read).length;
+      setNotifications(filteredNotificationsData);
+      const newUnreadCount = filteredNotificationsData.filter(notif => !notif.is_read).length;
       setUnreadCount(newUnreadCount);
       
       // If new notifications detected, notify subscribers
@@ -153,6 +178,9 @@ export const NotificationProvider = ({ children }) => {
     try {
       await axios.delete(`/notifications/${notificationId}`);
       
+      // Add the notification ID to the deleted set
+      deletedNotificationIds.current.add(notificationId);
+      
       // Update local state optimistically
       setNotifications(prevNotifications => 
         prevNotifications.filter(notif => notif.id !== notificationId)
@@ -186,6 +214,11 @@ export const NotificationProvider = ({ children }) => {
     
     try {
       await axios.delete('/notifications');
+      
+      // Add all current notification IDs to the deleted set
+      notifications.forEach(notif => {
+        deletedNotificationIds.current.add(notif.id);
+      });
       
       // Update local state
       setNotifications([]);

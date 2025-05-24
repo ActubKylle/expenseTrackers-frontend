@@ -10,7 +10,7 @@ import NotificationEventBus from '../contexts/NotificationEventBus';
  */
 class NotificationService {
   constructor() {
-    this.pollInterval = 5000; // Start with 5 seconds
+    this.pollInterval = 2000; // Start with 5 seconds
     this.maxPollInterval = 60000; // Max 1 minute
     this.minPollInterval = 3000; // Min 3 seconds
     this.backoffFactor = 1.5; // Increase poll time by this factor if no new notifications
@@ -23,7 +23,13 @@ class NotificationService {
     this.audioBuffer = null;
     this.setupComplete = false;
     this.fallbackAudio = null;
-    this.lastNotificationIds = new Set(); // Track IDs of last fetched notifications
+    
+    // Track ALL notifications we've seen to avoid duplicates
+    this.processedNotificationIds = new Set();
+    // Track specifically deleted notifications
+    this.deletedNotificationIds = new Set();
+    // Track notifications marked as read
+    this.readNotificationIds = new Set();
     
     // Setup throttling - prevent excessive polls
     this.canPoll = true;
@@ -65,7 +71,48 @@ class NotificationService {
   }
 
   /**
-   * Poll for new notifications by comparing with previous fetch
+   * Reset tracking when user logs out
+   */
+  reset() {
+    this.processedNotificationIds.clear();
+    this.deletedNotificationIds.clear();
+    this.readNotificationIds.clear();
+    console.log('Notification tracking reset');
+  }
+
+  /**
+   * Add a notification ID to the deleted list
+   * @param {number} id - Notification ID to mark as deleted
+   */
+  addDeletedNotification(id) {
+    this.deletedNotificationIds.add(id);
+    this.processedNotificationIds.add(id);
+    console.log(`Notification ${id} marked as deleted`);
+  }
+
+  /**
+   * Add multiple notification IDs to the deleted list
+   * @param {Array<number>} ids - Array of notification IDs to mark as deleted
+   */
+  addDeletedNotifications(ids) {
+    ids.forEach(id => {
+      this.deletedNotificationIds.add(id);
+      this.processedNotificationIds.add(id);
+    });
+    console.log(`${ids.length} notifications marked as deleted`);
+  }
+
+  /**
+   * Mark a notification as read
+   * @param {number} id - Notification ID to mark as read
+   */
+  markNotificationAsRead(id) {
+    this.readNotificationIds.add(id);
+    console.log(`Notification ${id} marked as read`);
+  }
+
+  /**
+   * Poll for new notifications by comparing with previously seen notifications
    */
   async pollForNotifications() {
     if (!this.canPoll) return;
@@ -80,18 +127,33 @@ class NotificationService {
       this.activeCount++;
       
       // Since we don't have getNewNotifications, we'll use getNotifications
-      // and compare with our last known set of notifications
+      // and compare with our lists of processed and deleted notifications
       const response = await getNotifications({ per_page: 20 }); // Fetch more to ensure we catch new ones
       const notifications = response.data || [];
       
-      // Find new notifications by comparing IDs
-      const newNotifications = notifications.filter(
-        n => !this.lastNotificationIds.has(n.id)
-      );
-      
-      // Update our tracking set with current notification IDs
-      this.lastNotificationIds.clear();
-      notifications.forEach(n => this.lastNotificationIds.add(n.id));
+      // Find new notifications by filtering out ones we've already processed or deleted
+      const newNotifications = notifications.filter(notification => {
+        // Skip if we've already processed this notification
+        if (this.processedNotificationIds.has(notification.id)) {
+          return false;
+        }
+        
+        // Skip if this notification was previously deleted
+        if (this.deletedNotificationIds.has(notification.id)) {
+          return false;
+        }
+        
+        // This is a new notification we haven't seen before
+        // Add it to our processed set so we don't show it again
+        this.processedNotificationIds.add(notification.id);
+        
+        // If it's already marked as read on the server, track that too
+        if (notification.is_read) {
+          this.readNotificationIds.add(notification.id);
+        }
+        
+        return true;
+      });
       
       // If new notifications found, publish event
       if (newNotifications.length > 0) {

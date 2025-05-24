@@ -28,12 +28,17 @@ const NotificationServiceInitializer = ({ children }) => {
   const { user } = useAuth();
   
   useEffect(() => {
-    // Start notification service when user logs in
+    // Only start the service if the user is logged in
     if (user) {
-      console.log("Starting notification service");
+      console.log("Starting notification service for user:", user.id);
+      
+      // Reset service when user logs in to clear any previous data
+      notificationService.reset();
+      
+      // Start the service
       notificationService.start();
       
-      // Clean up when component unmounts
+      // Clean up when component unmounts or user changes
       return () => {
         console.log("Stopping notification service");
         notificationService.stop();
@@ -41,6 +46,22 @@ const NotificationServiceInitializer = ({ children }) => {
     }
   }, [user]);
   
+  // Also add a cleanup handler when the app unmounts
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (user) {
+        console.log("Page unloading, stopping notification service");
+        notificationService.stop();
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [user]);
+
   return children;
 };
 
@@ -53,7 +74,7 @@ const ProtectedRoute = ({ children }) => {
     return (
       <LoadingScreen
         message="Expense Tracker..."
-        progress={50} // Replace with actual progress value
+        progress={50}
         secondaryMessage="Please wait while we verify your credentials."
       />
     );

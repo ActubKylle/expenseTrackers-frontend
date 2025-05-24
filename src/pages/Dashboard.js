@@ -1,13 +1,35 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Grid, Paper, Typography, Box, CircularProgress, 
-  Card, CardContent, Divider, List, ListItem, 
-  ListItemText, useTheme, LinearProgress, Button, IconButton,
-  Menu, MenuItem, ListItemIcon, Chip, Skeleton, Tooltip,
-  Dialog, DialogActions, DialogContent, DialogTitle,
-  Collapse, Alert, useMediaQuery
-} from '@mui/material';
-import { 
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  Grid,
+  Paper,
+  Typography,
+  Box,
+  CircularProgress,
+  Card,
+  CardContent,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  useTheme,
+  LinearProgress,
+  Button,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Chip,
+  Skeleton,
+  Tooltip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Collapse,
+  Alert,
+  useMediaQuery,
+} from "@mui/material";
+import {
   Refresh as RefreshIcon,
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
@@ -26,61 +48,75 @@ import {
   Close as CloseIcon,
   Help as HelpIcon,
   PlayCircleOutline as TourIcon,
-  CheckCircleOutline as SuccessIcon
-} from '@mui/icons-material';
-import { motion } from 'framer-motion';
-import MainLayout from '../layouts/MainLayout';
-import { getDashboardSummary } from '../api/dashboard';
-import { Pie, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js';
-import { format, getYear, getMonth, getDate } from 'date-fns';
-import { printDashboard } from '../utils/printUtils';
+  CheckCircleOutline as SuccessIcon,
+} from "@mui/icons-material";
+import { motion } from "framer-motion";
+import MainLayout from "../layouts/MainLayout";
+import { getDashboardSummary } from "../api/dashboard";
+import { Pie, Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip as ChartTooltip,
+  Legend,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+} from "chart.js";
+import { format, getYear, getMonth, getDate } from "date-fns";
+import { printDashboard } from "../utils/printUtils";
 import { Helmet } from "react-helmet";
 // Import AOS
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 // Register Chart.js components
-ChartJS.register(ArcElement, ChartTooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement);
+ChartJS.register(
+  ArcElement,
+  ChartTooltip,
+  Legend,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement
+);
 
 // Add chart gradient setup
 const createGradient = (ctx, color) => {
-  if (!ctx) return color + '80';
+  if (!ctx) return color + "80";
   const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-  gradient.addColorStop(0, color + '80');
-  gradient.addColorStop(1, color + '10');
+  gradient.addColorStop(0, color + "80");
+  gradient.addColorStop(1, color + "10");
   return gradient;
 };
 
 // Custom MiniChart component
 const MiniChart = ({ data, color }) => {
   if (!data || data.length === 0) return null;
-  
+
   const maxValue = Math.max(...data);
   const minValue = Math.min(...data);
   const range = maxValue - minValue || 1; // Prevent division by zero
-  
+
   const points = data.map((value, index) => ({
     x: (index / (data.length - 1)) * 100,
-    y: 100 - ((value - minValue) / range) * 100
+    y: 100 - ((value - minValue) / range) * 100,
   }));
 
   const path = points.reduce((acc, point, i) => {
-    return acc + (i === 0 ? `M ${point.x},${point.y}` : ` L ${point.x},${point.y}`);
-  }, '');
+    return (
+      acc + (i === 0 ? `M ${point.x},${point.y}` : ` L ${point.x},${point.y}`)
+    );
+  }, "");
 
   return (
     <svg
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
-      style={{ width: '100%', height: '50px', display: 'block' }}
+      style={{ width: "100%", height: "50px", display: "block" }}
     >
-      <path
-        d={path}
-        stroke={color}
-        strokeWidth="2"
-        fill="none"
-      />
+      <path d={path} stroke={color} strokeWidth="2" fill="none" />
     </svg>
   );
 };
@@ -89,7 +125,7 @@ const MiniChart = ({ data, color }) => {
 const DashboardTour = ({ open, onClose }) => {
   const [step, setStep] = useState(1);
   const totalSteps = 5;
-  
+
   const handleNext = () => {
     if (step < totalSteps) {
       setStep(step + 1);
@@ -97,66 +133,68 @@ const DashboardTour = ({ open, onClose }) => {
       onClose();
     }
   };
-  
+
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
     }
   };
-  
+
   const getTourContent = () => {
-    switch(step) {
+    switch (step) {
       case 1:
         return {
           title: "Welcome to Your Financial Dashboard",
-          content: "This dashboard gives you a complete overview of your expenses. Let's explore the key features to help you track your finances effectively."
+          content:
+            "This dashboard gives you a complete overview of your expenses. Let's explore the key features to help you track your finances effectively.",
         };
       case 2:
         return {
           title: "Summary Cards",
-          content: "These cards show your key financial metrics at a glance. You can see your total expenses, spending trends compared to previous periods, and breakdowns by category."
+          content:
+            "These cards show your key financial metrics at a glance. You can see your total expenses, spending trends compared to previous periods, and breakdowns by category.",
         };
       case 3:
         return {
           title: "Monthly Analysis",
-          content: "This section shows how your spending changes over time. You can identify trends, see your highest and lowest spending months, and track your progress toward financial goals."
+          content:
+            "This section shows how your spending changes over time. You can identify trends, see your highest and lowest spending months, and track your progress toward financial goals.",
         };
       case 4:
         return {
           title: "Budget Overview",
-          content: "Track how your actual expenses compare to your planned budget. Progress bars show each category's spending as a percentage of your budget, helping you identify areas where you might be overspending."
+          content:
+            "Track how your actual expenses compare to your planned budget. Progress bars show each category's spending as a percentage of your budget, helping you identify areas where you might be overspending.",
         };
       case 5:
         return {
           title: "Filtering & Exporting",
-          content: "Use the filter option to view data for different time periods. The export button lets you save or print your financial reports for record-keeping or sharing."
+          content:
+            "Use the filter option to view data for different time periods. The export button lets you save or print your financial reports for record-keeping or sharing.",
         };
       default:
         return { title: "", content: "" };
     }
   };
-  
+
   const content = getTourContent();
-  
+
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle sx={{ 
-        bgcolor: 'primary.main', 
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle
+        sx={{
+          bgcolor: "primary.main",
+          color: "white",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center" }}>
           <TourIcon sx={{ mr: 1 }} />
           {content.title}
         </Box>
-        <IconButton size="small" onClick={onClose} sx={{ color: 'white' }}>
+        <IconButton size="small" onClick={onClose} sx={{ color: "white" }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -164,16 +202,23 @@ const DashboardTour = ({ open, onClose }) => {
         <Typography variant="body1" sx={{ mb: 2 }}>
           {content.content}
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            mt: 2,
+          }}
+        >
           {Array.from({ length: totalSteps }).map((_, idx) => (
             <Box
               key={idx}
               sx={{
                 width: 10,
                 height: 10,
-                borderRadius: '50%',
+                borderRadius: "50%",
                 mx: 0.5,
-                bgcolor: idx + 1 === step ? 'primary.main' : 'grey.300'
+                bgcolor: idx + 1 === step ? "primary.main" : "grey.300",
               }}
             />
           ))}
@@ -183,8 +228,8 @@ const DashboardTour = ({ open, onClose }) => {
         <Button onClick={handleBack} disabled={step === 1}>
           Back
         </Button>
-        <Button 
-          onClick={handleNext} 
+        <Button
+          onClick={handleNext}
           variant={step === totalSteps ? "contained" : "text"}
           autoFocus
         >
@@ -198,31 +243,26 @@ const DashboardTour = ({ open, onClose }) => {
 // Help Dialog Component
 const HelpDialog = ({ open, onClose, title, content }) => {
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle sx={{ 
-        bgcolor: 'primary.main', 
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle
+        sx={{
+          bgcolor: "primary.main",
+          color: "white",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center" }}>
           <HelpIcon sx={{ mr: 1 }} />
           {title}
         </Box>
-        <IconButton size="small" onClick={onClose} sx={{ color: 'white' }}>
+        <IconButton size="small" onClick={onClose} sx={{ color: "white" }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ py: 3 }}>
-        <Typography variant="body1">
-          {content}
-        </Typography>
+        <Typography variant="body1">{content}</Typography>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} variant="contained">
@@ -235,61 +275,66 @@ const HelpDialog = ({ open, onClose, title, content }) => {
 
 const Dashboard = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [summaryData, setSummaryData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  
+
   // Dynamic filtering state
-  const [timeFilter, setTimeFilter] = useState('current');
+  const [timeFilter, setTimeFilter] = useState("current");
   const [printMenuAnchor, setPrintMenuAnchor] = useState(null);
   const [filterMenuAnchor, setFilterMenuAnchor] = useState(null);
-  
+
   // First-time user experience states
   const [showTutorialAlert, setShowTutorialAlert] = useState(true);
   const [tourOpen, setTourOpen] = useState(false);
-  
+
   // Feature explanation dialog
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
-  const [helpDialogContent, setHelpDialogContent] = useState({ title: '', content: '' });
+  const [helpDialogContent, setHelpDialogContent] = useState({
+    title: "",
+    content: "",
+  });
+
+  const [maintenanceDialogOpen, setMaintenanceDialogOpen] = useState(false);
 
   // Optimize data fetching with caching
   const [dataCache, setDataCache] = useState({
     timestamp: null,
-    data: null
+    data: null,
   });
 
   // Initialize AOS when component mounts
   useEffect(() => {
     AOS.init({
       duration: 800,
-      easing: 'ease-out-cubic',
+      easing: "ease-out-cubic",
       once: true,
       offset: 50,
       delay: 0,
       mirror: false,
-      anchorPlacement: 'top-bottom',
-      disable: window.innerWidth < 768 ? true : false
+      anchorPlacement: "top-bottom",
+      disable: window.innerWidth < 768 ? true : false,
     });
-    
+
     // Refresh AOS on window resize for responsive behavior
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
       AOS.refresh();
     });
-    
+
     // Check if it's the user's first visit and open tour automatically
-    const isFirstVisit = !localStorage.getItem('dashboardVisited');
+    const isFirstVisit = !localStorage.getItem("dashboardVisited");
     if (isFirstVisit) {
       // Wait for data to load before showing tour
       setTimeout(() => {
         setTourOpen(true);
-        localStorage.setItem('dashboardVisited', 'true');
+        localStorage.setItem("dashboardVisited", "true");
       }, 1500);
     }
-    
+
     return () => {
-      window.removeEventListener('resize', () => {
+      window.removeEventListener("resize", () => {
         AOS.refresh();
       });
     };
@@ -309,7 +354,7 @@ const Dashboard = () => {
   // Handle refresh button click
   const handleRefresh = () => {
     setLoading(true);
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
   // Print menu handlers
@@ -323,7 +368,8 @@ const Dashboard = () => {
 
   // Filter menu handlers
   const handleFilterMenuOpen = (event) => {
-    setFilterMenuAnchor(event.currentTarget);
+    // setFilterMenuAnchor(event.currentTarget);
+    setMaintenanceDialogOpen(true);
   };
 
   const handleFilterMenuClose = () => {
@@ -339,10 +385,10 @@ const Dashboard = () => {
   // Simulate print functionality
   const handlePrint = (type) => {
     handlePrintMenuClose();
-    if (type === 'print') {
+    if (type === "print") {
       printDashboard(summaryData, getTimeFilterTitle());
     } else {
-      alert('PDF export functionality coming soon!');
+      alert("PDF export functionality coming soon!");
     }
   };
 
@@ -354,80 +400,84 @@ const Dashboard = () => {
   };
 
   // Enhanced fetch function with caching
-  const fetchDashboardData = useCallback(async (force = false) => {
-    try {
-      // Check cache validity (5 minutes)
-      const cacheValid = dataCache.timestamp && 
-        (Date.now() - dataCache.timestamp) < 300000 && 
-        !force;
+  const fetchDashboardData = useCallback(
+    async (force = false) => {
+      try {
+        // Check cache validity (5 minutes)
+        const cacheValid =
+          dataCache.timestamp &&
+          Date.now() - dataCache.timestamp < 300000 &&
+          !force;
 
-      if (cacheValid && dataCache.data) {
-        setSummaryData(dataCache.data);
-        setLoading(false);
-        return;
-      }
+        if (cacheValid && dataCache.data) {
+          setSummaryData(dataCache.data);
+          setLoading(false);
+          return;
+        }
 
-      setLoading(true);
-      setError(null);
+        setLoading(true);
+        setError(null);
 
-      // Calculate date parameters based on selected filter
-      const now = new Date();
-      let startDate, endDate;
-      
-      switch(timeFilter) {
-        case 'lastMonth':
-          startDate = new Date(getYear(now), getMonth(now) - 1, 1);
-          endDate = new Date(getYear(now), getMonth(now), 0);
-          break;
-        case 'lastThreeMonths':
-          startDate = new Date(getYear(now), getMonth(now) - 3, 1);
-          endDate = now;
-          break;
-        case 'lastSixMonths':
-          startDate = new Date(getYear(now), getMonth(now) - 6, 1);
-          endDate = now;
-          break;
-        case 'year':
-          startDate = new Date(getYear(now), 0, 1);
-          endDate = now;
-          break;
-        case 'current':
-        default:
-          startDate = new Date(getYear(now), getMonth(now), 1);
-          endDate = new Date(getYear(now), getMonth(now) + 1, 0);
-      }
-      
-      // Format dates for API request
-      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
-      const formattedEndDate = format(endDate, 'yyyy-MM-dd');
-      
-      const params = {
-        start_date: formattedStartDate,
-        end_date: formattedEndDate
-      };
+        // Calculate date parameters based on selected filter
+        const now = new Date();
+        let startDate, endDate;
 
-      const response = await getDashboardSummary(params);
+        switch (timeFilter) {
+          case "lastMonth":
+            startDate = new Date(getYear(now), getMonth(now) - 1, 1);
+            endDate = new Date(getYear(now), getMonth(now), 0);
+            break;
+          case "lastThreeMonths":
+            startDate = new Date(getYear(now), getMonth(now) - 3, 1);
+            endDate = now;
+            break;
+          case "lastSixMonths":
+            startDate = new Date(getYear(now), getMonth(now) - 6, 1);
+            endDate = now;
+            break;
+          case "year":
+            startDate = new Date(getYear(now), 0, 1);
+            endDate = now;
+            break;
+          case "current":
+          default:
+            startDate = new Date(getYear(now), getMonth(now), 1);
+            endDate = new Date(getYear(now), getMonth(now) + 1, 0);
+        }
 
-      if (response) {
-        setSummaryData(response);
-        setDataCache({
-          timestamp: Date.now(),
-          data: response
+        // Format dates for API request
+        const formattedStartDate = format(startDate, "yyyy-MM-dd");
+        const formattedEndDate = format(endDate, "yyyy-MM-dd");
+
+        const params = {
+          start_date: formattedStartDate,
+          end_date: formattedEndDate,
+        };
+
+        const response = await getDashboardSummary(params);
+
+        if (response) {
+          setSummaryData(response);
+          setDataCache({
+            timestamp: Date.now(),
+            data: response,
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        setError(err.message || "Failed to load dashboard data");
+        setSummaryData({
+          total_expenses: 0,
+          expenses_by_category: [],
+          trends: [],
+          budget_usage: [],
         });
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-      setError(err.message || 'Failed to load dashboard data');
-      setSummaryData({
-        total_expenses: 0,
-        expenses_by_category: [],
-        trends: [],
-        budget_usage: []
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [timeFilter, dataCache.timestamp]);
+    },
+    [timeFilter, dataCache.timestamp]
+  );
 
   // Optimize monthly analysis calculations
   const monthlyAnalysis = useMemo(() => {
@@ -438,18 +488,25 @@ const Dashboard = () => {
       averageSpending: 0,
       highestMonth: null,
       lowestMonth: null,
-      monthOverMonthGrowth: []
+      monthOverMonthGrowth: [],
     };
 
     // Single pass through the data
-    calculations.averageSpending = trends.reduce((sum, month) => sum + month.total, 0) / trends.length;
-    calculations.highestMonth = trends.reduce((max, month) => month.total > (max?.total || 0) ? month : max, trends[0]);
-    calculations.lowestMonth = trends.reduce((min, month) => month.total < (min?.total || 0) ? month : min, trends[0]);
+    calculations.averageSpending =
+      trends.reduce((sum, month) => sum + month.total, 0) / trends.length;
+    calculations.highestMonth = trends.reduce(
+      (max, month) => (month.total > (max?.total || 0) ? month : max),
+      trends[0]
+    );
+    calculations.lowestMonth = trends.reduce(
+      (min, month) => (month.total < (min?.total || 0) ? month : min),
+      trends[0]
+    );
 
     // Calculate growth in same loop
     calculations.monthOverMonthGrowth = trends.slice(0, -1).map((month, i) => ({
       period: month.period,
-      growth: ((month.total - trends[i + 1].total) / trends[i + 1].total) * 100
+      growth: ((month.total - trends[i + 1].total) / trends[i + 1].total) * 100,
     }));
 
     return calculations;
@@ -483,11 +540,17 @@ const Dashboard = () => {
   // Prepare data for category pie chart
   const pieChartData = useMemo(() => {
     return {
-      labels: summaryData?.expenses_by_category?.map(item => item.category.name) || [],
+      labels:
+        summaryData?.expenses_by_category?.map((item) => item.category.name) ||
+        [],
       datasets: [
         {
-          data: summaryData?.expenses_by_category?.map(item => item.total) || [],
-          backgroundColor: summaryData?.expenses_by_category?.map(item => item.category.color) || [],
+          data:
+            summaryData?.expenses_by_category?.map((item) => item.total) || [],
+          backgroundColor:
+            summaryData?.expenses_by_category?.map(
+              (item) => item.category.color
+            ) || [],
           borderWidth: 1,
         },
       ],
@@ -500,13 +563,13 @@ const Dashboard = () => {
 
     // Create reversed array so time flows left to right
     const reversedTrends = [...summaryData.trends].reverse();
-    
+
     return {
-      labels: reversedTrends.map(trend => trend.period),
+      labels: reversedTrends.map((trend) => trend.period),
       datasets: [
         {
-          label: 'Monthly Expenses',
-          data: reversedTrends.map(trend => trend.total),
+          label: "Monthly Expenses",
+          data: reversedTrends.map((trend) => trend.total),
           fill: true,
           borderColor: theme.palette.primary.main,
           backgroundColor: (context) => {
@@ -530,7 +593,7 @@ const Dashboard = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'right',
+        position: "right",
         labels: {
           boxWidth: 15,
           padding: 15,
@@ -551,9 +614,14 @@ const Dashboard = () => {
         callbacks: {
           label: (context) => {
             // Display category name and amount
-            const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+            const total = context.dataset.data.reduce(
+              (sum, val) => sum + val,
+              0
+            );
             const percentage = Math.round((context.parsed * 100) / total);
-            return `${context.label}: ₱${context.parsed.toFixed(2)} (${percentage}%)`;
+            return `${context.label}: ₱${context.parsed.toFixed(
+              2
+            )} (${percentage}%)`;
           },
         },
       },
@@ -572,9 +640,9 @@ const Dashboard = () => {
     plugins: {
       legend: { display: false },
       tooltip: {
-        mode: 'index',
+        mode: "index",
         intersect: false,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: "rgba(255, 255, 255, 0.9)",
         titleColor: theme.palette.text.primary,
         bodyColor: theme.palette.text.secondary,
         borderColor: theme.palette.divider,
@@ -583,124 +651,134 @@ const Dashboard = () => {
         displayColors: false,
         callbacks: {
           label: (context) => `₱${context.parsed.y.toFixed(2)}`,
-          title: (tooltipItems) => format(new Date(tooltipItems[0].label), 'MMMM yyyy')
-        }
-      }
+          title: (tooltipItems) =>
+            format(new Date(tooltipItems[0].label), "MMMM yyyy"),
+        },
+      },
     },
     scales: {
       x: {
         grid: { display: false },
-        ticks: { maxRotation: 0 }
+        ticks: { maxRotation: 0 },
       },
       y: {
         beginAtZero: true,
         grid: { color: theme.palette.divider },
         ticks: {
-          callback: (value) => `₱${value.toFixed(0)}`
-        }
-      }
+          callback: (value) => `₱${value.toFixed(0)}`,
+        },
+      },
     },
     interaction: {
       intersect: false,
-      mode: 'index'
-    }
+      mode: "index",
+    },
   };
 
   // Enhanced card component with mini-chart and fixed height
-  const StatsCard = ({ 
-    title, 
-    value, 
-    trend, 
-    color, 
-    data, 
-    icon, 
+  const StatsCard = ({
+    title,
+    value,
+    trend,
+    color,
+    data,
+    icon,
     isCount = false,
     subtitle,
     index = 0, // Used for staggered animations
-    helpText = null // New parameter for help text
+    helpText = null, // New parameter for help text
   }) => (
-    <Card 
+    <Card
       sx={{
         ...cardStyles,
-        position: 'relative',
-        overflow: 'hidden',
+        position: "relative",
+        overflow: "hidden",
         background: `linear-gradient(135deg, ${color}08 0%, ${color}02 100%)`,
         borderLeft: `4px solid ${color}`,
-        height: '100%', // Ensure all cards have same height within their grid cell
-        display: 'flex',
-        flexDirection: 'column'
+        height: "100%", // Ensure all cards have same height within their grid cell
+        display: "flex",
+        flexDirection: "column",
       }}
       data-aos="fade-up"
-      data-aos-delay={100 + (index * 100)} // Staggered delay based on card index
+      data-aos-delay={100 + index * 100} // Staggered delay based on card index
     >
-      <CardContent sx={{ 
-        p: 3, 
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        minHeight: 150 // Set minimum height for consistency
-      }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ width: '75%' }}> {/* Limit width to prevent expansion */}
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography 
-                variant="subtitle2" 
-                sx={{ 
-                  color: 'text.secondary',
+      <CardContent
+        sx={{
+          p: 3,
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          minHeight: 150, // Set minimum height for consistency
+        }}
+      >
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+          <Box sx={{ width: "75%" }}>
+            {" "}
+            {/* Limit width to prevent expansion */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: "text.secondary",
                   fontWeight: 600,
-                  fontSize: '0.875rem',
-                  mb: 0.5
+                  fontSize: "0.875rem",
+                  mb: 0.5,
                 }}
               >
                 {title}
               </Typography>
               {helpText && (
                 <Tooltip title={helpText} arrow placement="top">
-                  <InfoIcon 
-                    color="info" 
-                    fontSize="small" 
-                    sx={{ ml: 0.5, opacity: 0.7, cursor: 'help', fontSize: '16px' }} 
+                  <InfoIcon
+                    color="info"
+                    fontSize="small"
+                    sx={{
+                      ml: 0.5,
+                      opacity: 0.7,
+                      cursor: "help",
+                      fontSize: "16px",
+                    }}
                   />
                 </Tooltip>
               )}
             </Box>
-            <Typography 
-              variant="h4" 
-              sx={{ 
+            <Typography
+              variant="h4"
+              sx={{
                 fontWeight: 700,
-                color: 'text.primary',
-                fontSize: { xs: '1.5rem', md: '1.75rem' },
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
+                color: "text.primary",
+                fontSize: { xs: "1.5rem", md: "1.75rem" },
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
               {isCount ? value : `₱${value.toFixed(2)}`}
             </Typography>
             {subtitle && (
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: 'text.secondary',
-                  display: 'block',
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                  display: "block",
                   mt: 0.5,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '100%'
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "100%",
                 }}
               >
                 {subtitle}
               </Typography>
             )}
           </Box>
-          <Box 
-            sx={{ 
+          <Box
+            sx={{
               p: 1,
               borderRadius: 2,
               bgcolor: `${color}15`,
-              height: 'fit-content'
+              height: "fit-content",
             }}
           >
             {React.cloneElement(icon, { sx: { color } })}
@@ -708,13 +786,21 @@ const Dashboard = () => {
         </Box>
 
         {trend !== 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1 }}>
             <Chip
               size="small"
-              icon={trend > 0 ? <TrendingUpIcon /> : trend < 0 ? <TrendingDownIcon /> : <TrendingFlatIcon />}
-              label={`${trend > 0 ? '+' : ''}${trend.toFixed(1)}%`}
-              color={trend > 0 ? 'error' : trend < 0 ? 'success' : 'default'}
-              sx={{ height: '24px' }}
+              icon={
+                trend > 0 ? (
+                  <TrendingUpIcon />
+                ) : trend < 0 ? (
+                  <TrendingDownIcon />
+                ) : (
+                  <TrendingFlatIcon />
+                )
+              }
+              label={`${trend > 0 ? "+" : ""}${trend.toFixed(1)}%`}
+              color={trend > 0 ? "error" : trend < 0 ? "success" : "default"}
+              sx={{ height: "24px" }}
             />
             <Typography variant="caption" color="text.secondary">
               vs previous period
@@ -723,14 +809,16 @@ const Dashboard = () => {
         )}
 
         {data && (
-          <Box sx={{ 
-            position: 'absolute', 
-            bottom: 0, 
-            left: 0, 
-            right: 0, 
-            opacity: 0.2,
-            overflow: 'hidden'
-          }}>
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              opacity: 0.2,
+              overflow: "hidden",
+            }}
+          >
             <MiniChart data={data} color={color} />
           </Box>
         )}
@@ -738,175 +826,343 @@ const Dashboard = () => {
     </Card>
   );
 
- 
-
   const renderMonthlyTrends = () => (
-    <Paper 
-      sx={{ 
-        p: 3, 
-        boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+    <Paper
+      sx={{
+        p: 3,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
         borderRadius: 2,
-        height: '100%',
-        background: 'white'
+        height: "100%",
+        background: "white",
       }}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 500, color: 'text.primary' }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 500, color: "text.primary" }}
+          >
             Monthly Spending Analysis
           </Typography>
-          <Tooltip title="See how your spending changes over time and identify trends" arrow placement="top">
-            <InfoIcon color="info" fontSize="small" sx={{ ml: 1, opacity: 0.7, cursor: 'help' }} />
+          <Tooltip
+            title="See how your spending changes over time and identify trends"
+            arrow
+            placement="top"
+          >
+            <InfoIcon
+              color="info"
+              fontSize="small"
+              sx={{ ml: 1, opacity: 0.7, cursor: "help" }}
+            />
           </Tooltip>
         </Box>
-        
+
         <Button
           size="small"
           startIcon={<HelpIcon />}
-          sx={{ 
-            textTransform: 'none',
+          sx={{
+            textTransform: "none",
             color: theme.palette.primary.main,
             borderColor: theme.palette.primary.main,
-            borderRadius: 1.5
+            borderRadius: 1.5,
           }}
           variant="outlined"
-          onClick={() => openHelpDialog(
-            "Understanding Your Monthly Trends", 
-            "This chart shows how your expenses change over time. Look for patterns to help identify seasonal spending, unexpected costs, or areas where you might save money."
-          )}
+          onClick={() =>
+            openHelpDialog(
+              "Understanding Your Monthly Trends",
+              "This chart shows how your expenses change over time. Look for patterns to help identify seasonal spending, unexpected costs, or areas where you might save money."
+            )
+          }
         >
           Learn More
         </Button>
       </Box>
-      
-      <Box 
-        sx={{ 
-          height: 300, 
+
+      <Box
+        sx={{
+          height: 300,
           mb: 4,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         {summaryData?.trends?.length > 0 ? (
           <Line data={lineChartData} options={lineChartOptions} />
         ) : (
-          <Box sx={{ textAlign: 'center', color: 'text.secondary' }}>
+          <Box sx={{ textAlign: "center", color: "text.secondary" }}>
             <ShowChartIcon sx={{ fontSize: 60, opacity: 0.3, mb: 2 }} />
             <Typography>No spending trend data available yet</Typography>
-            <Typography variant="caption">Start tracking your expenses to see trends over time</Typography>
+            <Typography variant="caption">
+              Start tracking your expenses to see trends over time
+            </Typography>
           </Box>
         )}
       </Box>
-      
+
       {monthlyAnalysis && (
         <>
           {/* Monthly Insights Table */}
           <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
             Monthly Insights
           </Typography>
-          <Box sx={{ 
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 1,
-            overflow: 'hidden',
-            mb: 3
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <Box
+            sx={{
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 1,
+              overflow: "hidden",
+              mb: 3,
+            }}
+          >
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ backgroundColor: 'rgba(0, 0, 0, 0.04)' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, fontSize: '14px' }}>Metric</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '14px' }}>Value</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, fontSize: '14px' }}>Period</th>
+                <tr style={{ backgroundColor: "rgba(0, 0, 0, 0.04)" }}>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 600,
+                      fontSize: "14px",
+                    }}
+                  >
+                    Metric
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 600,
+                      fontSize: "14px",
+                    }}
+                  >
+                    Value
+                  </th>
+                  <th
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      fontWeight: 600,
+                      fontSize: "14px",
+                    }}
+                  >
+                    Period
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td style={{ padding: '12px 16px', borderTop: '1px solid rgba(0, 0, 0, 0.1)' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ bgcolor: theme.palette.primary.main, width: 8, height: 8, borderRadius: '50%', mr: 1.5 }} />
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box
+                        sx={{
+                          bgcolor: theme.palette.primary.main,
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          mr: 1.5,
+                        }}
+                      />
                       Average Monthly Spending
                     </Box>
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', borderTop: '1px solid rgba(0, 0, 0, 0.1)', fontWeight: 500 }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                      fontWeight: 500,
+                    }}
+                  >
                     ₱{monthlyAnalysis.averageSpending.toFixed(2)}
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', borderTop: '1px solid rgba(0, 0, 0, 0.1)', color: 'text.secondary', fontSize: '14px' }}>
-                    Based on {summaryData?.trends?.length} {summaryData?.trends?.length === 1 ? 'month' : 'months'}
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                      color: "text.secondary",
+                      fontSize: "14px",
+                    }}
+                  >
+                    Based on {summaryData?.trends?.length}{" "}
+                    {summaryData?.trends?.length === 1 ? "month" : "months"}
                   </td>
                 </tr>
-  
+
                 <tr>
-                  <td style={{ padding: '12px 16px', borderTop: '1px solid rgba(0, 0, 0, 0.1)' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ bgcolor: theme.palette.error.main, width: 8, height: 8, borderRadius: '50%', mr: 1.5 }} />
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box
+                        sx={{
+                          bgcolor: theme.palette.error.main,
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          mr: 1.5,
+                        }}
+                      />
                       Highest Spending Month
                     </Box>
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', borderTop: '1px solid rgba(0, 0, 0, 0.1)', fontWeight: 500 }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                      fontWeight: 500,
+                    }}
+                  >
                     ₱{monthlyAnalysis.highestMonth.total.toFixed(2)}
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', borderTop: '1px solid rgba(0, 0, 0, 0.1)', color: 'text.secondary', fontSize: '14px' }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                      color: "text.secondary",
+                      fontSize: "14px",
+                    }}
+                  >
                     {monthlyAnalysis.highestMonth.period}
                   </td>
                 </tr>
-  
+
                 <tr>
-                  <td style={{ padding: '12px 16px', borderTop: '1px solid rgba(0, 0, 0, 0.1)' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Box sx={{ bgcolor: theme.palette.success.main, width: 8, height: 8, borderRadius: '50%', mr: 1.5 }} />
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                    }}
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box
+                        sx={{
+                          bgcolor: theme.palette.success.main,
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          mr: 1.5,
+                        }}
+                      />
                       Lowest Spending Month
                     </Box>
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', borderTop: '1px solid rgba(0, 0, 0, 0.1)', fontWeight: 500 }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                      fontWeight: 500,
+                    }}
+                  >
                     ₱{monthlyAnalysis.lowestMonth.total.toFixed(2)}
                   </td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right', borderTop: '1px solid rgba(0, 0, 0, 0.1)', color: 'text.secondary', fontSize: '14px' }}>
+                  <td
+                    style={{
+                      padding: "12px 16px",
+                      textAlign: "right",
+                      borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+                      color: "text.secondary",
+                      fontSize: "14px",
+                    }}
+                  >
                     {monthlyAnalysis.lowestMonth.period}
                   </td>
                 </tr>
               </tbody>
             </table>
           </Box>
-  
+
           {/* Spending Trend Analysis */}
           {monthlyAnalysis.monthOverMonthGrowth.length > 0 && (
             <Box sx={{ mt: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Spending Trend Analysis
                 </Typography>
-                <Tooltip title="Shows whether your expenses are increasing or decreasing over time" arrow>
-                  <InfoIcon sx={{ ml: 1, fontSize: 16, color: 'text.secondary', opacity: 0.7 }} />
+                <Tooltip
+                  title="Shows whether your expenses are increasing or decreasing over time"
+                  arrow
+                >
+                  <InfoIcon
+                    sx={{
+                      ml: 1,
+                      fontSize: 16,
+                      color: "text.secondary",
+                      opacity: 0.7,
+                    }}
+                  />
                 </Tooltip>
               </Box>
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 1,
+                }}
+              >
                 {/* Trend direction indicator */}
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  p: 1.5, 
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  mr: 2
-                }}>
-                  {monthlyAnalysis.monthOverMonthGrowth.reduce((acc, curr) => acc + curr.growth, 0) > 0 ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    p: 1.5,
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    mr: 2,
+                  }}
+                >
+                  {monthlyAnalysis.monthOverMonthGrowth.reduce(
+                    (acc, curr) => acc + curr.growth,
+                    0
+                  ) > 0 ? (
                     <>
-                      <TrendingUpIcon sx={{ color: theme.palette.error.main, mr: 1 }} />
+                      <TrendingUpIcon
+                        sx={{ color: theme.palette.error.main, mr: 1 }}
+                      />
                       <Box>
-                        <Typography variant="body2" fontWeight={500}>Increasing Trend</Typography>
-                        <Typography variant="caption" color="text.secondary">Your spending is rising over time</Typography>
+                        <Typography variant="body2" fontWeight={500}>
+                          Increasing Trend
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Your spending is rising over time
+                        </Typography>
                       </Box>
                     </>
                   ) : (
                     <>
-                      <TrendingDownIcon sx={{ color: theme.palette.success.main, mr: 1 }} />
+                      <TrendingDownIcon
+                        sx={{ color: theme.palette.success.main, mr: 1 }}
+                      />
                       <Box>
-                        <Typography variant="body2" fontWeight={500}>Decreasing Trend</Typography>
-                        <Typography variant="caption" color="text.secondary">Your spending is declining over time</Typography>
+                        <Typography variant="body2" fontWeight={500}>
+                          Decreasing Trend
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Your spending is declining over time
+                        </Typography>
                       </Box>
                     </>
                   )}
@@ -928,41 +1184,52 @@ const Dashboard = () => {
           value={summaryData?.total_expenses || 0}
           trend={monthlyAnalysis?.monthOverMonthGrowth?.[0]?.growth || 0}
           color={theme.palette.primary.main}
-          data={summaryData?.trends?.map(t => t.total)}
+          data={summaryData?.trends?.map((t) => t.total)}
           icon={<MonetizationOnIcon />}
           index={0}
           helpText="The total amount you've spent during the selected time period"
         />
       </Grid>
-  
+
       {/* Fix: Remove "const render" from this Grid item declaration */}
       <Grid item xs={12} sm={6} md={3}>
         <StatsCard
           title="Average Monthly"
           value={monthlyAnalysis?.averageSpending || 0}
-          trend={((summaryData?.total_expenses || 0) / (monthlyAnalysis?.averageSpending || 1) - 1) * 100}
+          trend={
+            ((summaryData?.total_expenses || 0) /
+              (monthlyAnalysis?.averageSpending || 1) -
+              1) *
+            100
+          }
           color={theme.palette.info.main}
-          data={summaryData?.trends?.map(t => t.total)}
+          data={summaryData?.trends?.map((t) => t.total)}
           icon={<AccountBalanceIcon />}
           index={1}
           helpText="Your average monthly spending - helps you understand your typical expenses"
         />
-      </Grid> 
-  
+      </Grid>
+
       <Grid item xs={12} sm={6} md={3}>
         <StatsCard
           title="Highest Category"
-          value={Math.max(...(summaryData?.expenses_by_category?.map(c => c.total) || [0]))}
+          value={Math.max(
+            ...(summaryData?.expenses_by_category?.map((c) => c.total) || [0])
+          )}
           trend={0}
           color={theme.palette.warning.main}
           icon={<AssessmentIcon />}
-          data={summaryData?.expenses_by_category?.map(c => c.total)}
-          subtitle={summaryData?.expenses_by_category?.sort((a, b) => b.total - a.total)[0]?.category?.name}
+          data={summaryData?.expenses_by_category?.map((c) => c.total)}
+          subtitle={
+            summaryData?.expenses_by_category?.sort(
+              (a, b) => b.total - a.total
+            )[0]?.category?.name
+          }
           index={2}
           helpText="Your biggest spending category for this period"
         />
       </Grid>
-  
+
       <Grid item xs={12} sm={6} md={3}>
         <StatsCard
           title="Active Categories"
@@ -982,84 +1249,101 @@ const Dashboard = () => {
   const renderBudgetSection = () => {
     // Create a map of category names to their colors from the expenses_by_category data
     const categoryColorMap = {};
-    summaryData?.expenses_by_category?.forEach(item => {
+    summaryData?.expenses_by_category?.forEach((item) => {
       categoryColorMap[item.category.name] = item.category.color;
     });
 
     return (
-      <Paper 
-        sx={{ 
-          ...cardStyles, 
+      <Paper
+        sx={{
+          ...cardStyles,
           p: 3,
-          height: '100%'
+          height: "100%",
         }}
         data-aos="fade-up"
         data-aos-delay="300"
       >
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          mb: 3 
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography variant="h6" sx={{ fontWeight: 500 }}>
               Budget Overview
             </Typography>
-            <Tooltip title="Track your spending against your budget limits for each category" arrow placement="top">
-              <InfoIcon color="info" fontSize="small" sx={{ ml: 1, opacity: 0.7, cursor: 'help' }} />
+            <Tooltip
+              title="Track your spending against your budget limits for each category"
+              arrow
+              placement="top"
+            >
+              <InfoIcon
+                color="info"
+                fontSize="small"
+                sx={{ ml: 1, opacity: 0.7, cursor: "help" }}
+              />
             </Tooltip>
           </Box>
-          
-          <Box sx={{ display: 'flex', gap: 1 }}>
+
+          <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               size="small"
               startIcon={<HelpIcon />}
-              onClick={() => openHelpDialog(
-                "Understanding Your Budget Overview", 
-                "Budget bars show how close you are to your spending limits. Green means you're well under budget, yellow means you're approaching your limit, and red means you've exceeded it. Managing your budget helps you control spending and save money for your financial goals."
-              )}
-              sx={{ textTransform: 'none' }}
+              onClick={() =>
+                openHelpDialog(
+                  "Understanding Your Budget Overview",
+                  "Budget bars show how close you are to your spending limits. Green means you're well under budget, yellow means you're approaching your limit, and red means you've exceeded it. Managing your budget helps you control spending and save money for your financial goals."
+                )
+              }
+              sx={{ textTransform: "none" }}
             >
               How to Read
             </Button>
-            
+
             <Button
               variant="outlined"
               size="small"
               href="/budgets"
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: "none" }}
             >
               Manage Budgets
             </Button>
           </Box>
         </Box>
-        
+
         {!summaryData?.budget_usage?.length ? (
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
-              py: 4, 
-              color: 'text.secondary',
-              bgcolor: 'background.paper',
+          <Box
+            sx={{
+              textAlign: "center",
+              py: 4,
+              color: "text.secondary",
+              bgcolor: "background.paper",
               borderRadius: 2,
-              border: '1px dashed',
-              borderColor: 'divider'
+              border: "1px dashed",
+              borderColor: "divider",
             }}
             data-aos="fade-up"
           >
-            <AccountBalanceWalletIcon sx={{ fontSize: 60, opacity: 0.3, mb: 2 }} />
-            <Typography variant="h6" sx={{ mb: 1 }}>No Budget Data Yet</Typography>
-            <Typography sx={{ mb: 2 }}>
-              Setting up budgets helps you control spending and reach your financial goals
+            <AccountBalanceWalletIcon
+              sx={{ fontSize: 60, opacity: 0.3, mb: 2 }}
+            />
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              No Budget Data Yet
             </Typography>
-            <Button 
-              variant="contained" 
+            <Typography sx={{ mb: 2 }}>
+              Setting up budgets helps you control spending and reach your
+              financial goals
+            </Typography>
+            <Button
+              variant="contained"
               href="/budgets"
-              sx={{ 
+              sx={{
                 borderRadius: 8,
                 px: 3,
-                boxShadow: 2
+                boxShadow: 2,
               }}
             >
               Create Your First Budget
@@ -1068,119 +1352,131 @@ const Dashboard = () => {
         ) : (
           <>
             {/* Legend explanation */}
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                gap: 2, 
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
                 mb: 3,
-                flexWrap: 'wrap'
+                flexWrap: "wrap",
               }}
               data-aos="fade-up"
             >
-              <Chip 
-                size="small" 
-                label="Under Budget" 
-                sx={{ bgcolor: theme.palette.success.main, color: 'white' }} 
+              <Chip
+                size="small"
+                label="Under Budget"
+                sx={{ bgcolor: theme.palette.success.main, color: "white" }}
               />
-              <Chip 
-                size="small" 
-                label="Near Limit (>80%)" 
-                sx={{ bgcolor: theme.palette.warning.main, color: 'white' }} 
+              <Chip
+                size="small"
+                label="Near Limit (>80%)"
+                sx={{ bgcolor: theme.palette.warning.main, color: "white" }}
               />
-              <Chip 
-                size="small" 
-                label="Over Budget" 
-                sx={{ bgcolor: theme.palette.error.main, color: 'white' }} 
+              <Chip
+                size="small"
+                label="Over Budget"
+                sx={{ bgcolor: theme.palette.error.main, color: "white" }}
               />
             </Box>
-            
+
             {summaryData?.budget_usage?.map((budget, index) => {
               // Get the color for this category from the map, or use a default color
-              const categoryColor = categoryColorMap[budget.category] || theme.palette.primary.main;
-              
+              const categoryColor =
+                categoryColorMap[budget.category] || theme.palette.primary.main;
+
               // Determine progress bar color based on percentage
-              const progressColor = budget.percentage > 100 ? theme.palette.error.main : 
-                                  budget.percentage > 80 ? theme.palette.warning.main : 
-                                  theme.palette.success.main;
-              
+              const progressColor =
+                budget.percentage > 100
+                  ? theme.palette.error.main
+                  : budget.percentage > 80
+                  ? theme.palette.warning.main
+                  : theme.palette.success.main;
+
               return (
-                <Box 
-                  key={index} 
+                <Box
+                  key={index}
                   sx={{ mb: 3 }}
                   data-aos="fade-right"
-                  data-aos-delay={400 + (index * 50)}
+                  data-aos-delay={400 + index * 50}
                   data-aos-duration={600}
                 >
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    mb: 1
-                  }}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 1,
-                      width: '60%' // Limit width for category name
-                    }}>
-                      <Box 
-                        sx={{ 
-                          width: 12, 
-                          height: 12, 
-                          borderRadius: '50%', 
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        width: "60%", // Limit width for category name
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: "50%",
                           bgcolor: categoryColor,
-                          flexShrink: 0
-                        }} 
+                          flexShrink: 0,
+                        }}
                       />
-                      <Typography 
-                        variant="body1" 
-                        sx={{ 
+                      <Typography
+                        variant="body1"
+                        sx={{
                           fontWeight: 500,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
                         {budget.category}
                       </Typography>
                     </Box>
-                    <Typography 
+                    <Typography
                       variant="body2"
-                      color={budget.percentage > 100 ? 'error.main' : 'text.secondary'}
+                      color={
+                        budget.percentage > 100
+                          ? "error.main"
+                          : "text.secondary"
+                      }
                       sx={{
-                        whiteSpace: 'nowrap'
+                        whiteSpace: "nowrap",
                       }}
                     >
                       ₱{budget.spent.toFixed(2)} / ₱{budget.budget.toFixed(2)}
                     </Typography>
                   </Box>
-                  
-                  <Box sx={{ position: 'relative' }}>
+
+                  <Box sx={{ position: "relative" }}>
                     <LinearProgress
                       variant="determinate"
                       value={Math.min(budget.percentage, 100)}
                       sx={{
                         height: 10,
                         borderRadius: 5,
-                        bgcolor: 'background.paper',
-                        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)',
-                        '& .MuiLinearProgress-bar': {
+                        bgcolor: "background.paper",
+                        boxShadow: "inset 0 1px 2px rgba(0,0,0,0.1)",
+                        "& .MuiLinearProgress-bar": {
                           borderRadius: 5,
-                          transition: 'transform 0.4s ease',
-                          backgroundColor: progressColor
-                        }
+                          transition: "transform 0.4s ease",
+                          backgroundColor: progressColor,
+                        },
                       }}
                     />
                     <Typography
                       variant="caption"
                       sx={{
-                        position: 'absolute',
-                        right: '8px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: 'white',
-                        textShadow: '0 0 2px rgba(0,0,0,0.5)',
-                        zIndex: 1
+                        position: "absolute",
+                        right: "8px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        color: "white",
+                        textShadow: "0 0 2px rgba(0,0,0,0.5)",
+                        zIndex: 1,
                       }}
                     >
                       {budget.percentage.toFixed(0)}%
@@ -1189,28 +1485,32 @@ const Dashboard = () => {
                 </Box>
               );
             })}
-            
+
             {/* Helpful tips section */}
-            <Box 
-              sx={{ 
-                mt: 4, 
-                p: 2, 
-                borderRadius: 2, 
-                bgcolor: 'primary.light',
-                color: 'primary.contrastText',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 2
+            <Box
+              sx={{
+                mt: 4,
+                p: 2,
+                borderRadius: 2,
+                bgcolor: "primary.light",
+                color: "primary.contrastText",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 2,
               }}
               data-aos="fade-up"
               data-aos-delay="700"
             >
               <InfoIcon color="inherit" sx={{ mt: 0.5 }} />
               <Box>
-                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>Budget Tip</Typography>
+                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                  Budget Tip
+                </Typography>
                 <Typography variant="body2">
-                  A common budgeting approach is the 50/30/20 rule: 50% for needs, 30% for wants, and 20% for savings. 
-                  Track your expenses for a few months to identify your spending patterns before setting strict budgets.
+                  A common budgeting approach is the 50/30/20 rule: 50% for
+                  needs, 30% for wants, and 20% for savings. Track your expenses
+                  for a few months to identify your spending patterns before
+                  setting strict budgets.
                 </Typography>
               </Box>
             </Box>
@@ -1220,59 +1520,189 @@ const Dashboard = () => {
     );
   };
 
-  // Render expense distribution section
-  const renderExpenseDistribution = () => (
-    <Paper 
-      sx={{
-        p: 3,
-        boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-        borderRadius: 2,
-        height: '100%',
-        background: 'white'
+  // Maintenance Dialog
+  const renderMaintenanceDialog = () => (
+    <Dialog
+      open={maintenanceDialogOpen}
+      onClose={() => setMaintenanceDialogOpen(false)}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          overflow: "hidden",
+        },
       }}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 500, color: 'text.primary' }}>
+      <Box
+        sx={{
+          bgcolor: "warning.main",
+          py: 1.5,
+          px: 3,
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+        }}
+      >
+        <DateRangeIcon sx={{ color: "white" }} />
+        <DialogTitle
+          sx={{
+            color: "white",
+            p: 0,
+            fontWeight: 600,
+          }}
+        >
+          Feature Temporarily Unavailable
+        </DialogTitle>
+      </Box>
+      <DialogContent sx={{ pt: 3, pb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <Box
+            sx={{
+              p: 2,
+              mb: 2,
+              bgcolor: "warning.light",
+              borderRadius: "50%",
+              color: "warning.dark",
+            }}
+          >
+            <DateRangeIcon sx={{ fontSize: 40 }} />
+          </Box>
+
+          <Typography variant="h6" gutterBottom>
+            Under Maintenance
+          </Typography>
+
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            We're enhancing the date filtering functionality to provide you with
+            more accurate and useful insights.
+          </Typography>
+
+          <Typography variant="body2" color="text.secondary">
+            This feature will be available soon. In the meantime, you can use
+            the current view or contact support if you need specific date range
+            data.
+          </Typography>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button
+          onClick={() => setMaintenanceDialogOpen(false)}
+          variant="outlined"
+          sx={{ mr: 1 }}
+        >
+          Close
+        </Button>
+        <Button
+          variant="contained"
+          color="warning"
+          onClick={() => {
+            setMaintenanceDialogOpen(false);
+            // You could replace this with a help desk link or support contact
+            alert("Support contact: support@expensetracker.app");
+          }}
+        >
+          Contact Support
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+  // Render expense distribution section
+  const renderExpenseDistribution = () => (
+    <Paper
+      sx={{
+        p: 3,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+        borderRadius: 2,
+        height: "100%",
+        background: "white",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 500, color: "text.primary" }}
+          >
             Expense Distribution
           </Typography>
-          <Tooltip title="See how your spending is distributed across different categories" arrow placement="top">
-            <InfoIcon color="info" fontSize="small" sx={{ ml: 1, opacity: 0.7, cursor: 'help' }} />
+          <Tooltip
+            title="See how your spending is distributed across different categories"
+            arrow
+            placement="top"
+          >
+            <InfoIcon
+              color="info"
+              fontSize="small"
+              sx={{ ml: 1, opacity: 0.7, cursor: "help" }}
+            />
           </Tooltip>
         </Box>
       </Box>
-      
-      <Box sx={{ 
-        height: 280,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        mb: 3
-      }}>
+
+      <Box
+        sx={{
+          height: 280,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mb: 3,
+        }}
+      >
         {pieChartData.labels.length > 0 ? (
-          <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-            <Pie data={pieChartData} options={{
-              ...pieChartOptions,
-              plugins: {
-                ...pieChartOptions.plugins,
-                legend: {
-                  position: 'bottom',
-                  labels: {
-                    usePointStyle: true,
-                    padding: 15,
-                    boxWidth: 8,
-                    font: {
-                      size: 11
-                    }
-                  }
-                }
-              },
-              cutout: '50%' // Makes it a donut chart
-            }} />
+          <div style={{ width: "100%", height: "100%", position: "relative" }}>
+            <Pie
+              data={pieChartData}
+              options={{
+                ...pieChartOptions,
+                plugins: {
+                  ...pieChartOptions.plugins,
+                  legend: {
+                    position: "bottom",
+                    labels: {
+                      usePointStyle: true,
+                      padding: 15,
+                      boxWidth: 8,
+                      font: {
+                        size: 11,
+                      },
+                    },
+                  },
+                },
+                cutout: "50%", // Makes it a donut chart
+              }}
+            />
           </div>
         ) : (
-          <Box display="flex" alignItems="center" justifyContent="center" height="100%" flexDirection="column">
-            <CategoryIcon sx={{ fontSize: 60, opacity: 0.3, mb: 2, color: 'text.secondary' }} />
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            height="100%"
+            flexDirection="column"
+          >
+            <CategoryIcon
+              sx={{
+                fontSize: 60,
+                opacity: 0.3,
+                mb: 2,
+                color: "text.secondary",
+              }}
+            />
             <Typography variant="body1" color="text.secondary">
               No expense data available
             </Typography>
@@ -1282,73 +1712,84 @@ const Dashboard = () => {
           </Box>
         )}
       </Box>
-      
+
       {pieChartData.labels.length > 0 && (
         <Box sx={{ mt: 2 }}>
           <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
             Category Breakdown
           </Typography>
-          <Box sx={{ maxHeight: 200, overflowY: 'auto', pr: 1 }}>
+          <Box sx={{ maxHeight: 200, overflowY: "auto", pr: 1 }}>
             {summaryData?.expenses_by_category
               ?.sort((a, b) => b.total - a.total)
               .map((category, index) => (
-                <Box 
-                  key={index} 
-                  sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
+                <Box
+                  key={index}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                     mb: 1.5,
                     pb: 1,
-                    borderBottom: index < summaryData.expenses_by_category.length - 1 ? '1px solid' : 'none',
-                    borderColor: 'divider'
+                    borderBottom:
+                      index < summaryData.expenses_by_category.length - 1
+                        ? "1px solid"
+                        : "none",
+                    borderColor: "divider",
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box 
-                      sx={{ 
-                        width: 10, 
-                        height: 10, 
-                        borderRadius: '50%', 
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
                         bgcolor: category.category.color,
-                        mr: 1.5
-                      }} 
+                        mr: 1.5,
+                      }}
                     />
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                       {category.category.name}
                     </Typography>
                   </Box>
-                  <Box sx={{ textAlign: 'right' }}>
+                  <Box sx={{ textAlign: "right" }}>
                     <Typography variant="body2" sx={{ fontWeight: 500 }}>
                       ₱{category.total.toFixed(2)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {((category.total / summaryData.total_expenses) * 100).toFixed(1)}%
+                      {(
+                        (category.total / summaryData.total_expenses) *
+                        100
+                      ).toFixed(1)}
+                      %
                     </Typography>
                   </Box>
                 </Box>
-              ))
-            }
+              ))}
           </Box>
         </Box>
       )}
-      
+
       {pieChartData.labels.length > 0 && (
-        <Box 
-          sx={{ 
-            mt: 3, 
-            p: 2, 
-            borderRadius: 2, 
-            bgcolor: 'rgba(25, 118, 210, 0.05)',
-            border: '1px solid',
-            borderColor: 'rgba(25, 118, 210, 0.1)'
+        <Box
+          sx={{
+            mt: 3,
+            p: 2,
+            borderRadius: 2,
+            bgcolor: "rgba(25, 118, 210, 0.05)",
+            border: "1px solid",
+            borderColor: "rgba(25, 118, 210, 0.1)",
           }}
         >
-          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: theme.palette.primary.main }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 1, fontWeight: 600, color: theme.palette.primary.main }}
+          >
             Tip: Budget Allocation
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Focus on reducing expenses in your largest categories for the biggest impact on your finances. Consider setting budget limits for categories that exceed 20% of your total spending.
+            Focus on reducing expenses in your largest categories for the
+            biggest impact on your finances. Consider setting budget limits for
+            categories that exceed 20% of your total spending.
           </Typography>
         </Box>
       )}
@@ -1356,28 +1797,33 @@ const Dashboard = () => {
   );
   // Function to get filter title
   const getTimeFilterTitle = () => {
-    switch(timeFilter) {
-      case 'lastMonth': return 'Last Month';
-      case 'lastThreeMonths': return 'Last 3 Months';
-      case 'lastSixMonths': return 'Last 6 Months';
-      case 'year': return 'This Year';
-      case 'current':
-      default: return 'Current Month';
+    switch (timeFilter) {
+      case "lastMonth":
+        return "Last Month";
+      case "lastThreeMonths":
+        return "Last 3 Months";
+      case "lastSixMonths":
+        return "Last 6 Months";
+      case "year":
+        return "This Year";
+      case "current":
+      default:
+        return "Current Month";
     }
   };
 
   // Enhanced styles for dashboard components
   const cardStyles = {
-    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-    borderRadius: '16px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-    transition: 'all 0.3s ease',
-    border: '1px solid rgba(0,0,0,0.05)',
-    overflow: 'hidden',
-    '&:hover': {
-      transform: 'translateY(-5px)',
-      boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-    }
+    background: "linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
+    borderRadius: "16px",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+    transition: "all 0.3s ease",
+    border: "1px solid rgba(0,0,0,0.05)",
+    overflow: "hidden",
+    "&:hover": {
+      transform: "translateY(-5px)",
+      boxShadow: "0 8px 25px rgba(0,0,0,0.1)",
+    },
   };
 
   // Enhanced print menu
@@ -1390,29 +1836,39 @@ const Dashboard = () => {
         elevation: 3,
         sx: {
           minWidth: 200,
-          borderRadius: '12px',
+          borderRadius: "12px",
           mt: 1,
-        }
+        },
       }}
     >
-      <MenuItem onClick={() => {
-        handlePrintMenuClose();
-        printDashboard(summaryData, getTimeFilterTitle());
-      }}>
+      <MenuItem
+        onClick={() => {
+          handlePrintMenuClose();
+          printDashboard(summaryData, getTimeFilterTitle());
+        }}
+      >
         <ListItemIcon>
           <PrintIcon fontSize="small" />
         </ListItemIcon>
-        <ListItemText primary="Print Report" secondary="Create a printable version" />
+        <ListItemText
+          primary="Print Report"
+          secondary="Create a printable version"
+        />
       </MenuItem>
-      <MenuItem onClick={() => {
-        handlePrintMenuClose();
-        // Here you can implement PDF export
-        alert('PDF export functionality coming soon!');
-      }}>
+      <MenuItem
+        onClick={() => {
+          handlePrintMenuClose();
+          // Here you can implement PDF export
+          alert("PDF export functionality coming soon!");
+        }}
+      >
         <ListItemIcon>
           <PdfIcon fontSize="small" />
         </ListItemIcon>
-        <ListItemText primary="Export as PDF" secondary="Save for your records" />
+        <ListItemText
+          primary="Export as PDF"
+          secondary="Save for your records"
+        />
       </MenuItem>
     </Menu>
   );
@@ -1427,27 +1883,27 @@ const Dashboard = () => {
         elevation: 3,
         sx: {
           minWidth: 200,
-          borderRadius: '12px',
+          borderRadius: "12px",
           mt: 1,
-          '& .MuiMenuItem-root': {
+          "& .MuiMenuItem-root": {
             py: 1.5,
-            transition: 'background-color 0.2s',
-            '&.Mui-selected': {
-              backgroundColor: 'primary.light',
-              '&:hover': {
-                backgroundColor: 'primary.light',
-              }
-            }
-          }
-        }
+            transition: "background-color 0.2s",
+            "&.Mui-selected": {
+              backgroundColor: "primary.light",
+              "&:hover": {
+                backgroundColor: "primary.light",
+              },
+            },
+          },
+        },
       }}
     >
       {[
-        { value: 'current', label: 'Current Month' },
-        { value: 'lastMonth', label: 'Last Month' },
-        { value: 'lastThreeMonths', label: 'Last 3 Months' },
-        { value: 'lastSixMonths', label: 'Last 6 Months' },
-        { value: 'year', label: 'This Year' }
+        { value: "current", label: "Current Month" },
+        { value: "lastMonth", label: "Last Month" },
+        { value: "lastThreeMonths", label: "Last 3 Months" },
+        { value: "lastSixMonths", label: "Last 6 Months" },
+        { value: "year", label: "This Year" },
       ].map((option) => (
         <MenuItem
           key={option.value}
@@ -1455,17 +1911,17 @@ const Dashboard = () => {
           onClick={() => handleTimeFilterChange(option.value)}
         >
           <ListItemIcon>
-            <DateRangeIcon 
-              fontSize="small" 
-              sx={{ 
-                color: timeFilter === option.value ? 'primary.main' : 'inherit'
-              }} 
+            <DateRangeIcon
+              fontSize="small"
+              sx={{
+                color: timeFilter === option.value ? "primary.main" : "inherit",
+              }}
             />
           </ListItemIcon>
-          <ListItemText 
+          <ListItemText
             primary={option.label}
             primaryTypographyProps={{
-              fontWeight: timeFilter === option.value ? 600 : 400
+              fontWeight: timeFilter === option.value ? 600 : 400,
             }}
           />
         </MenuItem>
@@ -1474,315 +1930,402 @@ const Dashboard = () => {
   );
 
   // Optimized rendering with load states
-// Optimized rendering with load states
-const renderContent = () => {
-  if (loading && !summaryData) {
-    return <LoadingPlaceholder />;
-  }
+  // Optimized rendering with load states
+  const renderContent = () => {
+    if (loading && !summaryData) {
+      return <LoadingPlaceholder />;
+    }
 
-  if (error && !summaryData) {
-    return <ErrorDisplay error={error} onRetry={() => fetchDashboardData(true)} />;
-  }
+    if (error && !summaryData) {
+      return (
+        <ErrorDisplay error={error} onRetry={() => fetchDashboardData(true)} />
+      );
+    }
 
-  // Calculate trend percentage for Total Expenses
-  const totalExpensesTrend = monthlyAnalysis?.monthOverMonthGrowth?.[0]?.growth || 0;
-  
-  // Find highest category and its value
-  const highestCategory = summaryData?.expenses_by_category
-    ?.sort((a, b) => b.total - a.total)[0] || { category: { name: '' }, total: 0 };
+    // Calculate trend percentage for Total Expenses
+    const totalExpensesTrend =
+      monthlyAnalysis?.monthOverMonthGrowth?.[0]?.growth || 0;
 
-  return (
-    <>
-      {/* New Summary Cards - Matching Image Design with Dynamic Data */}
-      <Grid container spacing={3} mb={4}>
-  {/* Total Expenses Card */}
-  <Grid item xs={12} sm={6} md={3}>
-    <Card sx={{ 
-      borderRadius: 2, 
-      background: 'linear-gradient(135deg, #FF9F9F 0%, #FF5F7E 100%)',
-      boxShadow: '0 4px 20px rgba(255, 95, 126, 0.3)',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <CardContent sx={{ position: 'relative', padding: 3, color: 'white', zIndex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="medium" sx={{ opacity: 0.9, mb: 0.5 }}>
-          Total Expenses
-        </Typography>
-        
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-          ₱{(summaryData?.total_expenses || 0).toFixed(2)}
-        </Typography>
-        
-        {totalExpensesTrend !== 0 && (
-          <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
-            {totalExpensesTrend > 0 ? <TrendingUpIcon fontSize="small" sx={{ mr: 0.5 }} /> : <TrendingDownIcon fontSize="small" sx={{ mr: 0.5 }} />}
-            {totalExpensesTrend > 0 ? 'Increased' : 'Decreased'} by {Math.abs(totalExpensesTrend).toFixed(1)}%
-          </Typography>
-        )}
-        
-        {/* Icon in top right */}
-        <IconButton 
-          sx={{ 
-            position: 'absolute', 
-            top: 16, 
-            right: 16, 
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            p: 1,
-            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
-          }}
-        >
-          <ShowChartIcon sx={{ color: 'white', fontSize: 20 }} />
-        </IconButton>
-        
-        {/* Decorative circles */}
-        <Box sx={{
-          position: 'absolute',
-          top: -30,
-          right: -30,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          bottom: -40,
-          right: 30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-      </CardContent>
-    </Card>
-  </Grid>
-  
-  {/* Average Monthly Card */}
-  <Grid item xs={12} sm={6} md={3}>
-    <Card sx={{ 
-      borderRadius: 2, 
-      background: 'linear-gradient(135deg, #7BB5FF 0%, #5F8FFF 100%)',
-      boxShadow: '0 4px 20px rgba(95, 143, 255, 0.3)',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <CardContent sx={{ position: 'relative', padding: 3, color: 'white', zIndex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="medium" sx={{ opacity: 0.9, mb: 0.5 }}>
-          Average Monthly
-        </Typography>
-        
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-          ₱{(monthlyAnalysis?.averageSpending || 0).toFixed(2)}
-        </Typography>
-        
-        <Typography variant="body2">
-          vs previous period
-        </Typography>
-        
-        {/* Icon in top right */}
-        <IconButton 
-          sx={{ 
-            position: 'absolute', 
-            top: 16, 
-            right: 16, 
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            p: 1,
-            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
-          }}
-        >
-          <DateRangeIcon sx={{ color: 'white', fontSize: 20 }} />
-        </IconButton>
-        
-        {/* Decorative circles */}
-        <Box sx={{
-          position: 'absolute',
-          top: -30,
-          right: -30,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          bottom: -40,
-          right: 30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-      </CardContent>
-    </Card>
-  </Grid>
-  
-  {/* Highest Category Card */}
-  <Grid item xs={12} sm={6} md={3}>
-    <Card sx={{ 
-      borderRadius: 2, 
-      background: 'linear-gradient(135deg, #FF9F7F 0%, #FC7B4D 100%)',
-      boxShadow: '0 4px 20px rgba(252, 123, 77, 0.3)',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <CardContent sx={{ position: 'relative', padding: 3, color: 'white', zIndex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="medium" sx={{ opacity: 0.9, mb: 0.5 }}>
-          Highest Category
-        </Typography>
-        
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-          ₱{highestCategory.total.toFixed(2)}
-        </Typography>
-        
-        <Typography variant="body2" noWrap sx={{ maxWidth: '80%' }}>
-          {highestCategory.category.name || 'No categories yet'}
-        </Typography>
-        
-        {/* Icon in top right */}
-        <IconButton 
-          sx={{ 
-            position: 'absolute', 
-            top: 16, 
-            right: 16, 
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            p: 1,
-            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
-          }}
-        >
-          <AssessmentIcon sx={{ color: 'white', fontSize: 20 }} />
-        </IconButton>
-        
-        {/* Decorative circles */}
-        <Box sx={{
-          position: 'absolute',
-          top: -30,
-          right: -30,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          bottom: -40,
-          right: 30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-      </CardContent>
-    </Card>
-  </Grid>
-  
-  {/* Active Categories Card */}
-  <Grid item xs={12} sm={6} md={3}>
-    <Card sx={{ 
-      borderRadius: 2, 
-      background: 'linear-gradient(135deg, #7FFFD4 0%, #64DFBD 100%)',
-      boxShadow: '0 4px 20px rgba(100, 223, 189, 0.3)',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      <CardContent sx={{ position: 'relative', padding: 3, color: 'white', zIndex: 1 }}>
-        <Typography variant="subtitle1" fontWeight="medium" sx={{ opacity: 0.9, mb: 0.5 }}>
-          Active Categories
-        </Typography>
-        
-        <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
-          {summaryData?.expenses_by_category?.length || 0}
-        </Typography>
-        
-        <Typography variant="body2">
-          Total Categories
-        </Typography>
-        
-        {/* Icon in top right */}
-        <IconButton 
-          sx={{ 
-            position: 'absolute', 
-            top: 16, 
-            right: 16, 
-            bgcolor: 'rgba(255, 255, 255, 0.2)',
-            p: 1,
-            '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
-          }}
-        >
-          <CategoryIcon sx={{ color: 'white', fontSize: 20 }} />
-        </IconButton>
-        
-        {/* Decorative circles */}
-        <Box sx={{
-          position: 'absolute',
-          top: -30,
-          right: -30,
-          width: 150,
-          height: 150,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-        
-        <Box sx={{
-          position: 'absolute',
-          bottom: -40,
-          right: 30,
-          width: 100,
-          height: 100,
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.1)',
-          zIndex: -1
-        }} />
-      </CardContent>
-    </Card>
-  </Grid>
-</Grid>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          {renderMonthlyTrends()}
+    // Find highest category and its value
+    const highestCategory = summaryData?.expenses_by_category?.sort(
+      (a, b) => b.total - a.total
+    )[0] || { category: { name: "" }, total: 0 };
+
+    return (
+      <>
+        <Grid container spacing={3} mb={4}>
+          {/* Total Expenses Card */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Card
+              sx={{
+                borderRadius: 2,
+                background: "linear-gradient(135deg, #FF9F9F 0%, #FF5F7E 100%)",
+                boxShadow: "0 4px 20px rgba(255, 95, 126, 0.3)",
+                height: "100%",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <CardContent
+                sx={{
+                  position: "relative",
+                  padding: 3,
+                  color: "white",
+                  zIndex: 1,
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  sx={{ opacity: 0.9, mb: 0.5 }}
+                >
+                  Total Expenses
+                </Typography>
+
+                <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                  ₱{(summaryData?.total_expenses || 0).toFixed(2)}
+                </Typography>
+
+                {totalExpensesTrend !== 0 && (
+                  <Typography
+                    variant="body2"
+                    sx={{ display: "flex", alignItems: "center" }}
+                  >
+                    {totalExpensesTrend > 0 ? (
+                      <TrendingUpIcon fontSize="small" sx={{ mr: 0.5 }} />
+                    ) : (
+                      <TrendingDownIcon fontSize="small" sx={{ mr: 0.5 }} />
+                    )}
+                    {totalExpensesTrend > 0 ? "Increased" : "Decreased"} by{" "}
+                    {Math.abs(totalExpensesTrend).toFixed(1)}%
+                  </Typography>
+                )}
+
+                {/* Icon in top right */}
+                <IconButton
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    p: 1,
+                    "&:hover": { bgcolor: "rgba(255, 255, 255, 0.3)" },
+                  }}
+                >
+                  <ShowChartIcon sx={{ color: "white", fontSize: 20 }} />
+                </IconButton>
+
+                {/* Decorative circles */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -30,
+                    right: -30,
+                    width: 150,
+                    height: 150,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    zIndex: -1,
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: -40,
+                    right: 30,
+                    width: 100,
+                    height: 100,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    zIndex: -1,
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Average Monthly Card */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Card
+              sx={{
+                borderRadius: 2,
+                background: "linear-gradient(135deg, #7BB5FF 0%, #5F8FFF 100%)",
+                boxShadow: "0 4px 20px rgba(95, 143, 255, 0.3)",
+                height: "100%",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <CardContent
+                sx={{
+                  position: "relative",
+                  padding: 3,
+                  color: "white",
+                  zIndex: 1,
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  sx={{ opacity: 0.9, mb: 0.5 }}
+                >
+                  Average Monthly
+                </Typography>
+
+                <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                  ₱{(monthlyAnalysis?.averageSpending || 0).toFixed(2)}
+                </Typography>
+
+                <Typography variant="body2">vs previous period</Typography>
+
+                {/* Icon in top right */}
+                <IconButton
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    p: 1,
+                    "&:hover": { bgcolor: "rgba(255, 255, 255, 0.3)" },
+                  }}
+                >
+                  <DateRangeIcon sx={{ color: "white", fontSize: 20 }} />
+                </IconButton>
+
+                {/* Decorative circles */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -30,
+                    right: -30,
+                    width: 150,
+                    height: 150,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    zIndex: -1,
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: -40,
+                    right: 30,
+                    width: 100,
+                    height: 100,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    zIndex: -1,
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Highest Category Card */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Card
+              sx={{
+                borderRadius: 2,
+                background: "linear-gradient(135deg, #FF9F7F 0%, #FC7B4D 100%)",
+                boxShadow: "0 4px 20px rgba(252, 123, 77, 0.3)",
+                height: "100%",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <CardContent
+                sx={{
+                  position: "relative",
+                  padding: 3,
+                  color: "white",
+                  zIndex: 1,
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  sx={{ opacity: 0.9, mb: 0.5 }}
+                >
+                  Highest Category
+                </Typography>
+
+                <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                  ₱{highestCategory.total.toFixed(2)}
+                </Typography>
+
+                <Typography variant="body2" noWrap sx={{ maxWidth: "80%" }}>
+                  {highestCategory.category.name || "No categories yet"}
+                </Typography>
+
+                {/* Icon in top right */}
+                <IconButton
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    p: 1,
+                    "&:hover": { bgcolor: "rgba(255, 255, 255, 0.3)" },
+                  }}
+                >
+                  <AssessmentIcon sx={{ color: "white", fontSize: 20 }} />
+                </IconButton>
+
+                {/* Decorative circles */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -30,
+                    right: -30,
+                    width: 150,
+                    height: 150,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    zIndex: -1,
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: -40,
+                    right: 30,
+                    width: 100,
+                    height: 100,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    zIndex: -1,
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Active Categories Card */}
+          <Grid item xs={12} sm={6} md={3}>
+            <Card
+              sx={{
+                borderRadius: 2,
+                background: "linear-gradient(135deg, #7FFFD4 0%, #64DFBD 100%)",
+                boxShadow: "0 4px 20px rgba(100, 223, 189, 0.3)",
+                height: "100%",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <CardContent
+                sx={{
+                  position: "relative",
+                  padding: 3,
+                  color: "white",
+                  zIndex: 1,
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  sx={{ opacity: 0.9, mb: 0.5 }}
+                >
+                  Active Categories
+                </Typography>
+
+                <Typography variant="h4" fontWeight="bold" sx={{ mb: 1 }}>
+                  {summaryData?.expenses_by_category?.length || 0}
+                </Typography>
+
+                <Typography variant="body2">Total Categories</Typography>
+
+                {/* Icon in top right */}
+                <IconButton
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    bgcolor: "rgba(255, 255, 255, 0.2)",
+                    p: 1,
+                    "&:hover": { bgcolor: "rgba(255, 255, 255, 0.3)" },
+                  }}
+                >
+                  <CategoryIcon sx={{ color: "white", fontSize: 20 }} />
+                </IconButton>
+
+                {/* Decorative circles */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: -30,
+                    right: -30,
+                    width: 150,
+                    height: 150,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    zIndex: -1,
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: -40,
+                    right: 30,
+                    width: 100,
+                    height: 100,
+                    borderRadius: "50%",
+                    background: "rgba(255, 255, 255, 0.1)",
+                    zIndex: -1,
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={6}>
+            {renderMonthlyTrends()}
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            {renderExpenseDistribution()}
+          </Grid>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          {renderExpenseDistribution()}
+        <Grid container spacing={3} sx={{ mt: 3 }}>
+          <Grid item xs={12}>
+            {renderBudgetSection()}
+          </Grid>
         </Grid>
-      </Grid>
-
-      <Grid container spacing={3} sx={{ mt: 3 }}>
-        <Grid item xs={12}>
-          {renderBudgetSection()}
-        </Grid>
-      </Grid>
-    </>
-  );
-};
+      </>
+    );
+  };
   // Loading placeholder component with AOS animations
   const LoadingPlaceholder = () => (
     <Box sx={{ py: 4 }}>
       <Box data-aos="fade-up" data-aos-duration="600">
-        <Skeleton variant="rectangular" height={200} sx={{ mb: 2, borderRadius: 2 }} />
+        <Skeleton
+          variant="rectangular"
+          height={200}
+          sx={{ mb: 2, borderRadius: 2 }}
+        />
       </Box>
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
           <Box data-aos="fade-up" data-aos-delay="200" data-aos-duration="600">
-            <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              variant="rectangular"
+              height={300}
+              sx={{ borderRadius: 2 }}
+            />
           </Box>
         </Grid>
         <Grid item xs={12} md={6}>
           <Box data-aos="fade-up" data-aos-delay="300" data-aos-duration="600">
-            <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+            <Skeleton
+              variant="rectangular"
+              height={300}
+              sx={{ borderRadius: 2 }}
+            />
           </Box>
         </Grid>
       </Grid>
@@ -1791,12 +2334,17 @@ const renderContent = () => {
 
   // Error display component with AOS animation
   const ErrorDisplay = ({ error, onRetry }) => (
-    <Box sx={{ textAlign: 'center', py: 4 }} data-aos="fade-up" data-aos-duration="600">
+    <Box
+      sx={{ textAlign: "center", py: 4 }}
+      data-aos="fade-up"
+      data-aos-duration="600"
+    >
       <Typography color="error" gutterBottom>
         {error}
       </Typography>
-      <Typography variant="body2" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
-        We couldn't load your dashboard data. This might be due to a connection issue or the server might be temporarily unavailable.
+      <Typography variant="body2" sx={{ mb: 3, maxWidth: 500, mx: "auto" }}>
+        We couldn't load your dashboard data. This might be due to a connection
+        issue or the server might be temporarily unavailable.
       </Typography>
       <Button
         variant="outlined"
@@ -1814,28 +2362,28 @@ const renderContent = () => {
       <Helmet>
         <title>Financial Dashboard | Expense Tracker</title>
       </Helmet>
-      
+
       {/* First-time user tutorial alert */}
       <Collapse in={showTutorialAlert}>
-        <Alert 
-          severity="info" 
-          sx={{ 
-            mb: 2, 
+        <Alert
+          severity="info"
+          sx={{
+            mb: 2,
             borderRadius: 2,
-            '& .MuiAlert-message': { width: '100%' }
+            "& .MuiAlert-message": { width: "100%" },
           }}
           action={
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Button 
-                color="info" 
-                size="small" 
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Button
+                color="info"
+                size="small"
                 onClick={() => setTourOpen(true)}
                 sx={{ mr: 1 }}
               >
                 Take Tour
               </Button>
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={() => setShowTutorialAlert(false)}
               >
                 <CloseIcon fontSize="small" />
@@ -1843,53 +2391,63 @@ const renderContent = () => {
             </Box>
           }
         >
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+            }}
+          >
             <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-              Welcome to your Financial Dashboard! 
+              Welcome to your Financial Dashboard!
             </Typography>
           </Box>
           <Typography variant="body2">
-            This dashboard gives you a complete overview of your expenses. Take a quick tour to learn how to use all features.
+            This dashboard gives you a complete overview of your expenses. Take
+            a quick tour to learn how to use all features.
           </Typography>
         </Alert>
       </Collapse>
-      
-      <Box className="dashboard-content" sx={{ maxWidth: 1400, mx: 'auto', p: { xs: 2, md: 3 } }}>
-        <Box 
-          sx={{ 
+
+      <Box
+        className="dashboard-content"
+        sx={{ maxWidth: 1400, mx: "auto", p: { xs: 2, md: 3 } }}
+      >
+        <Box
+          sx={{
             mb: 4,
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', md: 'center' },
-            gap: 2
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", md: "center" },
+            gap: 2,
           }}
           data-aos="fade-down"
           data-aos-duration="800"
         >
           <Box>
-            <Typography 
-              variant="h4" 
-              component="h1" 
-              sx={{ 
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{
                 fontWeight: 700,
-                fontSize: { xs: '1.8rem', md: '2.2rem' },
-                background: 'linear-gradient(45deg, #1976d2, #2196f3)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                fontSize: { xs: "1.8rem", md: "2.2rem" },
+                background: "linear-gradient(45deg, #1976d2, #2196f3)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
                 mb: 1,
               }}
             >
               Financial Dashboard
             </Typography>
-            <Typography 
-              variant="subtitle1" 
-              sx={{ 
-                color: 'text.secondary',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
+            <Typography
+              variant="subtitle1"
+              sx={{
+                color: "text.secondary",
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
               }}
             >
               <DateRangeIcon sx={{ fontSize: 20 }} />
@@ -1897,11 +2455,11 @@ const renderContent = () => {
             </Typography>
           </Box>
 
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              gap: 2, 
-              flexWrap: 'wrap'
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              flexWrap: "wrap",
             }}
             data-aos="fade-left"
             data-aos-delay="200"
@@ -1911,16 +2469,16 @@ const renderContent = () => {
               startIcon={<FilterIcon />}
               onClick={handleFilterMenuOpen}
               sx={{
-                borderRadius: '12px',
-                textTransform: 'none',
+                borderRadius: "12px",
+                textTransform: "none",
                 px: 3,
-                borderColor: 'divider',
-                '&:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                }
+                borderColor: "divider",
+                "&:hover": {
+                  backgroundColor: "rgba(25, 118, 210, 0.04)",
+                },
               }}
             >
-              {isMobile ? 'Filter' : 'Time Period'}
+              {isMobile ? "Filter" : "Time Period"}
             </Button>
 
             <Button
@@ -1928,29 +2486,29 @@ const renderContent = () => {
               startIcon={<PrintIcon />}
               onClick={handlePrintMenuOpen}
               sx={{
-                borderRadius: '12px',
-                textTransform: 'none',
+                borderRadius: "12px",
+                textTransform: "none",
                 px: 3,
-                background: 'linear-gradient(45deg, #1976d2, #2196f3)',
-                boxShadow: '0 4px 10px rgba(25, 118, 210, 0.2)',
-                '&:hover': {
-                  boxShadow: '0 6px 15px rgba(25, 118, 210, 0.3)',
-                }
+                background: "linear-gradient(45deg, #1976d2, #2196f3)",
+                boxShadow: "0 4px 10px rgba(25, 118, 210, 0.2)",
+                "&:hover": {
+                  boxShadow: "0 6px 15px rgba(25, 118, 210, 0.3)",
+                },
               }}
             >
-              {isMobile ? 'Export' : 'Export Report'}
+              {isMobile ? "Export" : "Export Report"}
             </Button>
 
             <Tooltip title="Refresh Data">
-              <IconButton 
-                onClick={handleRefresh} 
-                color="primary" 
+              <IconButton
+                onClick={handleRefresh}
+                color="primary"
                 aria-label="refresh data"
-                sx={{ 
-                  borderRadius: '50%', 
+                sx={{
+                  borderRadius: "50%",
                   p: 1.2,
-                  border: '1px solid',
-                  borderColor: 'divider' 
+                  border: "1px solid",
+                  borderColor: "divider",
                 }}
                 data-aos="zoom-in"
                 data-aos-delay="300"
@@ -1958,17 +2516,17 @@ const renderContent = () => {
                 <RefreshIcon />
               </IconButton>
             </Tooltip>
-            
+
             <Tooltip title="Dashboard Help">
-              <IconButton 
-                onClick={() => setTourOpen(true)} 
-                color="primary" 
+              <IconButton
+                onClick={() => setTourOpen(true)}
+                color="primary"
                 aria-label="dashboard help"
-                sx={{ 
-                  borderRadius: '50%', 
+                sx={{
+                  borderRadius: "50%",
                   p: 1.2,
-                  border: '1px solid',
-                  borderColor: 'divider'
+                  border: "1px solid",
+                  borderColor: "divider",
                 }}
                 data-aos="zoom-in"
                 data-aos-delay="400"
@@ -1980,18 +2538,20 @@ const renderContent = () => {
         </Box>
         {renderContent()}
       </Box>
-      
+
       {/* Dashboard tour component */}
       <DashboardTour open={tourOpen} onClose={() => setTourOpen(false)} />
-      
+
       {/* Help dialog component */}
-      <HelpDialog 
-        open={helpDialogOpen} 
+      <HelpDialog
+        open={helpDialogOpen}
         onClose={() => setHelpDialogOpen(false)}
         title={helpDialogContent.title}
         content={helpDialogContent.content}
       />
-      
+      {/* Maintenance dialog component */}
+      {renderMaintenanceDialog()}
+
       {/* Menus */}
       {filterMenu}
       {printMenu}
@@ -2000,4 +2560,3 @@ const renderContent = () => {
 };
 
 export default React.memo(Dashboard);
-             

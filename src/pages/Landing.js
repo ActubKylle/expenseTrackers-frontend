@@ -1,13 +1,25 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { 
-  Box, Container, Typography, Button, Grid, Paper, 
-  Card, CardContent, CardMedia, Avatar, Divider,
-  Stack, useTheme, useMediaQuery, IconButton
-} from '@mui/material';
-import { 
-  BarChart as ChartIcon, 
-  Savings as SavingsIcon, 
-  Category as CategoryIcon, 
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Grid,
+  Paper,
+  Card,
+  CardContent,
+  CardMedia,
+  Avatar,
+  Divider,
+  Stack,
+  useTheme,
+  useMediaQuery,
+  IconButton,
+} from "@mui/material";
+import {
+  BarChart as ChartIcon,
+  Savings as SavingsIcon,
+  Category as CategoryIcon,
   ShowChart as ShowChartIcon,
   CreditCard as CreditCardIcon,
   GitHub as GitHubIcon,
@@ -17,56 +29,54 @@ import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
   ArrowBackIos as ArrowBackIosIcon,
   ArrowForwardIos as ArrowForwardIosIcon,
-  
-} from '@mui/icons-material';
-import { Link as RouterLink } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+} from "@mui/icons-material";
+import { Link as RouterLink } from "react-router-dom";
+import { motion } from "framer-motion";
+import AOS from "aos";
+import "aos/dist/aos.css";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 
 // import Slider from 'react-slick';
 // import 'slick-carousel/slick/slick.css';
 // import 'slick-carousel/slick/slick-theme.css';
 // Import dashboard images/GIFs with proper path handling and fallback options
-const dashboardImage = '/dashboard.gif'; 
-const fallbackDashboardImage = '/dashbord.png'; 
-const dashboardPreviewFallback = 'https://via.placeholder.com/600x400?text=Dashboard+Preview';
+const dashboardImage = "/dashboard.gif";
+const fallbackDashboardImage = "/dashbord.png";
+const dashboardPreviewFallback =
+  "https://via.placeholder.com/600x400?text=Dashboard+Preview";
 
 // Import developer profile images
-const profile1 = '/profile1.png';
-const profile2 = '/profile2.png';
-const profileFallback = 'https://via.placeholder.com/200x200?text=Team+Member';
-
-
+const profile1 = "/profile1.png";
+const profile2 = "/profile2.png";
+const profileFallback = "https://via.placeholder.com/200x200?text=Team+Member";
 
 // Custom theme tokens
 const themeColors = {
   primary: {
-    main: '#2563EB', // Modern blue
-    light: '#60A5FA',
-    dark: '#1E40AF',
-    contrastText: '#FFFFFF'
+    main: "#2563EB", // Modern blue
+    light: "#60A5FA",
+    dark: "#1E40AF",
+    contrastText: "#FFFFFF",
   },
   secondary: {
-    main: '#EC4899', // Vibrant pink
-    light: '#F9A8D4',
-    dark: '#BE185D'
+    main: "#EC4899", // Vibrant pink
+    light: "#F9A8D4",
+    dark: "#BE185D",
   },
   success: {
-    main: '#10B981', // Modern green
-    light: '#6EE7B7'
+    main: "#10B981", // Modern green
+    light: "#6EE7B7",
   },
   background: {
-    default: '#F9FAFB',
-    paper: '#FFFFFF',
-    dark: '#111827',
-    gradient: 'linear-gradient(45deg, #2563EB, #3B82F6)'
+    default: "#F9FAFB",
+    paper: "#FFFFFF",
+    dark: "#111827",
+    gradient: "linear-gradient(45deg, #2563EB, #3B82F6)",
   },
   text: {
-    primary: '#1F2937',
-    secondary: '#4B5563'
-  }
+    primary: "#1F2937",
+    secondary: "#4B5563",
+  },
 };
 
 // Dashboard Image component with GIF support and better error handling
@@ -86,48 +96,49 @@ const DashboardPreview = () => {
   return (
     <Box
       sx={{
-        position: 'relative',
-        '&::after': {
+        position: "relative",
+        "&::after": {
           content: '""',
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'linear-gradient(180deg, rgba(37,99,235,0) 85%, rgba(37,99,235,0.1) 100%)',
-          borderRadius: '1rem',
-          pointerEvents: 'none'
-        }
+          background:
+            "linear-gradient(180deg, rgba(37,99,235,0) 85%, rgba(37,99,235,0.1) 100%)",
+          borderRadius: "1rem",
+          pointerEvents: "none",
+        },
       }}
     >
-      <img 
-        src={currentImage} 
-        alt="Expense Tracker Dashboard" 
-        style={{ 
-          width: '100%',
-          height: 'auto',
-          display: 'block',
-          transition: 'all 0.3s ease',
-          borderRadius: '1rem',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+      <img
+        src={currentImage}
+        alt="Expense Tracker Dashboard"
+        style={{
+          width: "100%",
+          height: "auto",
+          display: "block",
+          transition: "all 0.3s ease",
+          borderRadius: "1rem",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
         }}
         onError={handleImageError}
       />
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
-          bottom: '5%',
-          right: '5%',
-          bgcolor: 'rgba(0,0,0,0.7)',
-          color: '#fff',
+          position: "absolute",
+          bottom: "5%",
+          right: "5%",
+          bgcolor: "rgba(0,0,0,0.7)",
+          color: "#fff",
           px: 2,
           py: 0.8,
-          borderRadius: '2rem',
-          fontSize: '0.75rem',
-          fontWeight: 'bold',
-          backdropFilter: 'blur(4px)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          animation: 'pulse 2s infinite ease-in-out'
+          borderRadius: "2rem",
+          fontSize: "0.75rem",
+          fontWeight: "bold",
+          backdropFilter: "blur(4px)",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+          animation: "pulse 2s infinite ease-in-out",
         }}
       >
         LIVE PREVIEW
@@ -139,7 +150,7 @@ const DashboardPreview = () => {
 // Hero section with enhanced visuals
 const HeroSection = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [isGifLoaded, setIsGifLoaded] = useState(false);
 
   useEffect(() => {
@@ -147,7 +158,7 @@ const HeroSection = () => {
     img.onload = () => setIsGifLoaded(true);
     img.onerror = () => setIsGifLoaded(false);
     img.src = dashboardImage;
-    
+
     return () => {
       img.onload = null;
       img.onerror = null;
@@ -155,152 +166,160 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh',
-        pt: { xs: '80px', md: '100px' },
+    <Box
+      sx={{
+        minHeight: "100vh",
+        pt: { xs: "80px", md: "100px" },
         pb: { xs: 10, md: 14 },
-        position: 'relative',
-        overflow: 'hidden',
-        background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)'
+        position: "relative",
+        overflow: "hidden",
+        background: "linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)",
       }}
     >
       {/* Background elements */}
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           left: 0,
           right: 0,
-          height: '100%',
-          overflow: 'hidden',
+          height: "100%",
+          overflow: "hidden",
           zIndex: 0,
-          opacity: 0.5
+          opacity: 0.5,
         }}
       >
         {/* SVG Pattern Background */}
-        <Box sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          opacity: 0.05,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%232563EB' fill-opacity='0.7' fill-rule='evenodd'/%3E%3C/svg%3E")`,
-          backgroundSize: '150px 150px',
-          zIndex: 0,
-          transform: 'rotate(5deg) scale(1.2)',
-          animation: 'patternMove 60s linear infinite'
-        }} />
-        
-        {/* Keep the original circular gradients for layered effect */}
-        <Box 
+        <Box
           sx={{
-            position: 'absolute',
-            width: '600px',
-            height: '600px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(37,99,235,0.08) 0%, rgba(37,99,235,0) 70%)',
-            top: '-200px',
-            right: '-100px',
-            filter: 'blur(10px)'
-          }}
-        />
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '400px',
-            height: '400px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(37,99,235,0.06) 0%, rgba(37,99,235,0) 70%)',
-            bottom: '10%',
-            left: '-150px',
-            filter: 'blur(8px)'
-          }}
-        />
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '300px',
-            height: '300px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(236,72,153,0.07) 0%, rgba(236,72,153,0) 70%)',
-            top: '30%',
-            left: '10%',
-            filter: 'blur(8px)'
-          }}
-        />
-        
-        {/* Additional decorative elements */}
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '200px',
-            height: '200px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, rgba(139,92,246,0) 70%)',
-            bottom: '20%',
-            right: '15%',
-            filter: 'blur(5px)',
-            animation: 'float 10s ease-in-out infinite'
-          }}
-        />
-        <Box 
-          sx={{
-            position: 'absolute',
-            width: '120px',
-            height: '120px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(16,185,129,0.06) 0%, rgba(16,185,129,0) 70%)',
-            top: '15%',
-            right: '30%',
-            filter: 'blur(5px)',
-            animation: 'float 8s ease-in-out infinite'
-          }}
-        />
-        
-        {/* Animated grid pattern - kept for additional texture */}
-        <Box 
-          sx={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundImage: 'linear-gradient(rgba(37,99,235,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.02) 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
+            opacity: 0.05,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%232563EB' fill-opacity='0.7' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+            backgroundSize: "150px 150px",
+            zIndex: 0,
+            transform: "rotate(5deg) scale(1.2)",
+            animation: "patternMove 60s linear infinite",
+          }}
+        />
+
+        {/* Keep the original circular gradients for layered effect */}
+        <Box
+          sx={{
+            position: "absolute",
+            width: "600px",
+            height: "600px",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(37,99,235,0.08) 0%, rgba(37,99,235,0) 70%)",
+            top: "-200px",
+            right: "-100px",
+            filter: "blur(10px)",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            width: "400px",
+            height: "400px",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(37,99,235,0.06) 0%, rgba(37,99,235,0) 70%)",
+            bottom: "10%",
+            left: "-150px",
+            filter: "blur(8px)",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            width: "300px",
+            height: "300px",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(236,72,153,0.07) 0%, rgba(236,72,153,0) 70%)",
+            top: "30%",
+            left: "10%",
+            filter: "blur(8px)",
+          }}
+        />
+
+        {/* Additional decorative elements */}
+        <Box
+          sx={{
+            position: "absolute",
+            width: "200px",
+            height: "200px",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(139,92,246,0.05) 0%, rgba(139,92,246,0) 70%)",
+            bottom: "20%",
+            right: "15%",
+            filter: "blur(5px)",
+            animation: "float 10s ease-in-out infinite",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            width: "120px",
+            height: "120px",
+            borderRadius: "50%",
+            background:
+              "radial-gradient(circle, rgba(16,185,129,0.06) 0%, rgba(16,185,129,0) 70%)",
+            top: "15%",
+            right: "30%",
+            filter: "blur(5px)",
+            animation: "float 8s ease-in-out infinite",
+          }}
+        />
+
+        {/* Animated grid pattern - kept for additional texture */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundImage:
+              "linear-gradient(rgba(37,99,235,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.02) 1px, transparent 1px)",
+            backgroundSize: "20px 20px",
             zIndex: 1,
-            opacity: 0.7
+            opacity: 0.7,
           }}
         />
       </Box>
-      
+
       {/* Animation keyframes as additional style */}
       <Box
         sx={{
-          '@keyframes patternMove': {
-            '0%': {
-              backgroundPosition: '0 0',
+          "@keyframes patternMove": {
+            "0%": {
+              backgroundPosition: "0 0",
             },
-            '100%': {
-              backgroundPosition: '150px 150px',
+            "100%": {
+              backgroundPosition: "150px 150px",
             },
           },
-          '@keyframes float': {
-            '0%': {
-              transform: 'translateY(0)',
+          "@keyframes float": {
+            "0%": {
+              transform: "translateY(0)",
             },
-            '50%': {
-              transform: 'translateY(-15px)',
+            "50%": {
+              transform: "translateY(-15px)",
             },
-            '100%': {
-              transform: 'translateY(0)',
+            "100%": {
+              transform: "translateY(0)",
             },
           },
         }}
       />
-      
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
         <Grid container spacing={6} alignItems="center">
           <Grid item xs={12} md={6}>
             <Box
@@ -308,181 +327,204 @@ const HeroSection = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              sx={{ maxWidth: '600px' }}
+              sx={{ maxWidth: "600px" }}
             >
               <Box
                 sx={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  background: 'rgba(37,99,235,0.1)',
+                  display: "inline-flex",
+                  alignItems: "center",
+                  background: "rgba(37,99,235,0.1)",
                   px: 2,
                   py: 1,
-                  borderRadius: '100px',
+                  borderRadius: "100px",
                   mb: 4,
-                  backdropFilter: 'blur(5px)',
-                  boxShadow: '0 2px 8px rgba(37,99,235,0.1)'
+                  backdropFilter: "blur(5px)",
+                  boxShadow: "0 2px 8px rgba(37,99,235,0.1)",
                 }}
               >
                 <Box
                   sx={{
                     width: 8,
                     height: 8,
-                    borderRadius: '50%',
-                    bgcolor: '#10B981',
+                    borderRadius: "50%",
+                    bgcolor: "#10B981",
                     mr: 1,
-                    animation: 'pulse 2s infinite'
+                    animation: "pulse 2s infinite",
                   }}
                 />
                 <Typography
                   sx={{
-                    fontSize: '0.9rem',
+                    fontSize: "0.9rem",
                     fontWeight: 600,
-                    color: themeColors.primary.main
+                    color: themeColors.primary.main,
                   }}
                 >
                   Now Available — Version 2.0
                 </Typography>
               </Box>
-              
-              <Typography 
-                variant="h1" 
-                component="h1" 
-                sx={{ 
+
+              <Typography
+                variant="h1"
+                component="h1"
+                sx={{
                   fontWeight: 800,
-                  fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem', lg: '4.5rem' },
+                  fontSize: {
+                    xs: "2.5rem",
+                    sm: "3rem",
+                    md: "3.75rem",
+                    lg: "4.5rem",
+                  },
                   lineHeight: 1.1,
                   mb: 3,
-                  letterSpacing: '-0.02em',
-                  background: 'linear-gradient(90deg, #1E40AF, #3B82F6 70%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  maxWidth: '600px',
-                  position: 'relative',
-                  textShadow: '0 10px 20px rgba(37,99,235,0.1)'
+                  letterSpacing: "-0.02em",
+                  background: "linear-gradient(90deg, #1E40AF, #3B82F6 70%)",
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  maxWidth: "600px",
+                  position: "relative",
+                  textShadow: "0 10px 20px rgba(37,99,235,0.1)",
                 }}
               >
                 Take Control of Your Finances
               </Typography>
-              <Typography 
-                variant="h5" 
-                sx={{ 
+              <Typography
+                variant="h5"
+                sx={{
                   fontWeight: 400,
                   mb: 5,
-                  maxWidth: '540px',
+                  maxWidth: "540px",
                   color: themeColors.text.secondary,
-                  fontSize: { xs: '1.1rem', md: '1.25rem' },
-                  lineHeight: 1.7
+                  fontSize: { xs: "1.1rem", md: "1.25rem" },
+                  lineHeight: 1.7,
                 }}
               >
-                Track expenses, manage budgets, and achieve your financial goals with our intuitive, all-in-one expense tracker.
+                Track expenses, manage budgets, and achieve your financial goals
+                with our intuitive, all-in-one expense tracker.
               </Typography>
-              
-              <Box 
-                sx={{ 
-                  display: 'flex', 
-                  flexWrap: 'wrap',
+
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
                   gap: 2,
-                  mb: 6
+                  mb: 6,
                 }}
               >
-                <Button 
+                <Button
                   component={RouterLink}
                   to="/register"
                   variant="contained"
                   size="large"
-                  sx={{ 
+                  sx={{
                     bgcolor: themeColors.primary.main,
-                    color: 'white',
+                    color: "white",
                     px: 4,
                     py: 1.5,
-                    borderRadius: '10px',
+                    borderRadius: "10px",
                     fontWeight: 600,
-                    fontSize: '1rem',
-                    textTransform: 'none',
-                    boxShadow: '0 10px 20px rgba(37,99,235,0.3)',
-                    '&:hover': {
+                    fontSize: "1rem",
+                    textTransform: "none",
+                    boxShadow: "0 10px 20px rgba(37,99,235,0.3)",
+                    "&:hover": {
                       bgcolor: themeColors.primary.dark,
-                      transform: 'translateY(-3px)',
-                      boxShadow: '0 15px 30px rgba(37,99,235,0.4)'
+                      transform: "translateY(-3px)",
+                      boxShadow: "0 15px 30px rgba(37,99,235,0.4)",
                     },
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::after': {
+                    transition: "all 0.3s ease",
+                    position: "relative",
+                    overflow: "hidden",
+                    "&::after": {
                       content: '""',
-                      position: 'absolute',
+                      position: "absolute",
                       top: 0,
-                      left: '-50%',
-                      width: '150%',
-                      height: '100%',
-                      background: 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%)',
-                      transform: 'translateX(-100%)',
-                      transition: 'transform 0.6s ease',
+                      left: "-50%",
+                      width: "150%",
+                      height: "100%",
+                      background:
+                        "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%)",
+                      transform: "translateX(-100%)",
+                      transition: "transform 0.6s ease",
                     },
-                    '&:hover::after': {
-                      transform: 'translateX(100%)',
-                    }
+                    "&:hover::after": {
+                      transform: "translateX(100%)",
+                    },
                   }}
                   endIcon={<ArrowForwardIcon />}
                 >
                   Get Started Free
                 </Button>
-                
-                <Button 
+
+                <Button
                   component={RouterLink}
                   to="/how-it-works"
                   variant="outlined"
                   size="large"
-                  sx={{ 
+                  sx={{
                     borderColor: themeColors.primary.main,
                     color: themeColors.primary.main,
                     px: 4,
                     py: 1.5,
-                    borderRadius: '10px',
+                    borderRadius: "10px",
                     fontWeight: 600,
-                    fontSize: '1rem',
-                    textTransform: 'none',
-                    '&:hover': {
-                      bgcolor: 'rgba(37,99,235,0.05)',
+                    fontSize: "1rem",
+                    textTransform: "none",
+                    "&:hover": {
+                      bgcolor: "rgba(37,99,235,0.05)",
                       borderColor: themeColors.primary.dark,
-                      transform: 'translateY(-2px)'
+                      transform: "translateY(-2px)",
                     },
-                    transition: 'all 0.3s ease'
+                    transition: "all 0.3s ease",
                   }}
                   endIcon={<KeyboardArrowDownIcon />}
                 >
                   See How it Works
                 </Button>
               </Box>
-              
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                flexWrap: 'wrap',
-                background: 'rgba(255,255,255,0.5)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '12px',
-                p: 2,
-                boxShadow: '0 5px 15px rgba(0,0,0,0.03)'
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mr: 4, mb: { xs: 2, md: 0 } }}>
-                  <Box sx={{ display: 'flex', mr: 1 }}>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  background: "rgba(255,255,255,0.5)",
+                  backdropFilter: "blur(10px)",
+                  borderRadius: "12px",
+                  p: 2,
+                  boxShadow: "0 5px 15px rgba(0,0,0,0.03)",
+                }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    mr: 4,
+                    mb: { xs: 2, md: 0 },
+                  }}
+                >
+                  <Box sx={{ display: "flex", mr: 1 }}>
                     {[...Array(5)].map((_, i) => (
-                      <Box key={i} sx={{ 
-                        color: '#F59E0B', 
-                        fontSize: '1rem',
-                        animation: 'twinkle 3s infinite',
-                        animationDelay: `${i * 0.2}s`
-                      }}>★</Box>
+                      <Box
+                        key={i}
+                        sx={{
+                          color: "#F59E0B",
+                          fontSize: "1rem",
+                          animation: "twinkle 3s infinite",
+                          animationDelay: `${i * 0.2}s`,
+                        }}
+                      >
+                        ★
+                      </Box>
                     ))}
                   </Box>
-                  <Typography sx={{ color: themeColors.text.secondary, fontWeight: 500 }}>
+                  <Typography
+                    sx={{ color: themeColors.text.secondary, fontWeight: 500 }}
+                  >
                     4.9 out of 5 stars
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Box sx={{ display: 'flex', mr: 2 }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Box sx={{ display: "flex", mr: 2 }}>
                     {[...Array(4)].map((_, i) => (
                       <Avatar
                         key={i}
@@ -490,92 +532,96 @@ const HeroSection = () => {
                         sx={{
                           width: 28,
                           height: 28,
-                          border: '2px solid #F9FAFB',
+                          border: "2px solid #F9FAFB",
                           ml: i > 0 ? -1 : 0,
-                          boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
-                          transition: 'transform 0.3s ease',
-                          '&:hover': {
-                            transform: 'translateY(-3px) scale(1.15)',
-                            zIndex: 10
-                          }
+                          boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
+                          transition: "transform 0.3s ease",
+                          "&:hover": {
+                            transform: "translateY(-3px) scale(1.15)",
+                            zIndex: 10,
+                          },
                         }}
                       />
                     ))}
                   </Box>
-                  <Typography sx={{ color: themeColors.text.secondary, fontWeight: 500 }}>
+                  <Typography
+                    sx={{ color: themeColors.text.secondary, fontWeight: 500 }}
+                  >
                     Trusted by 10,000+ users
                   </Typography>
                 </Box>
               </Box>
             </Box>
           </Grid>
-          
+
           <Grid item xs={12} md={6}>
             <Box
               component={motion.div}
               variants={floatingAnimation}
               animate="animate"
-              sx={{ 
-                position: 'relative',
+              sx={{
+                position: "relative",
                 zIndex: 1,
                 mt: { xs: 4, md: 0 },
-                maxWidth: '600px',
-                mx: 'auto'
+                maxWidth: "600px",
+                mx: "auto",
               }}
             >
               <Box
                 component={motion.div}
                 animate={pulseAnimation.animate}
                 sx={{
-                  position: 'relative',
-                  border: '1px solid rgba(37,99,235,0.1)',
-                  borderRadius: '1rem',
+                  position: "relative",
+                  border: "1px solid rgba(37,99,235,0.1)",
+                  borderRadius: "1rem",
                   p: 1,
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05)',
-                  background: 'rgba(255,255,255,0.8)',
-                  backdropFilter: 'blur(8px)',
-                  overflow: 'hidden',
-                  '&::before': {
+                  boxShadow:
+                    "0 20px 40px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05)",
+                  background: "rgba(255,255,255,0.8)",
+                  backdropFilter: "blur(8px)",
+                  overflow: "hidden",
+                  "&::before": {
                     content: '""',
-                    position: 'absolute',
+                    position: "absolute",
                     top: -5,
                     left: -5,
                     right: -5,
                     bottom: -5,
                     zIndex: -1,
-                    borderRadius: '1.2rem',
-                    background: 'linear-gradient(45deg, rgba(37,99,235,0.2), rgba(139,92,246,0.2), rgba(16,185,129,0.2))',
-                    filter: 'blur(10px)',
+                    borderRadius: "1.2rem",
+                    background:
+                      "linear-gradient(45deg, rgba(37,99,235,0.2), rgba(139,92,246,0.2), rgba(16,185,129,0.2))",
+                    filter: "blur(10px)",
                     opacity: 0.7,
-                    animation: 'rotateBg 10s linear infinite'
-                  }
+                    animation: "rotateBg 10s linear infinite",
+                  },
                 }}
               >
                 <DashboardPreview />
               </Box>
-              
+
               {/* Feature highlight callouts */}
               <Box
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   bottom: -20,
                   left: -30,
-                  background: 'rgba(255,255,255,0.95)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: '12px',
+                  background: "rgba(255,255,255,0.95)",
+                  backdropFilter: "blur(8px)",
+                  borderRadius: "12px",
                   p: 2,
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                  display: { xs: 'none', md: 'flex' },
-                  alignItems: 'center',
-                  border: '1px solid rgba(37,99,235,0.1)',
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                  display: { xs: "none", md: "flex" },
+                  alignItems: "center",
+                  border: "1px solid rgba(37,99,235,0.1)",
                   zIndex: 2,
-                  maxWidth: '220px',
-                  transform: 'translateY(0)',
-                  transition: 'transform 0.5s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 30px rgba(0,0,0,0.15)'
-                  }
+                  maxWidth: "220px",
+                  transform: "translateY(0)",
+                  transition: "transform 0.5s ease",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 15px 30px rgba(0,0,0,0.15)",
+                  },
                 }}
                 data-aos="fade-up"
                 data-aos-delay="600"
@@ -584,13 +630,13 @@ const HeroSection = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'rgba(16,185,129,0.1)',
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(16,185,129,0.1)",
                     color: themeColors.success.main,
-                    mr: 2
+                    mr: 2,
                   }}
                 >
                   <ChartIcon />
@@ -599,45 +645,45 @@ const HeroSection = () => {
                   <Typography
                     sx={{
                       fontWeight: 700,
-                      fontSize: '0.9rem',
+                      fontSize: "0.9rem",
                       color: themeColors.text.primary,
-                      mb: 0.5
+                      mb: 0.5,
                     }}
                   >
                     Visual Analytics
                   </Typography>
                   <Typography
                     sx={{
-                      fontSize: '0.8rem',
-                      color: themeColors.text.secondary
+                      fontSize: "0.8rem",
+                      color: themeColors.text.secondary,
                     }}
                   >
                     Interactive charts reveal your spending patterns
                   </Typography>
                 </Box>
               </Box>
-              
+
               <Box
                 sx={{
-                  position: 'absolute',
+                  position: "absolute",
                   top: 40,
                   right: -20,
-                  background: 'rgba(255,255,255,0.95)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: '12px',
+                  background: "rgba(255,255,255,0.95)",
+                  backdropFilter: "blur(8px)",
+                  borderRadius: "12px",
                   p: 2,
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                  display: { xs: 'none', md: 'flex' },
-                  alignItems: 'center',
-                  border: '1px solid rgba(37,99,235,0.1)',
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                  display: { xs: "none", md: "flex" },
+                  alignItems: "center",
+                  border: "1px solid rgba(37,99,235,0.1)",
                   zIndex: 2,
-                  maxWidth: '220px',
-                  transform: 'translateY(0)',
-                  transition: 'transform 0.5s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 30px rgba(0,0,0,0.15)'
-                  }
+                  maxWidth: "220px",
+                  transform: "translateY(0)",
+                  transition: "transform 0.5s ease",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 15px 30px rgba(0,0,0,0.15)",
+                  },
                 }}
                 data-aos="fade-up"
                 data-aos-delay="800"
@@ -646,13 +692,13 @@ const HeroSection = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'rgba(139,92,246,0.1)',
-                    color: '#8B5CF6',
-                    mr: 2
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(139,92,246,0.1)",
+                    color: "#8B5CF6",
+                    mr: 2,
                   }}
                 >
                   <SavingsIcon />
@@ -661,47 +707,47 @@ const HeroSection = () => {
                   <Typography
                     sx={{
                       fontWeight: 700,
-                      fontSize: '0.9rem',
+                      fontSize: "0.9rem",
                       color: themeColors.text.primary,
-                      mb: 0.5
+                      mb: 0.5,
                     }}
                   >
                     Budget Planning
                   </Typography>
                   <Typography
                     sx={{
-                      fontSize: '0.8rem',
-                      color: themeColors.text.secondary
+                      fontSize: "0.8rem",
+                      color: themeColors.text.secondary,
                     }}
                   >
                     Set custom budgets for each category
                   </Typography>
                 </Box>
               </Box>
-              
+
               {/* New feature callout */}
               <Box
                 sx={{
-                  position: 'absolute',
-                  bottom: '30%',
+                  position: "absolute",
+                  bottom: "30%",
                   right: -15,
-                  background: 'rgba(255,255,255,0.95)',
-                  backdropFilter: 'blur(8px)',
-                  borderRadius: '12px',
+                  background: "rgba(255,255,255,0.95)",
+                  backdropFilter: "blur(8px)",
+                  borderRadius: "12px",
                   p: 2,
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                  display: { xs: 'none', md: 'flex' },
-                  alignItems: 'center',
-                  border: '1px solid rgba(37,99,235,0.1)',
+                  boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                  display: { xs: "none", md: "flex" },
+                  alignItems: "center",
+                  border: "1px solid rgba(37,99,235,0.1)",
                   zIndex: 2,
-                  maxWidth: '220px',
-                  transform: 'translateY(0)',
-                  transition: 'transform 0.5s ease',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 30px rgba(0,0,0,0.15)'
+                  maxWidth: "220px",
+                  transform: "translateY(0)",
+                  transition: "transform 0.5s ease",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 15px 30px rgba(0,0,0,0.15)",
                   },
-                  animation: 'float 5s ease-in-out infinite'
+                  animation: "float 5s ease-in-out infinite",
                 }}
                 data-aos="fade-up"
                 data-aos-delay="1000"
@@ -710,13 +756,13 @@ const HeroSection = () => {
                   sx={{
                     width: 40,
                     height: 40,
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'rgba(245,158,11,0.1)',
-                    color: '#F59E0B',
-                    mr: 2
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(245,158,11,0.1)",
+                    color: "#F59E0B",
+                    mr: 2,
                   }}
                 >
                   <ShowChartIcon />
@@ -725,17 +771,17 @@ const HeroSection = () => {
                   <Typography
                     sx={{
                       fontWeight: 700,
-                      fontSize: '0.9rem',
+                      fontSize: "0.9rem",
                       color: themeColors.text.primary,
-                      mb: 0.5
+                      mb: 0.5,
                     }}
                   >
                     Trend Analysis
                   </Typography>
                   <Typography
                     sx={{
-                      fontSize: '0.8rem',
-                      color: themeColors.text.secondary
+                      fontSize: "0.8rem",
+                      color: themeColors.text.secondary,
                     }}
                   >
                     Identify opportunities to save money
@@ -746,24 +792,43 @@ const HeroSection = () => {
           </Grid>
         </Grid>
       </Container>
-      
+
       {/* Additional keyframes for animations */}
       <style jsx global>{`
         @keyframes pulse {
-          0% { opacity: 1; }
-          50% { opacity: 0.5; }
-          100% { opacity: 1; }
+          0% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+          100% {
+            opacity: 1;
+          }
         }
-        
+
         @keyframes twinkle {
-          0% { transform: scale(1); opacity: 0.8; }
-          50% { transform: scale(1.2); opacity: 1; }
-          100% { transform: scale(1); opacity: 0.8; }
+          0% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: scale(1.2);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
         }
-        
+
         @keyframes rotateBg {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </Box>
@@ -776,17 +841,17 @@ const Landing = () => {
   useEffect(() => {
     AOS.init({
       duration: 800,
-      easing: 'ease-out',
+      easing: "ease-out",
       once: false,
       mirror: false,
       offset: 120,
     });
-    
+
     // Refresh AOS when components update
     AOS.refresh();
-    
+
     // Create global CSS for animations
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.innerHTML = `
       @keyframes pulse {
         0% { opacity: 0.6; transform: scale(0.9); }
@@ -816,40 +881,40 @@ const Landing = () => {
       }
     `;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
     };
   }, []);
 
   return (
-    <Box sx={{ bgcolor: themeColors.background.default, overflow: 'hidden' }}>
+    <Box sx={{ bgcolor: themeColors.background.default, overflow: "hidden" }}>
       {/* Navbar */}
       <Navbar />
-      
+
       {/* Hero Section */}
       <HeroSection />
-      
+
       {/* Features Section */}
       <Box id="features">
         <FeaturesSection />
       </Box>
-      
+
       {/* How It Works */}
       <HowItWorksSection />
-      
+
       {/* Testimonials */}
       <Box id="testimonials">
         <TestimonialSection />
-      </Box>      
+      </Box>
       {/* Team Section */}
       <Box id="team">
         <TeamSection />
-      </Box>      
+      </Box>
       {/* CTA Section */}
       <Box id="cta">
         <CTASection />
-      </Box>      
+      </Box>
       {/* Footer */}
       <Footer />
     </Box>
@@ -861,122 +926,146 @@ export default Landing;
 // Developer profiles
 const developers = [
   {
-    name: 'Kylle Acutb',
-    role: 'Backend Developer',
+    name: "Kylle Actub",
+    role: "Backend Developer",
     image: profile2,
-    bio: 'Experienced Laravel developer specializing in RESTful API development, database optimization, and secure authentication systems.',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com'
+    bio: "Experienced Laravel developer specializing in RESTful API development, database optimization, and secure authentication systems.",
+    github: "https://github.com",
+    linkedin: "https://linkedin.com",
   },
   {
-    name: 'Applegay Delicano',
-    role: 'Frontend Developer',
+    name: "Applegay Delicano",
+    role: "Frontend Developer",
     image: profile1,
-    bio: 'React specialist with expertise in Material UI, responsive design, and creating intuitive user experiences for web applications.',
-    github: 'https://github.com',
-    linkedin: 'https://linkedin.com'
-  }
+    bio: "React specialist with expertise in Material UI, responsive design, and creating intuitive user experiences for web applications.",
+    github: "https://github.com",
+    linkedin: "https://linkedin.com",
+  },
 ];
 
 // Features list with enhanced data
 const features = [
   {
-    title: 'Expense Tracking',
-    description: 'Record and categorize your daily expenses with just a few clicks',
-    icon: <CreditCardIcon fontSize="large" sx={{ color: themeColors.primary.main }} />,
-    color: 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.2))'
+    title: "Expense Tracking",
+    description:
+      "Record and categorize your daily expenses with just a few clicks",
+    icon: (
+      <CreditCardIcon
+        fontSize="large"
+        sx={{ color: themeColors.primary.main }}
+      />
+    ),
+    color: "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.2))",
   },
   {
-    title: 'Custom Categories',
-    description: 'Create and manage custom categories with color coding',
-    icon: <CategoryIcon fontSize="large" sx={{ color: themeColors.success.main }} />,
-    color: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.2))'
+    title: "Custom Categories",
+    description: "Create and manage custom categories with color coding",
+    icon: (
+      <CategoryIcon fontSize="large" sx={{ color: themeColors.success.main }} />
+    ),
+    color:
+      "linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.2))",
   },
   {
-    title: 'Visual Analytics',
-    description: 'Visualize your spending patterns with interactive charts',
-    icon: <ChartIcon fontSize="large" sx={{ color: themeColors.secondary.main }} />,
-    color: 'linear-gradient(135deg, rgba(236,72,153,0.1), rgba(236,72,153,0.2))'
+    title: "Visual Analytics",
+    description: "Visualize your spending patterns with interactive charts",
+    icon: (
+      <ChartIcon fontSize="large" sx={{ color: themeColors.secondary.main }} />
+    ),
+    color:
+      "linear-gradient(135deg, rgba(236,72,153,0.1), rgba(236,72,153,0.2))",
   },
   {
-    title: 'Budget Planning',
-    description: 'Set budgets for different expense categories and track your progress',
-    icon: <SavingsIcon fontSize="large" sx={{ color: '#8B5CF6' }} />,
-    color: 'linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.2))'
+    title: "Budget Planning",
+    description:
+      "Set budgets for different expense categories and track your progress",
+    icon: <SavingsIcon fontSize="large" sx={{ color: "#8B5CF6" }} />,
+    color:
+      "linear-gradient(135deg, rgba(139,92,246,0.1), rgba(139,92,246,0.2))",
   },
   {
-    title: 'Spending Trends',
-    description: 'Identify spending trends and opportunities to save money',
-    icon: <ShowChartIcon fontSize="large" sx={{ color: '#F59E0B' }} />,
-    color: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.2))'
-  }
+    title: "Spending Trends",
+    description: "Identify spending trends and opportunities to save money",
+    icon: <ShowChartIcon fontSize="large" sx={{ color: "#F59E0B" }} />,
+    color:
+      "linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.2))",
+  },
 ];
 
 // Testimonials
 const testimonials = [
   {
-    name: 'Sarah Johnson',
-    position: 'Marketing Manager',
-    avatar: 'https://i.pravatar.cc/150?img=32',
-    quote: "This expense tracker completely revolutionized how I manage my personal finances. The visual analytics make it easy to see where my money goes.",
-    rating: 5
+    name: "Sarah Johnson",
+    position: "Marketing Manager",
+    avatar: "https://i.pravatar.cc/150?img=32",
+    quote:
+      "This expense tracker completely revolutionized how I manage my personal finances. The visual analytics make it easy to see where my money goes.",
+    rating: 5,
   },
   {
-    name: 'Michael Chen',
-    position: 'Software Engineer',
-    avatar: 'https://i.pravatar.cc/150?img=11',
-    quote: "As someone who loves data, I appreciate the detailed reports and insights this app provides. Setting up custom categories was a game-changer.",
-    rating: 5
+    name: "Michael Chen",
+    position: "Software Engineer",
+    avatar: "https://i.pravatar.cc/150?img=11",
+    quote:
+      "As someone who loves data, I appreciate the detailed reports and insights this app provides. Setting up custom categories was a game-changer.",
+    rating: 5,
   },
   {
-    name: 'Emily Rodriguez',
-    position: 'Freelance Designer',
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    quote: "Keeping track of business expenses was always a challenge until I found this app. Now I can separate personal and business expenses effortlessly.",
-    rating: 4
+    name: "Emily Rodriguez",
+    position: "Freelance Designer",
+    avatar: "https://i.pravatar.cc/150?img=5",
+    quote:
+      "Keeping track of business expenses was always a challenge until I found this app. Now I can separate personal and business expenses effortlessly.",
+    rating: 4,
   },
   {
-    name: 'James Wilson',
-    position: 'DevOps Engineer',
-    avatar: 'https://i.pravatar.cc/150?img=13',
-    quote: "I've tried many expense tracking apps, but this one strikes the perfect balance between powerful features and ease of use. The streak visualizations keep me motivated.",
-    rating: 5
+    name: "James Wilson",
+    position: "DevOps Engineer",
+    avatar: "https://i.pravatar.cc/150?img=13",
+    quote:
+      "I've tried many expense tracking apps, but this one strikes the perfect balance between powerful features and ease of use. The streak visualizations keep me motivated.",
+    rating: 5,
   },
   {
-    name: 'Priya Sharma',
-    position: 'Full Stack Developer',
-    avatar: 'https://i.pravatar.cc/150?img=23',
-    quote: "The data visualization helps me understand my spending patterns better than any app I've used before. It's like having a personal financial coach in your pocket.",
-    rating: 5
-  }
+    name: "Priya Sharma",
+    position: "Full Stack Developer",
+    avatar: "https://i.pravatar.cc/150?img=23",
+    quote:
+      "The data visualization helps me understand my spending patterns better than any app I've used before. It's like having a personal financial coach in your pocket.",
+    rating: 5,
+  },
 ];
 
 const TestimonialSection = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [direction, setDirection] = useState('next');
+  const [direction, setDirection] = useState("next");
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
   const handlePrev = () => {
     if (isAnimating) return;
-    setDirection('prev');
+    setDirection("prev");
     setIsAnimating(true);
     setTimeout(() => {
-      setActiveIndex((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
+      setActiveIndex((prev) =>
+        prev === 0 ? testimonials.length - 1 : prev - 1
+      );
       setIsAnimating(false);
     }, 300);
   };
-  
+
   const handleNext = () => {
     if (isAnimating) return;
-    setDirection('next');
+    setDirection("next");
     setIsAnimating(true);
     setTimeout(() => {
-      setActiveIndex((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+      setActiveIndex((prev) =>
+        prev === testimonials.length - 1 ? 0 : prev + 1
+      );
       setIsAnimating(false);
     }, 300);
   };
@@ -986,7 +1075,7 @@ const TestimonialSection = () => {
     const timer = setTimeout(() => {
       handleNext();
     }, 5000);
-    
+
     return () => clearTimeout(timer);
   }, [activeIndex]);
 
@@ -994,115 +1083,115 @@ const TestimonialSection = () => {
   const handleTouchStart = (e) => {
     setTouchStart(e.targetTouches[0].clientX);
   };
-  
+
   const handleTouchMove = (e) => {
     setTouchEnd(e.targetTouches[0].clientX);
   };
-  
+
   const handleTouchEnd = () => {
     if (touchStart - touchEnd > 50) {
       // Swipe left
       handleNext();
     }
-    
+
     if (touchStart - touchEnd < -50) {
       // Swipe right
       handlePrev();
     }
   };
-  
+
   return (
-    <Box 
-      sx={{ 
-        py: { xs: 10, md: 14 }, 
-        background: 'linear-gradient(180deg, #F3F4F6 0%, #FFFFFF 100%)',
-        position: 'relative', 
-        overflow: 'hidden' 
+    <Box
+      sx={{
+        py: { xs: 10, md: 14 },
+        background: "linear-gradient(180deg, #F3F4F6 0%, #FFFFFF 100%)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
       {/* Background decorative elements */}
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
-          width: '400px',
-          height: '400px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(37,99,235,0.05) 0%, rgba(37,99,235,0) 70%)',
-          top: '15%',
-          right: '-200px',
-          zIndex: 0
+          position: "absolute",
+          width: "400px",
+          height: "400px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(37,99,235,0.05) 0%, rgba(37,99,235,0) 70%)",
+          top: "15%",
+          right: "-200px",
+          zIndex: 0,
         }}
       />
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
-          width: '500px',
-          height: '500px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(37,99,235,0.03) 0%, rgba(37,99,235,0) 70%)',
-          bottom: '-250px',
-          left: '-250px',
-          zIndex: 0
+          position: "absolute",
+          width: "500px",
+          height: "500px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(37,99,235,0.03) 0%, rgba(37,99,235,0) 70%)",
+          bottom: "-250px",
+          left: "-250px",
+          zIndex: 0,
         }}
       />
-      
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-        <Box 
-          sx={{ textAlign: 'center', mb: 8 }}
-          data-aos="fade-up"
-        >
-          <Typography 
+
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+        <Box sx={{ textAlign: "center", mb: 8 }} data-aos="fade-up">
+          <Typography
             component="span"
             sx={{
-              display: 'block',
-              textTransform: 'uppercase',
+              display: "block",
+              textTransform: "uppercase",
               color: theme.palette.primary.main,
               fontWeight: 700,
-              fontSize: '0.875rem',
-              letterSpacing: '0.1em',
-              mb: 2
+              fontSize: "0.875rem",
+              letterSpacing: "0.1em",
+              mb: 2,
             }}
           >
             TESTIMONIALS
           </Typography>
-          <Typography 
-            variant="h2" 
-            component="h2" 
-            sx={{ 
+          <Typography
+            variant="h2"
+            component="h2"
+            sx={{
               fontWeight: 800,
               mb: 3,
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
-              letterSpacing: '-0.02em',
+              fontSize: { xs: "2.5rem", md: "3.5rem" },
+              letterSpacing: "-0.02em",
               lineHeight: 1.2,
-              color: theme.palette.text.primary
+              color: theme.palette.text.primary,
             }}
           >
             What Our Users Say
           </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: theme.palette.text.secondary,
-              maxWidth: '700px',
-              mx: 'auto',
+              maxWidth: "700px",
+              mx: "auto",
               px: 2,
-              fontSize: { xs: '1rem', md: '1.25rem' },
+              fontSize: { xs: "1rem", md: "1.25rem" },
               fontWeight: 400,
-              lineHeight: 1.6
+              lineHeight: 1.6,
             }}
           >
-            Join thousands of satisfied users who've transformed their financial habits
+            Join thousands of satisfied users who've transformed their financial
+            habits
           </Typography>
         </Box>
-        
+
         {/* Testimonial Slider */}
-        <Box 
-          sx={{ 
-            position: 'relative', 
-            maxWidth: '900px', 
-            mx: 'auto',
+        <Box
+          sx={{
+            position: "relative",
+            maxWidth: "900px",
+            mx: "auto",
             my: 8,
-            px: { xs: 2, md: 8 }
+            px: { xs: 2, md: 8 },
           }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -1110,117 +1199,135 @@ const TestimonialSection = () => {
         >
           <Box
             sx={{
-              position: 'relative',
-              height: { xs: '380px', md: '280px' },
-              overflow: 'hidden'
+              position: "relative",
+              height: { xs: "380px", md: "280px" },
+              overflow: "hidden",
             }}
           >
             {testimonials.map((testimonial, index) => (
               <Box
                 key={index}
                 component={motion.div}
-                initial={{ opacity: 0, x: direction === 'next' ? 100 : -100 }}
-                animate={{ 
+                initial={{ opacity: 0, x: direction === "next" ? 100 : -100 }}
+                animate={{
                   opacity: activeIndex === index ? 1 : 0,
-                  x: activeIndex === index ? 0 : (activeIndex > index ? -100 : 100),
-                  position: activeIndex === index ? 'relative' : 'absolute'
+                  x:
+                    activeIndex === index
+                      ? 0
+                      : activeIndex > index
+                      ? -100
+                      : 100,
+                  position: activeIndex === index ? "relative" : "absolute",
                 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
                 sx={{
-                  width: '100%',
+                  width: "100%",
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center'
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
               >
                 <Box
                   sx={{
-                    width: '100%',
-                    height: { xs: '360px', md: '260px' },
-                    borderRadius: '1rem',
-                    boxShadow: '0 15px 40px rgba(0,0,0,0.08)',
-                    bgcolor: 'white',
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    overflow: 'visible',
+                    width: "100%",
+                    height: { xs: "360px", md: "260px" },
+                    borderRadius: "1rem",
+                    boxShadow: "0 15px 40px rgba(0,0,0,0.08)",
+                    bgcolor: "white",
+                    transition: "all 0.3s ease",
+                    position: "relative",
+                    overflow: "visible",
                     p: 4,
-   
                   }}
                 >
-                  <Box sx={{ display: 'flex', mb: 3, alignItems: 'center' }}>
-                    <Box sx={{ position: 'relative' }}>
-                      <Avatar 
-                        src={testimonial.avatar} 
+                  <Box sx={{ display: "flex", mb: 3, alignItems: "center" }}>
+                    <Box sx={{ position: "relative" }}>
+                      <Avatar
+                        src={testimonial.avatar}
                         alt={testimonial.name}
-                        sx={{ 
-                          width: 64, 
+                        sx={{
+                          width: 64,
                           height: 64,
-                          border: '3px solid white',
-                          boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                          border: "3px solid white",
+                          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
                         }}
                       />
-                      <Box 
+                      <Box
                         sx={{
-                          position: 'absolute',
+                          position: "absolute",
                           right: -5,
                           bottom: -5,
                           width: 24,
                           height: 24,
-                          borderRadius: '50%',
+                          borderRadius: "50%",
                           bgcolor: theme.palette.primary.main,
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
-                          fontWeight: 'bold',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                          color: "white",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "0.75rem",
+                          fontWeight: "bold",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                         }}
                       >
                         {index + 1}
                       </Box>
                     </Box>
                     <Box sx={{ ml: 2 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.text.primary }}>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 700,
+                          color: theme.palette.text.primary,
+                        }}
+                      >
                         {testimonial.name}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: theme.palette.primary.main }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: theme.palette.primary.main }}
+                      >
                         {testimonial.position}
                       </Typography>
                     </Box>
                   </Box>
-                  
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
-                      mb: 3, 
+
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      mb: 3,
                       lineHeight: 1.7,
                       color: theme.palette.text.primary,
-                      fontStyle: 'italic',
-                      fontSize: '1.05rem'
+                      fontStyle: "italic",
+                      fontSize: "1.05rem",
                     }}
                   >
                     "{testimonial.quote}"
                   </Typography>
-                  
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
                     {[...Array(5)].map((_, i) => (
-                      <Box 
-                        key={i} 
-                        sx={{ 
-                          color: i < testimonial.rating ? '#F59E0B' : 'rgba(0,0,0,0.2)',
+                      <Box
+                        key={i}
+                        sx={{
+                          color:
+                            i < testimonial.rating
+                              ? "#F59E0B"
+                              : "rgba(0,0,0,0.2)",
                           mr: 0.5,
-                          display: 'flex'
+                          display: "flex",
                         }}
                       >
-                        <Star 
+                        <Star
                           size={18}
-                          fill={i < testimonial.rating ? "#F59E0B" : "none"} 
-                          stroke={i < testimonial.rating ? "#F59E0B" : "#CBD5E1"}
+                          fill={i < testimonial.rating ? "#F59E0B" : "none"}
+                          stroke={
+                            i < testimonial.rating ? "#F59E0B" : "#CBD5E1"
+                          }
                         />
                       </Box>
                     ))}
@@ -1231,77 +1338,82 @@ const TestimonialSection = () => {
           </Box>
 
           {/* Navigation buttons */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            mt: 4,
-            gap: 2
-          }}>
-            <IconButton 
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              mt: 4,
+              gap: 2,
+            }}
+          >
+            <IconButton
               onClick={handlePrev}
-              sx={{ 
-                position: 'absolute',
-                top: '50%',
+              sx={{
+                position: "absolute",
+                top: "50%",
                 left: { xs: 0, md: -30 },
-                transform: 'translateY(-50%)',
-                bgcolor: 'white', 
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                '&:hover': {
+                transform: "translateY(-50%)",
+                bgcolor: "white",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                "&:hover": {
                   bgcolor: theme.palette.primary.main,
-                  color: 'white'
+                  color: "white",
                 },
-                transition: 'all 0.3s ease',
-                zIndex: 2
+                transition: "all 0.3s ease",
+                zIndex: 2,
               }}
               aria-label="Previous testimonial"
             >
               <ArrowBackIosIcon fontSize="small" />
             </IconButton>
-            
+
             {/* Pagination dots */}
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 gap: 1,
-                mt: 4
+                mt: 4,
               }}
             >
               {testimonials.map((_, index) => (
-                <Box 
+                <Box
                   key={index}
                   onClick={() => {
-                    setDirection(index > activeIndex ? 'next' : 'prev');
+                    setDirection(index > activeIndex ? "next" : "prev");
                     setActiveIndex(index);
                   }}
                   sx={{
                     width: activeIndex === index ? 24 : 10,
                     height: 10,
-                    borderRadius: '100px',
-                    bgcolor: activeIndex === index ? theme.palette.primary.main : 'rgba(37,99,235,0.2)',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease'
+                    borderRadius: "100px",
+                    bgcolor:
+                      activeIndex === index
+                        ? theme.palette.primary.main
+                        : "rgba(37,99,235,0.2)",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
                   }}
                 />
               ))}
             </Box>
-            
-            <IconButton 
+
+            <IconButton
               onClick={handleNext}
-              sx={{ 
-                position: 'absolute',
-                top: '50%',
+              sx={{
+                position: "absolute",
+                top: "50%",
                 right: { xs: 0, md: -30 },
-                transform: 'translateY(-50%)',
-                bgcolor: 'white', 
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                '&:hover': {
+                transform: "translateY(-50%)",
+                bgcolor: "white",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                "&:hover": {
                   bgcolor: theme.palette.primary.main,
-                  color: 'white'
+                  color: "white",
                 },
-                transition: 'all 0.3s ease',
-                zIndex: 2
+                transition: "all 0.3s ease",
+                zIndex: 2,
               }}
               aria-label="Next testimonial"
             >
@@ -1314,9 +1426,15 @@ const TestimonialSection = () => {
       {/* Custom CSS for animations */}
       <style jsx global>{`
         @keyframes float {
-          0% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-          100% { transform: translateY(0); }
+          0% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-8px);
+          }
+          100% {
+            transform: translateY(0);
+          }
         }
       `}</style>
     </Box>
@@ -1326,11 +1444,11 @@ const TestimonialSection = () => {
 // Animation variants
 const fadeInUp = {
   hidden: { opacity: 0, y: 60 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
-  }
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
 };
 
 const staggerContainer = {
@@ -1338,26 +1456,26 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2
-    }
-  }
+      staggerChildren: 0.2,
+    },
+  },
 };
 
 const fadeIn = {
   hidden: { opacity: 0 },
-  visible: { 
+  visible: {
     opacity: 1,
-    transition: { duration: 0.6 }
-  }
+    transition: { duration: 0.6 },
+  },
 };
 
 const scaleUp = {
   hidden: { scale: 0.8, opacity: 0 },
-  visible: { 
+  visible: {
     scale: 1,
     opacity: 1,
-    transition: { duration: 0.5 }
-  }
+    transition: { duration: 0.5 },
+  },
 };
 
 // Enhanced floating animation for hero image/GIF
@@ -1368,35 +1486,37 @@ const floatingAnimation = {
       duration: 4,
       repeat: Infinity,
       repeatType: "reverse",
-      ease: "easeInOut"
-    }
-  }
+      ease: "easeInOut",
+    },
+  },
 };
 
 // Pulse animation for GIF highlight
 const pulseAnimation = {
   animate: {
     boxShadow: [
-      '0 10px 30px rgba(37,99,235,0.3)',
-      '0 15px 40px rgba(37,99,235,0.5)',
-      '0 10px 30px rgba(37,99,235,0.3)'
+      "0 10px 30px rgba(37,99,235,0.3)",
+      "0 15px 40px rgba(37,99,235,0.5)",
+      "0 10px 30px rgba(37,99,235,0.3)",
     ],
     transition: {
       duration: 2,
       repeat: Infinity,
       repeatType: "reverse",
-      ease: "easeInOut"
-    }
-  }
+      ease: "easeInOut",
+    },
+  },
 };
 
-// Modern Navbar with glass morphism effect
-// Modern Navbar with glass morphism effect and smooth scrolling
-const Navbar = () => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+// Inside the Navbar component in your code
+
+              const Navbar = () => {
+                const [menuOpen, setMenuOpen] = useState(false);
+                const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [scrolled, setScrolled] = useState(false);
+  // Add a new state to track the active section
+  const [activeSection, setActiveSection] = useState("");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1405,13 +1525,34 @@ const Navbar = () => {
       } else {
         setScrolled(false);
       }
+
+      // Check which section is currently in view
+      const sections = ["features", "how-it-works", "testimonials", "team"];
+
+      // Find the section that is currently in the viewport
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          // Adjust these values based on when you want sections to be considered "active"
+          if (rect.top <= 150 && rect.bottom >= 150) {
+            setActiveSection(section);
+            return;
+          }
+        }
+      }
+
+      // If no section is active or we're at the top of the page
+      if (window.scrollY < 300) {
+        setActiveSection("");
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Function to handle smooth scrolling to sections
+  // Function to handle smooth scrolling to sections - use your existing function but add activeSection
   const scrollToSection = (sectionId) => {
     const section = document.getElementById(sectionId);
     if (section) {
@@ -1419,80 +1560,89 @@ const Navbar = () => {
       if (menuOpen) {
         setMenuOpen(false);
       }
-      
+
+      // Set active section
+      setActiveSection(sectionId);
+
       // Smooth scroll to section
-      section.scrollIntoView({ behavior: 'smooth' });
-      
+      section.scrollIntoView({ behavior: "smooth" });
+
       // Optional: update URL with hash for better UX
       window.history.pushState(null, null, `#${sectionId}`);
     }
   };
 
   return (
-    <Box 
-      sx={{ 
-        position: 'fixed',
+    <Box
+      sx={{
+        position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         zIndex: 1100,
-        transition: 'all 0.3s ease',
-        bgcolor: scrolled ? 'rgba(255, 255, 255, 0.85)' : 'transparent',
-        backdropFilter: scrolled ? 'blur(10px)' : 'none',
-        boxShadow: scrolled ? '0 4px 30px rgba(0, 0, 0, 0.1)' : 'none',
+        transition: "all 0.3s ease",
+        bgcolor: scrolled ? "rgba(255, 255, 255, 0.85)" : "transparent",
+        backdropFilter: scrolled ? "blur(10px)" : "none",
+        boxShadow: scrolled ? "0 4px 30px rgba(0, 0, 0, 0.1)" : "none",
       }}
     >
       <Container maxWidth="lg">
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
             py: scrolled ? 1.5 : 2,
-            transition: 'all 0.3s ease'
+            transition: "all 0.3s ease",
           }}
         >
+          {/* Logo - keep your existing code, just add onClick to clear activeSection */}
           <Box
             component={motion.div}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              cursor: 'pointer' // Make logo clickable 
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
             }}
             onClick={() => {
-              // Scroll to top when logo is clicked
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              setActiveSection("");
             }}
           >
+            {/* Your existing logo code */}
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(45deg, #2563EB, #60A5FA)',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 10px rgba(37, 99, 235, 0.3)',
-                mr: 1.5
+                background: "linear-gradient(45deg, #2563EB, #60A5FA)",
+                borderRadius: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 10px rgba(37, 99, 235, 0.3)",
+                mr: 1.5,
               }}
             >
-              <SavingsIcon sx={{ color: 'white' }} />
+              <SavingsIcon sx={{ color: "white" }} />
             </Box>
-            <Typography 
-              variant="h5" 
-              sx={{ 
+            <Typography
+              variant="h5"
+              sx={{
                 fontWeight: 800,
-                color: scrolled ? themeColors.text.primary : themeColors.primary.main,
-                fontSize: { xs: '1.2rem', md: '1.5rem' },
-                background: scrolled ? 'none' : 'linear-gradient(45deg, #2563EB, #60A5FA)',
-                backgroundClip: scrolled ? 'none' : 'text',
-                WebkitBackgroundClip: scrolled ? 'none' : 'text',
-                WebkitTextFillColor: scrolled ? 'inherit' : 'transparent',
-                letterSpacing: '-0.5px'
+                color: scrolled
+                  ? themeColors.text.primary
+                  : themeColors.primary.main,
+                fontSize: { xs: "1.2rem", md: "1.5rem" },
+                background: scrolled
+                  ? "none"
+                  : "linear-gradient(45deg, #2563EB, #60A5FA)",
+                backgroundClip: scrolled ? "none" : "text",
+                WebkitBackgroundClip: scrolled ? "none" : "text",
+                WebkitTextFillColor: scrolled ? "inherit" : "transparent",
+                letterSpacing: "-0.5px",
               }}
             >
               ExpenseTracker
@@ -1500,7 +1650,7 @@ const Navbar = () => {
           </Box>
 
           {isMobile ? (
-            <IconButton 
+            <IconButton
               onClick={() => setMenuOpen(!menuOpen)}
               sx={{ color: themeColors.primary.main }}
             >
@@ -1512,160 +1662,174 @@ const Navbar = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                gap: 3
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
               }}
             >
-              <Box sx={{ display: 'flex', gap: 3 }}>
-                <Typography 
+              <Box sx={{ display: "flex", gap: 3 }}>
+                {/* Update your navigation links with active state styles */}
+                <Typography
                   component="a"
-                  onClick={() => scrollToSection('features')}
-                  sx={{ 
-                    color: themeColors.text.secondary,
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    position: 'relative',
-                    '&:hover': {
+                  onClick={() => scrollToSection("features")}
+                  sx={{
+                    color:
+                      activeSection === "features"
+                        ? themeColors.primary.main
+                        : themeColors.text.secondary,
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    fontWeight: activeSection === "features" ? 600 : 500,
+                    position: "relative",
+                    "&:hover": {
                       color: themeColors.primary.main,
-                      '&::after': {
-                        width: '100%'
-                      }
+                      "&::after": {
+                        width: "100%",
+                      },
                     },
-                    '&::after': {
+                    "&::after": {
                       content: '""',
-                      position: 'absolute',
+                      position: "absolute",
                       bottom: -4,
                       left: 0,
-                      width: 0,
+                      width: activeSection === "features" ? "100%" : 0,
                       height: 2,
                       bgcolor: themeColors.primary.main,
-                      transition: 'width 0.3s ease'
-                    }
+                      transition: "width 0.3s ease",
+                    },
                   }}
                 >
                   Features
                 </Typography>
-                <Typography 
+                <Typography
                   component="a"
-                  onClick={() => scrollToSection('how-it-works')}
-                  sx={{ 
-                    color: themeColors.text.secondary,
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    position: 'relative',
-                    '&:hover': {
+                  onClick={() => scrollToSection("how-it-works")}
+                  sx={{
+                    color:
+                      activeSection === "how-it-works"
+                        ? themeColors.primary.main
+                        : themeColors.text.secondary,
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    fontWeight: activeSection === "how-it-works" ? 600 : 500,
+                    position: "relative",
+                    "&:hover": {
                       color: themeColors.primary.main,
-                      '&::after': {
-                        width: '100%'
-                      }
+                      "&::after": {
+                        width: "100%",
+                      },
                     },
-                    '&::after': {
+                    "&::after": {
                       content: '""',
-                      position: 'absolute',
+                      position: "absolute",
                       bottom: -4,
                       left: 0,
-                      width: 0,
+                      width: activeSection === "how-it-works" ? "100%" : 0,
                       height: 2,
                       bgcolor: themeColors.primary.main,
-                      transition: 'width 0.3s ease'
-                    }
+                      transition: "width 0.3s ease",
+                    },
                   }}
                 >
                   How It Works
                 </Typography>
-                <Typography 
+                <Typography
                   component="a"
-                  onClick={() => scrollToSection('testimonials')}
-                  sx={{ 
-                    color: themeColors.text.secondary,
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    position: 'relative',
-                    '&:hover': {
+                  onClick={() => scrollToSection("testimonials")}
+                  sx={{
+                    color:
+                      activeSection === "testimonials"
+                        ? themeColors.primary.main
+                        : themeColors.text.secondary,
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    fontWeight: activeSection === "testimonials" ? 600 : 500,
+                    position: "relative",
+                    "&:hover": {
                       color: themeColors.primary.main,
-                      '&::after': {
-                        width: '100%'
-                      }
+                      "&::after": {
+                        width: "100%",
+                      },
                     },
-                    '&::after': {
+                    "&::after": {
                       content: '""',
-                      position: 'absolute',
+                      position: "absolute",
                       bottom: -4,
                       left: 0,
-                      width: 0,
+                      width: activeSection === "testimonials" ? "100%" : 0,
                       height: 2,
                       bgcolor: themeColors.primary.main,
-                      transition: 'width 0.3s ease'
-                    }
+                      transition: "width 0.3s ease",
+                    },
                   }}
                 >
                   Testimonials
                 </Typography>
-                <Typography 
+                <Typography
                   component="a"
-                  onClick={() => scrollToSection('team')}
-                  sx={{ 
-                    color: themeColors.text.secondary,
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    position: 'relative',
-                    '&:hover': {
+                  onClick={() => scrollToSection("team")}
+                  sx={{
+                    color:
+                      activeSection === "team"
+                        ? themeColors.primary.main
+                        : themeColors.text.secondary,
+                    textDecoration: "none",
+                    cursor: "pointer",
+                    fontWeight: activeSection === "team" ? 600 : 500,
+                    position: "relative",
+                    "&:hover": {
                       color: themeColors.primary.main,
-                      '&::after': {
-                        width: '100%'
-                      }
+                      "&::after": {
+                        width: "100%",
+                      },
                     },
-                    '&::after': {
+                    "&::after": {
                       content: '""',
-                      position: 'absolute',
+                      position: "absolute",
                       bottom: -4,
                       left: 0,
-                      width: 0,
+                      width: activeSection === "team" ? "100%" : 0,
                       height: 2,
                       bgcolor: themeColors.primary.main,
-                      transition: 'width 0.3s ease'
-                    }
+                      transition: "width 0.3s ease",
+                    },
                   }}
                 >
                   Team
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Button 
-                  // For actual page changes, keep RouterLink
-                  component={RouterLink} 
+
+              {/* Keep your existing auth buttons code */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Button
+                  component={RouterLink}
                   to="/login"
-                  sx={{ 
+                  sx={{
                     fontWeight: 600,
                     color: themeColors.primary.main,
-                    '&:hover': {
-                      background: 'rgba(37, 99, 235, 0.08)'
-                    }
+                    "&:hover": {
+                      background: "rgba(37, 99, 235, 0.08)",
+                    },
                   }}
                 >
                   Log in
                 </Button>
-                <Button 
-                  component={RouterLink} 
+                <Button
+                  component={RouterLink}
                   to="/register"
                   variant="contained"
-                  sx={{ 
-                    background: 'linear-gradient(45deg, #2563EB, #3B82F6)',
+                  sx={{
+                    background: "linear-gradient(45deg, #2563EB, #3B82F6)",
                     fontWeight: 600,
-                    borderRadius: '8px',
+                    borderRadius: "8px",
                     px: 3,
                     py: 1,
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                    textTransform: 'none',
-                    '&:hover': {
-                      boxShadow: '0 6px 20px rgba(37, 99, 235, 0.6)'
-                    }
+                    boxShadow: "0 4px 14px rgba(37, 99, 235, 0.4)",
+                    textTransform: "none",
+                    "&:hover": {
+                      boxShadow: "0 6px 20px rgba(37, 99, 235, 0.6)",
+                    },
                   }}
                 >
                   Sign up free
@@ -1676,103 +1840,144 @@ const Navbar = () => {
         </Box>
       </Container>
 
-      {/* Mobile menu */}
+      {/* Update the mobile menu with active states */}
       {isMobile && (
         <Box
           sx={{
-            height: menuOpen ? '100vh' : 0,
-            overflow: 'hidden',
-            transition: 'height 0.3s ease-in-out',
-            bgcolor: 'white',
-            borderTop: menuOpen ? '1px solid #F3F4F6' : 'none'
+            height: menuOpen ? "100vh" : 0,
+            overflow: "hidden",
+            transition: "height 0.3s ease-in-out",
+            bgcolor: "white",
+            borderTop: menuOpen ? "1px solid #F3F4F6" : "none",
           }}
         >
           <Container>
-            <Box sx={{ py: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Typography 
+            <Box
+              sx={{ py: 4, display: "flex", flexDirection: "column", gap: 3 }}
+            >
+              {/* Mobile nav items with active states */}
+              <Typography
                 component="a"
-                onClick={() => scrollToSection('features')}
-                sx={{ 
-                  color: themeColors.text.primary,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
+                onClick={() => scrollToSection("features")}
+                sx={{
+                  color:
+                    activeSection === "features"
+                      ? themeColors.primary.main
+                      : themeColors.text.primary,
+                  textDecoration: "none",
+                  cursor: "pointer",
                   fontWeight: 600,
-                  fontSize: '1.2rem',
-                  py: 1
+                  fontSize: "1.2rem",
+                  py: 1,
+                  pl: 2,
+                  borderLeft:
+                    activeSection === "features"
+                      ? `4px solid ${themeColors.primary.main}`
+                      : "4px solid transparent",
+                  transition: "all 0.3s ease",
                 }}
               >
                 Features
               </Typography>
-              <Typography 
+              <Typography
                 component="a"
-                onClick={() => scrollToSection('how-it-works')}
-                sx={{ 
-                  color: themeColors.text.primary,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
+                onClick={() => scrollToSection("how-it-works")}
+                sx={{
+                  color:
+                    activeSection === "how-it-works"
+                      ? themeColors.primary.main
+                      : themeColors.text.primary,
+                  textDecoration: "none",
+                  cursor: "pointer",
                   fontWeight: 600,
-                  fontSize: '1.2rem',
-                  py: 1
+                  fontSize: "1.2rem",
+                  py: 1,
+                  pl: 2,
+                  borderLeft:
+                    activeSection === "how-it-works"
+                      ? `4px solid ${themeColors.primary.main}`
+                      : "4px solid transparent",
+                  transition: "all 0.3s ease",
                 }}
               >
                 How It Works
               </Typography>
-              <Typography 
+              <Typography
                 component="a"
-                onClick={() => scrollToSection('testimonials')}
-                sx={{ 
-                  color: themeColors.text.primary,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
+                onClick={() => scrollToSection("testimonials")}
+                sx={{
+                  color:
+                    activeSection === "testimonials"
+                      ? themeColors.primary.main
+                      : themeColors.text.primary,
+                  textDecoration: "none",
+                  cursor: "pointer",
                   fontWeight: 600,
-                  fontSize: '1.2rem',
-                  py: 1
+                  fontSize: "1.2rem",
+                  py: 1,
+                  pl: 2,
+                  borderLeft:
+                    activeSection === "testimonials"
+                      ? `4px solid ${themeColors.primary.main}`
+                      : "4px solid transparent",
+                  transition: "all 0.3s ease",
                 }}
               >
                 Testimonials
               </Typography>
-              <Typography 
+              <Typography
                 component="a"
-                onClick={() => scrollToSection('team')}
-                sx={{ 
-                  color: themeColors.text.primary,
-                  textDecoration: 'none',
-                  cursor: 'pointer',
+                onClick={() => scrollToSection("team")}
+                sx={{
+                  color:
+                    activeSection === "team"
+                      ? themeColors.primary.main
+                      : themeColors.text.primary,
+                  textDecoration: "none",
+                  cursor: "pointer",
                   fontWeight: 600,
-                  fontSize: '1.2rem',
-                  py: 1
+                  fontSize: "1.2rem",
+                  py: 1,
+                  pl: 2,
+                  borderLeft:
+                    activeSection === "team"
+                      ? `4px solid ${themeColors.primary.main}`
+                      : "4px solid transparent",
+                  transition: "all 0.3s ease",
                 }}
               >
                 Team
               </Typography>
+
+              {/* Keep your existing mobile auth buttons code */}
               <Box sx={{ pt: 2 }}>
-                <Button 
-                  component={RouterLink} 
+                <Button
+                  component={RouterLink}
                   to="/login"
                   fullWidth
-                  sx={{ 
+                  sx={{
                     fontWeight: 600,
                     color: themeColors.primary.main,
                     mb: 2,
                     py: 1.5,
                     border: `1px solid ${themeColors.primary.main}`,
-                    borderRadius: '8px'
+                    borderRadius: "8px",
                   }}
                 >
                   Log in
                 </Button>
-                <Button 
-                  component={RouterLink} 
+                <Button
+                  component={RouterLink}
                   to="/register"
                   variant="contained"
                   fullWidth
-                  sx={{ 
-                    background: 'linear-gradient(45deg, #2563EB, #3B82F6)',
+                  sx={{
+                    background: "linear-gradient(45deg, #2563EB, #3B82F6)",
                     fontWeight: 600,
-                    borderRadius: '8px',
+                    borderRadius: "8px",
                     py: 1.5,
-                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                    textTransform: 'none'
+                    boxShadow: "0 4px 14px rgba(37, 99, 235, 0.4)",
+                    textTransform: "none",
                   }}
                 >
                   Sign up free
@@ -1788,129 +1993,130 @@ const Navbar = () => {
 // Enhanced How It Works Component
 const HowItWorksSection = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   return (
-    <Box 
-      sx={{ 
-        py: { xs: 10, md: 16 }, 
-        position: 'relative',
-        overflow: 'hidden',
-        bgcolor: '#F9FAFB'
+    <Box
+      sx={{
+        py: { xs: 10, md: 16 },
+        position: "relative",
+        overflow: "hidden",
+        bgcolor: "#F9FAFB",
       }}
       id="how-it-works"
     >
       {/* Background decorative elements */}
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
-          width: '300px',
-          height: '300px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(37,99,235,0.1) 0%, rgba(37,99,235,0) 70%)',
-          top: '5%',
-          left: '-100px',
-          zIndex: 0
+          position: "absolute",
+          width: "300px",
+          height: "300px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(37,99,235,0.1) 0%, rgba(37,99,235,0) 70%)",
+          top: "5%",
+          left: "-100px",
+          zIndex: 0,
         }}
       />
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
-          width: '400px',
-          height: '400px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, rgba(59,130,246,0) 70%)',
-          bottom: '10%',
-          right: '-150px',
-          zIndex: 0
+          position: "absolute",
+          width: "400px",
+          height: "400px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(59,130,246,0.08) 0%, rgba(59,130,246,0) 70%)",
+          bottom: "10%",
+          right: "-150px",
+          zIndex: 0,
         }}
       />
 
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-        <Box 
-          sx={{ textAlign: 'center', mb: 10 }}
-          data-aos="fade-up"
-        >
-          <Typography 
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+        <Box sx={{ textAlign: "center", mb: 10 }} data-aos="fade-up">
+          <Typography
             component="span"
             sx={{
-              display: 'block',
-              textTransform: 'uppercase',
+              display: "block",
+              textTransform: "uppercase",
               color: themeColors.primary.main,
               fontWeight: 700,
-              fontSize: '0.875rem',
-              letterSpacing: '0.1em',
-              mb: 2
+              fontSize: "0.875rem",
+              letterSpacing: "0.1em",
+              mb: 2,
             }}
           >
             Getting Started
           </Typography>
-          <Typography 
-            variant="h2" 
-            component="h2" 
-            sx={{ 
+          <Typography
+            variant="h2"
+            component="h2"
+            sx={{
               fontWeight: 800,
               mb: 3,
-              background: 'linear-gradient(90deg, #2563EB, #60A5FA)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              display: 'inline-block',
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
-              letterSpacing: '-0.02em',
-              lineHeight: 1.2
+              background: "linear-gradient(90deg, #2563EB, #60A5FA)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              display: "inline-block",
+              fontSize: { xs: "2.5rem", md: "3.5rem" },
+              letterSpacing: "-0.02em",
+              lineHeight: 1.2,
             }}
           >
             How It Works
           </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: themeColors.text.secondary,
-              maxWidth: '700px',
-              mx: 'auto',
+              maxWidth: "700px",
+              mx: "auto",
               px: 2,
-              fontSize: { xs: '1rem', md: '1.25rem' },
+              fontSize: { xs: "1rem", md: "1.25rem" },
               fontWeight: 400,
-              lineHeight: 1.6
+              lineHeight: 1.6,
             }}
           >
             Start managing your expenses in three simple steps
           </Typography>
         </Box>
-        
+
         {/* Modern Timeline with updated design */}
-        <Box 
-          sx={{ 
-            position: 'relative',
-            maxWidth: '900px',
-            mx: 'auto',
+        <Box
+          sx={{
+            position: "relative",
+            maxWidth: "900px",
+            mx: "auto",
             pb: 5,
-            pt: 2
+            pt: 2,
           }}
         >
           {/* Center line */}
           {!isMobile && (
             <Box
               sx={{
-                position: 'absolute',
-                height: '100%',
-                width: '3px',
-                background: 'linear-gradient(180deg, rgba(37,99,235,0.2) 0%, rgba(37,99,235,0.6) 50%, rgba(37,99,235,0.2) 100%)',
-                left: '50%',
-                transform: 'translateX(-50%)',
+                position: "absolute",
+                height: "100%",
+                width: "3px",
+                background:
+                  "linear-gradient(180deg, rgba(37,99,235,0.2) 0%, rgba(37,99,235,0.6) 50%, rgba(37,99,235,0.2) 100%)",
+                left: "50%",
+                transform: "translateX(-50%)",
                 top: 0,
                 zIndex: 1,
-                '&::after': {
+                "&::after": {
                   content: '""',
-                  position: 'absolute',
-                  height: '60%',
-                  width: '3px',
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%)',
+                  position: "absolute",
+                  height: "60%",
+                  width: "3px",
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%)",
                   left: 0,
-                  top: '20%',
-                  animation: 'line-shine 3s infinite linear'
-                }
+                  top: "20%",
+                  animation: "line-shine 3s infinite linear",
+                },
               }}
             />
           )}
@@ -1918,96 +2124,100 @@ const HowItWorksSection = () => {
           {/* Step 1 */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              width: '100%',
-              justifyContent: 'center',
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              width: "100%",
+              justifyContent: "center",
               mb: { xs: 8, md: 10 },
-              position: 'relative'
+              position: "relative",
             }}
           >
             {/* Content Card - Left Side */}
             <Box
               sx={{
-                width: { xs: '100%', md: '45%' },
+                width: { xs: "100%", md: "45%" },
                 pr: { xs: 0, md: 4 },
-                display: 'flex',
-                justifyContent: { xs: 'center', md: 'flex-end' },
-                alignItems: 'center',
-                mb: { xs: 4, md: 0 }
+                display: "flex",
+                justifyContent: { xs: "center", md: "flex-end" },
+                alignItems: "center",
+                mb: { xs: 4, md: 0 },
               }}
               data-aos="fade-right"
               data-aos-duration="800"
             >
               <Box
                 sx={{
-                  bgcolor: 'white',
-                  borderRadius: '1rem',
-                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.03)',
+                  bgcolor: "white",
+                  borderRadius: "1rem",
+                  boxShadow:
+                    "0 10px 30px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.03)",
                   p: 4,
-                  textAlign: { xs: 'center', md: 'right' },
-                  maxWidth: '320px',
-                  width: '100%',
-                  position: 'relative',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.05)'
+                  textAlign: { xs: "center", md: "right" },
+                  maxWidth: "320px",
+                  width: "100%",
+                  position: "relative",
+                  transition: "all 0.3s ease-in-out",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow:
+                      "0 15px 35px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.05)",
                   },
-                  '&:after': {
+                  "&:after": {
                     content: '""',
-                    position: 'absolute',
-                    top: '50%',
-                    right: { xs: '50%', md: '-15px' },
-                    bottom: { xs: '-15px', md: 'auto' },
-                    transform: { 
-                      xs: 'translateX(50%) rotate(45deg)', 
-                      md: 'translateY(-50%) rotate(45deg)' 
+                    position: "absolute",
+                    top: "50%",
+                    right: { xs: "50%", md: "-15px" },
+                    bottom: { xs: "-15px", md: "auto" },
+                    transform: {
+                      xs: "translateX(50%) rotate(45deg)",
+                      md: "translateY(-50%) rotate(45deg)",
                     },
-                    width: '30px',
-                    height: '30px',
-                    bgcolor: 'white',
+                    width: "30px",
+                    height: "30px",
+                    bgcolor: "white",
                     zIndex: 0,
-                    borderRadius: '3px',
-                    boxShadow: '6px -6px 10px rgba(0, 0, 0, 0.02)',
-                    display: { xs: 'none', md: 'block' }
-                  }
+                    borderRadius: "3px",
+                    boxShadow: "6px -6px 10px rgba(0, 0, 0, 0.02)",
+                    display: { xs: "none", md: "block" },
+                  },
                 }}
               >
-                <Typography 
-                  variant="h5" 
-                  component="h3" 
+                <Typography
+                  variant="h5"
+                  component="h3"
                   color="primary"
-                  sx={{ 
-                    fontWeight: 700, 
-                    mb: 2, 
-                    fontSize: { xs: '1.4rem', md: '1.6rem' },
-                    position: 'relative',
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    fontSize: { xs: "1.4rem", md: "1.6rem" },
+                    position: "relative",
                     color: themeColors.primary.main,
-                    '&:after': {
+                    "&:after": {
                       content: '""',
-                      position: 'absolute',
-                      bottom: '-8px',
-                      right: { xs: '50%', md: 0 },
-                      left: { xs: '50%', md: 'auto' },
-                      transform: { xs: 'translateX(-50%)', md: 'none' },
-                      width: '60px',
-                      height: '3px',
-                      background: 'linear-gradient(90deg, rgba(37,99,235,0.5), rgba(37,99,235,1))'
-                    }
+                      position: "absolute",
+                      bottom: "-8px",
+                      right: { xs: "50%", md: 0 },
+                      left: { xs: "50%", md: "auto" },
+                      transform: { xs: "translateX(-50%)", md: "none" },
+                      width: "60px",
+                      height: "3px",
+                      background:
+                        "linear-gradient(90deg, rgba(37,99,235,0.5), rgba(37,99,235,1))",
+                    },
                   }}
                 >
                   Create an Account
                 </Typography>
-                <Typography 
+                <Typography
                   variant="body1"
-                  sx={{ 
-                    fontSize: '1rem', 
+                  sx={{
+                    fontSize: "1rem",
                     color: themeColors.text.secondary,
-                    lineHeight: 1.6
+                    lineHeight: 1.6,
                   }}
                 >
-                  Sign up in seconds with your email or Google account. No credit card required.
+                  Sign up in seconds with your email or Google account. No
+                  credit card required.
                 </Typography>
               </Box>
             </Box>
@@ -2015,24 +2225,24 @@ const HowItWorksSection = () => {
             {/* Circle with number - modern styling */}
             <Box
               sx={{
-                width: { xs: '100%', md: '10%' },
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                position: 'relative',
+                width: { xs: "100%", md: "10%" },
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                position: "relative",
                 zIndex: 5,
                 order: { xs: -1, md: 0 },
-                mb: { xs: 4, md: 0 }
+                mb: { xs: 4, md: 0 },
               }}
             >
-              <Box 
-                sx={{ 
-                  width: { xs: '60px', md: '70px' },
-                  height: { xs: '60px', md: '70px' },
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  position: 'relative'
+              <Box
+                sx={{
+                  width: { xs: "60px", md: "70px" },
+                  height: { xs: "60px", md: "70px" },
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  position: "relative",
                 }}
                 data-aos="zoom-in"
                 data-aos-delay="200"
@@ -2041,31 +2251,31 @@ const HowItWorksSection = () => {
                 {/* Outer ring with glow effect */}
                 <Box
                   sx={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    background: 'rgba(37,99,235,0.1)',
-                    animation: 'pulse 2s infinite'
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "50%",
+                    background: "rgba(37,99,235,0.1)",
+                    animation: "pulse 2s infinite",
                   }}
                 />
-                
+
                 {/* Inner circle */}
                 <Box
                   sx={{
-                    width: '85%',
-                    height: '85%',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    color: 'white',
+                    width: "85%",
+                    height: "85%",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #2563EB, #3B82F6)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    color: "white",
                     fontWeight: 800,
-                    fontSize: { xs: '1.6rem', md: '1.8rem' },
-                    boxShadow: '0 10px 20px rgba(37,99,235,0.3)',
-                    border: '3px solid rgba(255,255,255,0.8)',
-                    zIndex: 2
+                    fontSize: { xs: "1.6rem", md: "1.8rem" },
+                    boxShadow: "0 10px 20px rgba(37,99,235,0.3)",
+                    border: "3px solid rgba(255,255,255,0.8)",
+                    zIndex: 2,
                   }}
                 >
                   1
@@ -2074,44 +2284,46 @@ const HowItWorksSection = () => {
             </Box>
 
             {/* Empty space on right for first step */}
-            <Box sx={{ width: { xs: '100%', md: '45%' } }} />
+            <Box sx={{ width: { xs: "100%", md: "45%" } }} />
           </Box>
 
           {/* Step 2 */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              width: '100%',
-              justifyContent: 'center',
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              width: "100%",
+              justifyContent: "center",
               mb: { xs: 8, md: 10 },
-              position: 'relative'
+              position: "relative",
             }}
           >
             {/* Empty space on left for second step */}
-            <Box sx={{ width: { xs: '100%', md: '45%' }, order: { xs: 1, md: 0 } }} />
+            <Box
+              sx={{ width: { xs: "100%", md: "45%" }, order: { xs: 1, md: 0 } }}
+            />
 
             {/* Circle with number - modern styling */}
             <Box
               sx={{
-                width: { xs: '100%', md: '10%' },
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                position: 'relative',
+                width: { xs: "100%", md: "10%" },
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                position: "relative",
                 zIndex: 5,
                 order: { xs: -1, md: 1 },
-                mb: { xs: 4, md: 0 }
+                mb: { xs: 4, md: 0 },
               }}
             >
-              <Box 
-                sx={{ 
-                  width: { xs: '60px', md: '70px' },
-                  height: { xs: '60px', md: '70px' },
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  position: 'relative'
+              <Box
+                sx={{
+                  width: { xs: "60px", md: "70px" },
+                  height: { xs: "60px", md: "70px" },
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  position: "relative",
                 }}
                 data-aos="zoom-in"
                 data-aos-delay="300"
@@ -2120,32 +2332,32 @@ const HowItWorksSection = () => {
                 {/* Outer ring with glow effect */}
                 <Box
                   sx={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    background: 'rgba(37,99,235,0.1)',
-                    animation: 'pulse 2s infinite',
-                    animationDelay: '0.5s'
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "50%",
+                    background: "rgba(37,99,235,0.1)",
+                    animation: "pulse 2s infinite",
+                    animationDelay: "0.5s",
                   }}
                 />
-                
+
                 {/* Inner circle */}
                 <Box
                   sx={{
-                    width: '85%',
-                    height: '85%',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    color: 'white',
+                    width: "85%",
+                    height: "85%",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #2563EB, #3B82F6)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    color: "white",
                     fontWeight: 800,
-                    fontSize: { xs: '1.6rem', md: '1.8rem' },
-                    boxShadow: '0 10px 20px rgba(37,99,235,0.3)',
-                    border: '3px solid rgba(255,255,255,0.8)',
-                    zIndex: 2
+                    fontSize: { xs: "1.6rem", md: "1.8rem" },
+                    boxShadow: "0 10px 20px rgba(37,99,235,0.3)",
+                    border: "3px solid rgba(255,255,255,0.8)",
+                    zIndex: 2,
                   }}
                 >
                   2
@@ -2156,86 +2368,90 @@ const HowItWorksSection = () => {
             {/* Content Card - Right Side */}
             <Box
               sx={{
-                width: { xs: '100%', md: '45%' },
+                width: { xs: "100%", md: "45%" },
                 pl: { xs: 0, md: 4 },
-                display: 'flex',
-                justifyContent: { xs: 'center', md: 'flex-start' },
-                alignItems: 'center',
+                display: "flex",
+                justifyContent: { xs: "center", md: "flex-start" },
+                alignItems: "center",
                 order: { xs: 0, md: 2 },
-                mb: { xs: 4, md: 0 }
+                mb: { xs: 4, md: 0 },
               }}
               data-aos="fade-left"
               data-aos-duration="800"
             >
               <Box
                 sx={{
-                  bgcolor: 'white',
-                  borderRadius: '1rem',
-                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.03)',
+                  bgcolor: "white",
+                  borderRadius: "1rem",
+                  boxShadow:
+                    "0 10px 30px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.03)",
                   p: 4,
-                  textAlign: { xs: 'center', md: 'left' },
-                  maxWidth: '320px',
-                  width: '100%',
-                  position: 'relative',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.05)'
+                  textAlign: { xs: "center", md: "left" },
+                  maxWidth: "320px",
+                  width: "100%",
+                  position: "relative",
+                  transition: "all 0.3s ease-in-out",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow:
+                      "0 15px 35px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.05)",
                   },
-                  '&:before': {
+                  "&:before": {
                     content: '""',
-                    position: 'absolute',
-                    top: '50%',
-                    left: { xs: '50%', md: '-15px' },
-                    bottom: { xs: '-15px', md: 'auto' },
-                    transform: { 
-                      xs: 'translateX(-50%) rotate(45deg)', 
-                      md: 'translateY(-50%) rotate(45deg)' 
+                    position: "absolute",
+                    top: "50%",
+                    left: { xs: "50%", md: "-15px" },
+                    bottom: { xs: "-15px", md: "auto" },
+                    transform: {
+                      xs: "translateX(-50%) rotate(45deg)",
+                      md: "translateY(-50%) rotate(45deg)",
                     },
-                    width: '30px',
-                    height: '30px',
-                    bgcolor: 'white',
+                    width: "30px",
+                    height: "30px",
+                    bgcolor: "white",
                     zIndex: 0,
-                    borderRadius: '3px',
-                    boxShadow: '-6px 6px 10px rgba(0, 0, 0, 0.02)',
-                    display: { xs: 'none', md: 'block' }
-                  }
+                    borderRadius: "3px",
+                    boxShadow: "-6px 6px 10px rgba(0, 0, 0, 0.02)",
+                    display: { xs: "none", md: "block" },
+                  },
                 }}
               >
-                <Typography 
-                  variant="h5" 
-                  component="h3" 
+                <Typography
+                  variant="h5"
+                  component="h3"
                   color="primary"
-                  sx={{ 
-                    fontWeight: 700, 
-                    mb: 2, 
-                    fontSize: { xs: '1.4rem', md: '1.6rem' },
-                    position: 'relative',
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    fontSize: { xs: "1.4rem", md: "1.6rem" },
+                    position: "relative",
                     color: themeColors.primary.main,
-                    '&:after': {
+                    "&:after": {
                       content: '""',
-                      position: 'absolute',
-                      bottom: '-8px',
-                      left: { xs: '50%', md: 0 },
-                      right: { xs: '50%', md: 'auto' },
-                      transform: { xs: 'translateX(-50%)', md: 'none' },
-                      width: '60px',
-                      height: '3px',
-                      background: 'linear-gradient(90deg, rgba(37,99,235,1), rgba(37,99,235,0.5))'
-                    }
+                      position: "absolute",
+                      bottom: "-8px",
+                      left: { xs: "50%", md: 0 },
+                      right: { xs: "50%", md: "auto" },
+                      transform: { xs: "translateX(-50%)", md: "none" },
+                      width: "60px",
+                      height: "3px",
+                      background:
+                        "linear-gradient(90deg, rgba(37,99,235,1), rgba(37,99,235,0.5))",
+                    },
                   }}
                 >
                   Set Up Categories
                 </Typography>
-                <Typography 
+                <Typography
                   variant="body1"
-                  sx={{ 
-                    fontSize: '1rem', 
+                  sx={{
+                    fontSize: "1rem",
                     color: themeColors.text.secondary,
-                    lineHeight: 1.6
+                    lineHeight: 1.6,
                   }}
                 >
-                  Create custom categories with personalized color coding for different types of expenses.
+                  Create custom categories with personalized color coding for
+                  different types of expenses.
                 </Typography>
               </Box>
             </Box>
@@ -2244,95 +2460,99 @@ const HowItWorksSection = () => {
           {/* Step 3 */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              width: '100%',
-              justifyContent: 'center',
-              position: 'relative'
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              width: "100%",
+              justifyContent: "center",
+              position: "relative",
             }}
           >
             {/* Content Card - Left Side */}
             <Box
               sx={{
-                width: { xs: '100%', md: '45%' },
+                width: { xs: "100%", md: "45%" },
                 pr: { xs: 0, md: 4 },
-                display: 'flex',
-                justifyContent: { xs: 'center', md: 'flex-end' },
-                alignItems: 'center',
-                mb: { xs: 4, md: 0 }
+                display: "flex",
+                justifyContent: { xs: "center", md: "flex-end" },
+                alignItems: "center",
+                mb: { xs: 4, md: 0 },
               }}
               data-aos="fade-right"
               data-aos-duration="800"
             >
               <Box
                 sx={{
-                  bgcolor: 'white',
-                  borderRadius: '1rem',
-                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.03)',
+                  bgcolor: "white",
+                  borderRadius: "1rem",
+                  boxShadow:
+                    "0 10px 30px rgba(0, 0, 0, 0.05), 0 5px 15px rgba(0, 0, 0, 0.03)",
                   p: 4,
-                  textAlign: { xs: 'center', md: 'right' },
-                  maxWidth: '320px',
-                  width: '100%',
-                  position: 'relative',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    transform: 'translateY(-5px)',
-                    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.05)'
+                  textAlign: { xs: "center", md: "right" },
+                  maxWidth: "320px",
+                  width: "100%",
+                  position: "relative",
+                  transition: "all 0.3s ease-in-out",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow:
+                      "0 15px 35px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.05)",
                   },
-                  '&:after': {
+                  "&:after": {
                     content: '""',
-                    position: 'absolute',
-                    top: '50%',
-                    right: { xs: '50%', md: '-15px' },
-                    bottom: { xs: '-15px', md: 'auto' },
-                    transform: { 
-                      xs: 'translateX(50%) rotate(45deg)', 
-                      md: 'translateY(-50%) rotate(45deg)' 
+                    position: "absolute",
+                    top: "50%",
+                    right: { xs: "50%", md: "-15px" },
+                    bottom: { xs: "-15px", md: "auto" },
+                    transform: {
+                      xs: "translateX(50%) rotate(45deg)",
+                      md: "translateY(-50%) rotate(45deg)",
                     },
-                    width: '30px',
-                    height: '30px',
-                    bgcolor: 'white',
+                    width: "30px",
+                    height: "30px",
+                    bgcolor: "white",
                     zIndex: 0,
-                    borderRadius: '3px',
-                    boxShadow: '6px -6px 10px rgba(0, 0, 0, 0.02)',
-                    display: { xs: 'none', md: 'block' }
-                  }
+                    borderRadius: "3px",
+                    boxShadow: "6px -6px 10px rgba(0, 0, 0, 0.02)",
+                    display: { xs: "none", md: "block" },
+                  },
                 }}
               >
-                <Typography 
-                  variant="h5" 
-                  component="h3" 
+                <Typography
+                  variant="h5"
+                  component="h3"
                   color="primary"
-                  sx={{ 
-                    fontWeight: 700, 
-                    mb: 2, 
-                    fontSize: { xs: '1.4rem', md: '1.6rem' },
-                    position: 'relative',
+                  sx={{
+                    fontWeight: 700,
+                    mb: 2,
+                    fontSize: { xs: "1.4rem", md: "1.6rem" },
+                    position: "relative",
                     color: themeColors.primary.main,
-                    '&:after': {
+                    "&:after": {
                       content: '""',
-                      position: 'absolute',
-                      bottom: '-8px',
-                      right: { xs: '50%', md: 0 },
-                      left: { xs: '50%', md: 'auto' },
-                      transform: { xs: 'translateX(-50%)', md: 'none' },
-                      width: '60px',
-                      height: '3px',
-                      background: 'linear-gradient(90deg, rgba(37,99,235,0.5), rgba(37,99,235,1))'
-                    }
+                      position: "absolute",
+                      bottom: "-8px",
+                      right: { xs: "50%", md: 0 },
+                      left: { xs: "50%", md: "auto" },
+                      transform: { xs: "translateX(-50%)", md: "none" },
+                      width: "60px",
+                      height: "3px",
+                      background:
+                        "linear-gradient(90deg, rgba(37,99,235,0.5), rgba(37,99,235,1))",
+                    },
                   }}
                 >
                   Track Your Spending
                 </Typography>
-                <Typography 
+                <Typography
                   variant="body1"
-                  sx={{ 
-                    fontSize: '1rem', 
+                  sx={{
+                    fontSize: "1rem",
                     color: themeColors.text.secondary,
-                    lineHeight: 1.6
+                    lineHeight: 1.6,
                   }}
                 >
-                  Record expenses and visualize your habits with our beautiful interactive charts and analytics.
+                  Record expenses and visualize your habits with our beautiful
+                  interactive charts and analytics.
                 </Typography>
               </Box>
             </Box>
@@ -2340,24 +2560,24 @@ const HowItWorksSection = () => {
             {/* Circle with number - modern styling */}
             <Box
               sx={{
-                width: { xs: '100%', md: '10%' },
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                position: 'relative',
+                width: { xs: "100%", md: "10%" },
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                position: "relative",
                 zIndex: 5,
                 order: { xs: -1, md: 0 },
-                mb: { xs: 4, md: 0 }
+                mb: { xs: 4, md: 0 },
               }}
             >
-              <Box 
-                sx={{ 
-                  width: { xs: '60px', md: '70px' },
-                  height: { xs: '60px', md: '70px' },
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  position: 'relative'
+              <Box
+                sx={{
+                  width: { xs: "60px", md: "70px" },
+                  height: { xs: "60px", md: "70px" },
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  position: "relative",
                 }}
                 data-aos="zoom-in"
                 data-aos-delay="400"
@@ -2366,32 +2586,32 @@ const HowItWorksSection = () => {
                 {/* Outer ring with glow effect */}
                 <Box
                   sx={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    background: 'rgba(37,99,235,0.1)',
-                    animation: 'pulse 2s infinite',
-                    animationDelay: '1s'
+                    position: "absolute",
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: "50%",
+                    background: "rgba(37,99,235,0.1)",
+                    animation: "pulse 2s infinite",
+                    animationDelay: "1s",
                   }}
                 />
-                
+
                 {/* Inner circle */}
                 <Box
                   sx={{
-                    width: '85%',
-                    height: '85%',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #2563EB, #3B82F6)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    color: 'white',
+                    width: "85%",
+                    height: "85%",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #2563EB, #3B82F6)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    color: "white",
                     fontWeight: 800,
-                    fontSize: { xs: '1.6rem', md: '1.8rem' },
-                    boxShadow: '0 10px 20px rgba(37,99,235,0.3)',
-                    border: '3px solid rgba(255,255,255,0.8)',
-                    zIndex: 2
+                    fontSize: { xs: "1.6rem", md: "1.8rem" },
+                    boxShadow: "0 10px 20px rgba(37,99,235,0.3)",
+                    border: "3px solid rgba(255,255,255,0.8)",
+                    zIndex: 2,
                   }}
                 >
                   3
@@ -2400,37 +2620,39 @@ const HowItWorksSection = () => {
             </Box>
 
             {/* Empty space on right for third step */}
-            <Box sx={{ width: { xs: '100%', md: '45%' } }} />
+            <Box sx={{ width: { xs: "100%", md: "45%" } }} />
           </Box>
         </Box>
-        
-        <Box 
-          sx={{ textAlign: 'center', mt: 10 }}
+
+        <Box
+          sx={{ textAlign: "center", mt: 10 }}
           data-aos="fade-up"
           data-aos-delay="400"
         >
-          <Button 
+          <Button
             component={RouterLink}
             to="/register"
-            variant="contained" 
-            color="primary" 
+            variant="contained"
+            color="primary"
             size="large"
-            sx={{ 
-              px: 5, 
+            sx={{
+              px: 5,
               py: 1.8,
-              borderRadius: '12px',
-              background: 'linear-gradient(45deg, #2563EB, #3B82F6)',
-              boxShadow: '0 10px 30px rgba(37, 99, 235, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1D4ED8, #2563EB)',
-                boxShadow: '0 15px 40px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255,255,255,0.4)',
-                transform: 'translateY(-2px)'
+              borderRadius: "12px",
+              background: "linear-gradient(45deg, #2563EB, #3B82F6)",
+              boxShadow:
+                "0 10px 30px rgba(37, 99, 235, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)",
+              "&:hover": {
+                background: "linear-gradient(45deg, #1D4ED8, #2563EB)",
+                boxShadow:
+                  "0 15px 40px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255,255,255,0.4)",
+                transform: "translateY(-2px)",
               },
-              transition: 'all 0.3s ease',
-              fontSize: '1.1rem',
+              transition: "all 0.3s ease",
+              fontSize: "1.1rem",
               fontWeight: 600,
-              textTransform: 'none',
-              minHeight: { xs: '54px', md: 'auto' }
+              textTransform: "none",
+              minHeight: { xs: "54px", md: "auto" },
             }}
             className="pulse-animation"
             endIcon={<ArrowForwardIcon />}
@@ -2456,7 +2678,7 @@ const HowItWorksSection = () => {
             transform: scale(0.9);
           }
         }
-        
+
         @keyframes line-shine {
           0% {
             transform: translateY(-100%);
@@ -2473,112 +2695,109 @@ const HowItWorksSection = () => {
 // Features Section with more visual appeal
 const FeaturesSection = () => {
   return (
-    <Box 
-      sx={{ 
-        py: { xs: 10, md: 14 }, 
-        bgcolor: '#FFFFFF',
+    <Box
+      sx={{
+        py: { xs: 10, md: 14 },
+        bgcolor: "#FFFFFF",
       }}
     >
       <Container maxWidth="lg">
-        <Box 
-          sx={{ textAlign: 'center', mb: 8 }}
-          data-aos="fade-up"
-        >
-          <Typography 
+        <Box sx={{ textAlign: "center", mb: 8 }} data-aos="fade-up">
+          <Typography
             component="span"
             sx={{
-              display: 'block',
-              textTransform: 'uppercase',
+              display: "block",
+              textTransform: "uppercase",
               color: themeColors.primary.main,
               fontWeight: 700,
-              fontSize: '0.875rem',
-              letterSpacing: '0.1em',
-              mb: 2
+              fontSize: "0.875rem",
+              letterSpacing: "0.1em",
+              mb: 2,
             }}
           >
             What We Offer
           </Typography>
-          <Typography 
-            variant="h2" 
-            component="h2" 
-            sx={{ 
+          <Typography
+            variant="h2"
+            component="h2"
+            sx={{
               fontWeight: 800,
               mb: 3,
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
-              letterSpacing: '-0.02em',
+              fontSize: { xs: "2.5rem", md: "3.5rem" },
+              letterSpacing: "-0.02em",
               lineHeight: 1.2,
-              color: themeColors.text.primary
+              color: themeColors.text.primary,
             }}
           >
             Powerful Features
           </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: themeColors.text.secondary,
-              maxWidth: '700px',
-              mx: 'auto',
+              maxWidth: "700px",
+              mx: "auto",
               px: 2,
-              fontSize: { xs: '1rem', md: '1.25rem' },
+              fontSize: { xs: "1rem", md: "1.25rem" },
               fontWeight: 400,
-              lineHeight: 1.6
+              lineHeight: 1.6,
             }}
           >
             Everything you need to manage your finances in one place
           </Typography>
         </Box>
-        
+
         <Grid container spacing={4}>
           {features.map((feature, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card 
+              <Card
                 data-aos="zoom-in"
                 data-aos-delay={index * 100}
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.3s ease',
-                  borderRadius: '1rem',
-                  overflow: 'hidden',
-                  border: '1px solid rgba(0,0,0,0.05)',
-                  boxShadow: '0 10px 20px rgba(0,0,0,0.03)',
-                  '&:hover': {
-                    transform: 'translateY(-10px)',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.08)'
-                  }
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  transition: "all 0.3s ease",
+                  borderRadius: "1rem",
+                  overflow: "hidden",
+                  border: "1px solid rgba(0,0,0,0.05)",
+                  boxShadow: "0 10px 20px rgba(0,0,0,0.03)",
+                  "&:hover": {
+                    transform: "translateY(-10px)",
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
+                  },
                 }}
               >
                 <CardContent sx={{ flexGrow: 1, p: 4 }}>
-                  <Box 
-                    sx={{ 
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                  <Box
+                    sx={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       mb: 3,
-                      borderRadius: '16px',
+                      borderRadius: "16px",
                       p: 1.5,
                       background: feature.color,
                     }}
                   >
                     {feature.icon}
                   </Box>
-                  <Typography 
-                    variant="h5" 
-                    component="div" 
-                    sx={{ 
+                  <Typography
+                    variant="h5"
+                    component="div"
+                    sx={{
                       fontWeight: 700,
                       mb: 2,
-                      color: themeColors.text.primary
+                      color: themeColors.text.primary,
                     }}
                   >
                     {feature.title}
                   </Typography>
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
+                  <Typography
+                    variant="body1"
+                    sx={{
                       color: themeColors.text.secondary,
-                      lineHeight: 1.7
+                      lineHeight: 1.7,
                     }}
                   >
                     {feature.description}
@@ -2596,229 +2815,245 @@ const FeaturesSection = () => {
 // CTA section with more modern design
 const CTASection = () => {
   return (
-    <Box 
-      sx={{ 
-        py: { xs: 10, md: 14 }, 
-        position: 'relative',
-        overflow: 'hidden',
-        background: 'linear-gradient(135deg, #1E40AF, #3B82F6)',
-        color: 'white'
+    <Box
+      sx={{
+        py: { xs: 10, md: 14 },
+        position: "relative",
+        overflow: "hidden",
+        background: "linear-gradient(135deg, #1E40AF, #3B82F6)",
+        color: "white",
       }}
     >
       {/* Background design elements */}
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
-          width: '500px',
-          height: '500px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-          top: '-250px',
-          right: '-100px',
-          zIndex: 0
+          position: "absolute",
+          width: "500px",
+          height: "500px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)",
+          top: "-250px",
+          right: "-100px",
+          zIndex: 0,
         }}
       />
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
-          width: '300px',
-          height: '300px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-          bottom: '-150px',
-          left: '10%',
-          zIndex: 0
+          position: "absolute",
+          width: "300px",
+          height: "300px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)",
+          bottom: "-150px",
+          left: "10%",
+          zIndex: 0,
         }}
       />
-      <Box 
+      <Box
         sx={{
-          position: 'absolute',
-          width: '200px',
-          height: '200px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)',
-          top: '20%',
-          left: '5%',
-          zIndex: 0
+          position: "absolute",
+          width: "200px",
+          height: "200px",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)",
+          top: "20%",
+          left: "5%",
+          zIndex: 0,
         }}
       />
-      
-      <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
         <Grid container spacing={4} alignItems="center">
           <Grid item xs={12} md={7} data-aos="fade-right">
-            <Typography 
-              variant="h2" 
-              sx={{ 
+            <Typography
+              variant="h2"
+              sx={{
                 fontWeight: 800,
                 mb: 3,
-                fontSize: { xs: '2.5rem', md: '3.5rem' },
-                lineHeight: 1.2
+                fontSize: { xs: "2.5rem", md: "3.5rem" },
+                lineHeight: 1.2,
               }}
             >
               Ready to Transform Your Financial Habits?
             </Typography>
-            <Typography 
-              variant="h6" 
-              sx={{ 
+            <Typography
+              variant="h6"
+              sx={{
                 fontWeight: 400,
                 mb: 5,
                 opacity: 0.9,
-                maxWidth: '600px',
-                fontSize: { xs: '1.1rem', md: '1.25rem' },
-                lineHeight: 1.6
+                maxWidth: "600px",
+                fontSize: { xs: "1.1rem", md: "1.25rem" },
+                lineHeight: 1.6,
               }}
             >
-              Join thousands of users who are already saving more, spending smarter, and reaching their financial goals.
+              Join thousands of users who are already saving more, spending
+              smarter, and reaching their financial goals.
             </Typography>
-            
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <Button 
+
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+              <Button
                 component={RouterLink}
                 to="/register"
-                variant="contained" 
+                variant="contained"
                 size="large"
-                sx={{ 
-                  bgcolor: 'white',
+                sx={{
+                  bgcolor: "white",
                   color: themeColors.primary.main,
                   px: 4,
                   py: 1.5,
-                  borderRadius: '10px',
+                  borderRadius: "10px",
                   fontWeight: 600,
-                  fontSize: '1rem',
-                  textTransform: 'none',
-                  boxShadow: '0 10px 20px rgba(0,0,0,0.1)',
-                  '&:hover': {
-                    bgcolor: 'rgba(255,255,255,0.9)',
-                    transform: 'translateY(-3px)',
-                    boxShadow: '0 15px 30px rgba(0,0,0,0.15)'
+                  fontSize: "1rem",
+                  textTransform: "none",
+                  boxShadow: "0 10px 20px rgba(0,0,0,0.1)",
+                  "&:hover": {
+                    bgcolor: "rgba(255,255,255,0.9)",
+                    transform: "translateY(-3px)",
+                    boxShadow: "0 15px 30px rgba(0,0,0,0.15)",
                   },
-                  transition: 'all 0.3s ease'
+                  transition: "all 0.3s ease",
                 }}
                 endIcon={<ArrowForwardIcon />}
               >
                 Sign up for free
               </Button>
             </Box>
-            
-            <Box sx={{ mt: 6, display: 'flex', alignItems: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+
+            <Box sx={{ mt: 6, display: "flex", alignItems: "center" }}>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   {[...Array(5)].map((_, i) => (
-                    <Box key={i} sx={{ color: '#F59E0B', fontSize: '1.2rem', mr: 0.2 }}>★</Box>
+                    <Box
+                      key={i}
+                      sx={{ color: "#F59E0B", fontSize: "1.2rem", mr: 0.2 }}
+                    >
+                      ★
+                    </Box>
                   ))}
                 </Box>
                 <Typography sx={{ ml: 1, fontWeight: 700 }}>
                   4.9/5 rating
                 </Typography>
               </Box>
-              <Divider orientation="vertical" sx={{ mx: 3, height: 24, borderColor: 'rgba(255,255,255,0.3)' }} />
+              <Divider
+                orientation="vertical"
+                sx={{ mx: 3, height: 24, borderColor: "rgba(255,255,255,0.3)" }}
+              />
               <Typography>
                 <strong>10,000+</strong> happy users
               </Typography>
             </Box>
           </Grid>
-          
+
           <Grid item xs={12} md={5} data-aos="fade-left">
             {/* Decorative elements */}
             <Box
               sx={{
-                position: 'relative',
-                height: { xs: '300px', md: '400px' },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                position: "relative",
+                height: { xs: "300px", md: "400px" },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               {/* Main circle */}
               <Box
                 sx={{
-                  width: '280px',
-                  height: '280px',
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(10px)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                  boxShadow: '0 15px 35px rgba(0,0,0,0.1)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  animation: 'float 6s infinite alternate ease-in-out'
+                  width: "280px",
+                  height: "280px",
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.1)",
+                  backdropFilter: "blur(10px)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  boxShadow: "0 15px 35px rgba(0,0,0,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  animation: "float 6s infinite alternate ease-in-out",
                 }}
               >
-                <SavingsIcon sx={{ fontSize: '100px', color: 'white', opacity: 0.8 }} />
-                
+                <SavingsIcon
+                  sx={{ fontSize: "100px", color: "white", opacity: 0.8 }}
+                />
+
                 {/* Orbiting elements */}
                 <Box
                   sx={{
-                    position: 'absolute',
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.15)',
-                    backdropFilter: 'blur(5px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    top: '0',
-                    left: '50%',
-                    transform: 'translateX(-50%) translateY(-50%)',
-                    boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    animation: 'float 4s infinite alternate-reverse ease-in-out'
+                    position: "absolute",
+                    width: "60px",
+                    height: "60px",
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.15)",
+                    backdropFilter: "blur(5px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    top: "0",
+                    left: "50%",
+                    transform: "translateX(-50%) translateY(-50%)",
+                    boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    animation:
+                      "float 4s infinite alternate-reverse ease-in-out",
                   }}
                 >
-                  <ChartIcon sx={{ fontSize: '30px', color: 'white' }} />
+                  <ChartIcon sx={{ fontSize: "30px", color: "white" }} />
                 </Box>
-                
+
                 <Box
                   sx={{
-                    position: 'absolute',
-                    width: '70px',
-                    height: '70px',
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.15)',
-                    backdropFilter: 'blur(5px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bottom: '10%',
-                    right: '-10%',
-                    boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    animation: 'float 5s infinite alternate ease-in-out',
-                    animationDelay: '1s'
+                    position: "absolute",
+                    width: "70px",
+                    height: "70px",
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.15)",
+                    backdropFilter: "blur(5px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bottom: "10%",
+                    right: "-10%",
+                    boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    animation: "float 5s infinite alternate ease-in-out",
+                    animationDelay: "1s",
                   }}
                 >
-                  <CategoryIcon sx={{ fontSize: '35px', color: 'white' }} />
+                  <CategoryIcon sx={{ fontSize: "35px", color: "white" }} />
                 </Box>
-                
+
                 <Box
                   sx={{
-                    position: 'absolute',
-                    width: '50px',
-                    height: '50px',
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.15)',
-                    backdropFilter: 'blur(5px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bottom: '20%',
-                    left: '-15%',
-                    boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    animation: 'float 3.5s infinite alternate-reverse ease-in-out',
-                    animationDelay: '0.5s'
+                    position: "absolute",
+                    width: "50px",
+                    height: "50px",
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.15)",
+                    backdropFilter: "blur(5px)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bottom: "20%",
+                    left: "-15%",
+                    boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    animation:
+                      "float 3.5s infinite alternate-reverse ease-in-out",
+                    animationDelay: "0.5s",
                   }}
                 >
-                  <CreditCardIcon sx={{ fontSize: '25px', color: 'white' }} />
+                  <CreditCardIcon sx={{ fontSize: "25px", color: "white" }} />
                 </Box>
               </Box>
             </Box>
@@ -2832,107 +3067,106 @@ const CTASection = () => {
 // Modern Team Section
 const TeamSection = () => {
   return (
-    <Box sx={{ py: { xs: 10, md: 14 }, bgcolor: themeColors.background.default }}>
+    <Box
+      sx={{ py: { xs: 10, md: 14 }, bgcolor: themeColors.background.default }}
+    >
       <Container maxWidth="lg">
-        <Box 
-          sx={{ textAlign: 'center', mb: 8 }}
-          data-aos="fade-up"
-        >
-          <Typography 
+        <Box sx={{ textAlign: "center", mb: 8 }} data-aos="fade-up">
+          <Typography
             component="span"
             sx={{
-              display: 'block',
-              textTransform: 'uppercase',
+              display: "block",
+              textTransform: "uppercase",
               color: themeColors.primary.main,
               fontWeight: 700,
-              fontSize: '0.875rem',
-              letterSpacing: '0.1em',
-              mb: 2
+              fontSize: "0.875rem",
+              letterSpacing: "0.1em",
+              mb: 2,
             }}
           >
             Our Team
           </Typography>
-          <Typography 
-            variant="h2" 
-            component="h2" 
-            sx={{ 
+          <Typography
+            variant="h2"
+            component="h2"
+            sx={{
               fontWeight: 800,
               mb: 3,
-              fontSize: { xs: '2.5rem', md: '3.5rem' },
-              letterSpacing: '-0.02em',
+              fontSize: { xs: "2.5rem", md: "3.5rem" },
+              letterSpacing: "-0.02em",
               lineHeight: 1.2,
-              color: themeColors.text.primary
+              color: themeColors.text.primary,
             }}
           >
             Meet The Developers
           </Typography>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: themeColors.text.secondary,
-              maxWidth: '700px',
-              mx: 'auto',
+              maxWidth: "700px",
+              mx: "auto",
               px: 2,
-              fontSize: { xs: '1rem', md: '1.25rem' },
+              fontSize: { xs: "1rem", md: "1.25rem" },
               fontWeight: 400,
-              lineHeight: 1.6
+              lineHeight: 1.6,
             }}
           >
             The talented team behind the Expense Tracker application
           </Typography>
         </Box>
-        
+
         {/* Enhanced developer cards with better image display */}
         <Grid container spacing={8} justifyContent="center">
           {developers.map((developer, index) => (
             <Grid item xs={12} md={6} key={index}>
-              <Card 
+              <Card
                 data-aos="fade-up"
                 data-aos-delay={index * 200}
-                sx={{ 
-                  display: 'flex',
-                  flexDirection: { xs: 'column', md: 'row' },
-                  height: '100%',
-                  borderRadius: '1.5rem',
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-                  transition: 'all 0.3s ease',
-                  overflow: 'visible',
-                  position: 'relative',
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
+                  height: "100%",
+                  borderRadius: "1.5rem",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+                  transition: "all 0.3s ease",
+                  overflow: "visible",
+                  position: "relative",
                   pb: { xs: 0, md: 0 },
-                  '&:hover': {
-                    transform: 'translateY(-10px)',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                  "&:hover": {
+                    transform: "translateY(-10px)",
+                    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
                   },
-                  '&:hover .developer-image': {
-                    transform: 'scale(1.05)'
-                  }
+                  "&:hover .developer-image": {
+                    transform: "scale(1.05)",
+                  },
                 }}
               >
                 {/* Improved image display - separate from card to allow full visibility */}
                 <Box
                   sx={{
-                    width: { xs: '100%', md: '45%' },
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    position: 'relative',
-                    p: { xs: 3, md: 0 }
+                    width: { xs: "100%", md: "45%" },
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    position: "relative",
+                    p: { xs: 3, md: 0 },
                   }}
                 >
                   <Box
                     sx={{
-                      width: { xs: '240px', md: '280px' },
-                      height: { xs: '240px', md: '280px' },
-                      borderRadius: '50%',
-                      overflow: 'hidden',
+                      width: { xs: "240px", md: "280px" },
+                      height: { xs: "240px", md: "280px" },
+                      borderRadius: "50%",
+                      overflow: "hidden",
                       border: `4px solid ${themeColors.primary.light}`,
-                      boxShadow: '0 8px 25px rgba(37,99,235,0.15)',
-                      mx: 'auto',
+                      boxShadow: "0 8px 25px rgba(37,99,235,0.15)",
+                      mx: "auto",
                       my: { xs: 2, md: 0 },
-                      position: { xs: 'relative', md: 'absolute' },
-                      left: { md: '-30px' },
+                      position: { xs: "relative", md: "absolute" },
+                      left: { md: "-30px" },
                       background: themeColors.background.gradient,
-                      zIndex: 2
+                      zIndex: 2,
                     }}
                   >
                     <img
@@ -2940,125 +3174,128 @@ const TeamSection = () => {
                       src={developer.image}
                       alt={developer.name}
                       style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        objectPosition: 'center top', // Position to show face better
-                        transition: 'transform 0.5s ease'
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: "center top", // Position to show face better
+                        transition: "transform 0.5s ease",
                       }}
                       onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = `https://ui-avatars.com/api/?name=${developer.name.replace(' ', '+')}&size=280&background=random`;
+                        e.target.src = `https://ui-avatars.com/api/?name=${developer.name.replace(
+                          " ",
+                          "+"
+                        )}&size=280&background=random`;
                       }}
                     />
                   </Box>
                 </Box>
 
                 {/* Content section */}
-                <CardContent 
-                  sx={{ 
-                    p: 4, 
+                <CardContent
+                  sx={{
+                    p: 4,
                     pl: { md: 6 },
-                    flexGrow: 1, 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    width: { xs: '100%', md: '55%' },
-                    ml: { md: 3 }
+                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    width: { xs: "100%", md: "55%" },
+                    ml: { md: 3 },
                   }}
                 >
-                  <Typography 
-                    variant="h4" 
-                    component="div" 
-                    sx={{ 
+                  <Typography
+                    variant="h4"
+                    component="div"
+                    sx={{
                       fontWeight: 700,
                       mb: 1,
                       color: themeColors.text.primary,
-                      fontSize: { xs: '1.75rem', md: '2rem' }
+                      fontSize: { xs: "1.75rem", md: "2rem" },
                     }}
                   >
                     {developer.name}
                   </Typography>
-                  <Typography 
-                    variant="subtitle1" 
-                    sx={{ 
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
                       color: themeColors.primary.main,
                       mb: 3,
                       fontWeight: 600,
-                      fontSize: { xs: '1.1rem', md: '1.25rem' },
-                      display: 'flex',
-                      alignItems: 'center',
-                      '&:before': {
+                      fontSize: { xs: "1.1rem", md: "1.25rem" },
+                      display: "flex",
+                      alignItems: "center",
+                      "&:before": {
                         content: '""',
-                        display: 'inline-block',
-                        width: '30px',
-                        height: '2px',
+                        display: "inline-block",
+                        width: "30px",
+                        height: "2px",
                         mr: 1.5,
-                        bgcolor: themeColors.primary.main
-                      }
+                        bgcolor: themeColors.primary.main,
+                      },
                     }}
                   >
                     {developer.role}
                   </Typography>
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
+                  <Typography
+                    variant="body1"
+                    sx={{
                       color: themeColors.text.secondary,
                       mb: 4,
                       lineHeight: 1.8,
                       flexGrow: 1,
-                      fontSize: { xs: '0.95rem', md: '1rem' }
+                      fontSize: { xs: "0.95rem", md: "1rem" },
                     }}
                   >
                     {developer.bio}
                   </Typography>
                   <Stack direction="row" spacing={2}>
-                    <Button 
-                      variant="outlined" 
-                      size="medium" 
+                    <Button
+                      variant="outlined"
+                      size="medium"
                       startIcon={<GitHubIcon />}
                       href={developer.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      sx={{ 
-                        borderRadius: '12px',
+                      sx={{
+                        borderRadius: "12px",
                         borderColor: themeColors.primary.main,
-                        borderWidth: '2px',
+                        borderWidth: "2px",
                         color: themeColors.primary.main,
                         px: 3,
                         py: 1,
                         fontWeight: 600,
-                        '&:hover': {
+                        "&:hover": {
                           borderColor: themeColors.primary.dark,
-                          color: 'white',
+                          color: "white",
                           bgcolor: themeColors.primary.main,
-                          transform: 'translateY(-3px)',
-                          boxShadow: '0 10px 20px rgba(37,99,235,0.15)'
+                          transform: "translateY(-3px)",
+                          boxShadow: "0 10px 20px rgba(37,99,235,0.15)",
                         },
-                        transition: 'all 0.3s ease'
+                        transition: "all 0.3s ease",
                       }}
                     >
                       GitHub
                     </Button>
-                    <Button 
-                      variant="contained" 
-                      size="medium" 
+                    <Button
+                      variant="contained"
+                      size="medium"
                       startIcon={<LinkedInIcon />}
                       href={developer.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      sx={{ 
-                        borderRadius: '12px',
+                      sx={{
+                        borderRadius: "12px",
                         background: themeColors.background.gradient,
-                        color: 'white',
+                        color: "white",
                         px: 3,
                         py: 1,
                         fontWeight: 600,
-                        boxShadow: '0 8px 20px rgba(37,99,235,0.2)',
-                        '&:hover': {
-                          boxShadow: '0 12px 25px rgba(37,99,235,0.3)',
-                          transform: 'translateY(-3px)'
+                        boxShadow: "0 8px 20px rgba(37,99,235,0.2)",
+                        "&:hover": {
+                          boxShadow: "0 12px 25px rgba(37,99,235,0.3)",
+                          transform: "translateY(-3px)",
                         },
-                        transition: 'all 0.3s ease'
+                        transition: "all 0.3s ease",
                       }}
                     >
                       LinkedIn
@@ -3077,11 +3314,11 @@ const TeamSection = () => {
 // Modern Footer
 const Footer = () => {
   return (
-    <Box 
-      sx={{ 
-        bgcolor: '#F1F5F9',
+    <Box
+      sx={{
+        bgcolor: "#F1F5F9",
         pt: { xs: 8, md: 10 },
-        pb: 4
+        pb: 4,
       }}
     >
       <Container maxWidth="lg">
@@ -3090,9 +3327,9 @@ const Footer = () => {
             <Box sx={{ mb: 4 }}>
               <Box
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  mb: 2
+                  display: "flex",
+                  alignItems: "center",
+                  mb: 2,
                 }}
               >
                 <Box
@@ -3100,63 +3337,64 @@ const Footer = () => {
                     width: 40,
                     height: 40,
                     background: themeColors.background.gradient,
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 10px rgba(37,99,235,0.2)',
-                    mr: 1.5
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 4px 10px rgba(37,99,235,0.2)",
+                    mr: 1.5,
                   }}
                 >
-                  <SavingsIcon sx={{ color: 'white' }} />
+                  <SavingsIcon sx={{ color: "white" }} />
                 </Box>
-                <Typography 
-                  variant="h5" 
-                  sx={{ 
+                <Typography
+                  variant="h5"
+                  sx={{
                     fontWeight: 800,
                     color: themeColors.text.primary,
-                    fontSize: '1.5rem'
+                    fontSize: "1.5rem",
                   }}
                 >
                   ExpenseTracker
                 </Typography>
               </Box>
-              <Typography 
-                variant="body2" 
-                sx={{ 
+              <Typography
+                variant="body2"
+                sx={{
                   color: themeColors.text.secondary,
                   mb: 3,
-                  maxWidth: '300px'
+                  maxWidth: "300px",
                 }}
               >
-                Modern, intuitive expense tracking application designed to help you manage your finances and achieve your financial goals.
+                Modern, intuitive expense tracking application designed to help
+                you manage your finances and achieve your financial goals.
               </Typography>
             </Box>
-            
+
             <Box sx={{ mb: 2 }}>
-              <Typography 
-                variant="subtitle2" 
-                sx={{ 
+              <Typography
+                variant="subtitle2"
+                sx={{
                   fontWeight: 700,
                   mb: 2,
-                  color: themeColors.text.primary
+                  color: themeColors.text.primary,
                 }}
               >
                 Follow Us
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <IconButton 
-                  sx={{ 
-                    bgcolor: 'rgba(37,99,235,0.1)',
-                    '&:hover': { bgcolor: 'rgba(37,99,235,0.2)' }
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <IconButton
+                  sx={{
+                    bgcolor: "rgba(37,99,235,0.1)",
+                    "&:hover": { bgcolor: "rgba(37,99,235,0.2)" },
                   }}
                 >
                   <GitHubIcon sx={{ color: themeColors.primary.main }} />
                 </IconButton>
-                <IconButton 
-                  sx={{ 
-                    bgcolor: 'rgba(37,99,235,0.1)',
-                    '&:hover': { bgcolor: 'rgba(37,99,235,0.2)' }
+                <IconButton
+                  sx={{
+                    bgcolor: "rgba(37,99,235,0.1)",
+                    "&:hover": { bgcolor: "rgba(37,99,235,0.2)" },
                   }}
                 >
                   <LinkedInIcon sx={{ color: themeColors.primary.main }} />
@@ -3164,225 +3402,225 @@ const Footer = () => {
               </Box>
             </Box>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={2}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
+            <Typography
+              variant="subtitle2"
+              sx={{
                 fontWeight: 700,
                 mb: 3,
-                color: themeColors.text.primary
+                color: themeColors.text.primary,
               }}
             >
               Product
             </Typography>
             <Stack spacing={2}>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/features"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Features
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/testimonials"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Testimonials
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/roadmap"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Roadmap
               </Typography>
             </Stack>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={2}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
+            <Typography
+              variant="subtitle2"
+              sx={{
                 fontWeight: 700,
                 mb: 3,
-                color: themeColors.text.primary
+                color: themeColors.text.primary,
               }}
             >
               Company
             </Typography>
             <Stack spacing={2}>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/about"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 About Us
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/team"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Team
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/careers"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Careers
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/contact"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Contact
               </Typography>
             </Stack>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={2}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
+            <Typography
+              variant="subtitle2"
+              sx={{
                 fontWeight: 700,
                 mb: 3,
-                color: themeColors.text.primary
+                color: themeColors.text.primary,
               }}
             >
               Resources
             </Typography>
             <Stack spacing={2}>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/blog"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Blog
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/support"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Support
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/documentation"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Documentation
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/api"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 API
               </Typography>
             </Stack>
           </Grid>
-          
+
           <Grid item xs={12} sm={6} md={2}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
+            <Typography
+              variant="subtitle2"
+              sx={{
                 fontWeight: 700,
                 mb: 3,
-                color: themeColors.text.primary
+                color: themeColors.text.primary,
               }}
             >
               Legal
             </Typography>
             <Stack spacing={2}>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/privacy"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Privacy Policy
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/terms"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Terms of Service
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/cookies"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Cookie Policy
               </Typography>
-              <Typography 
+              <Typography
                 component={RouterLink}
                 to="/security"
-                sx={{ 
+                sx={{
                   color: themeColors.text.secondary,
-                  textDecoration: 'none',
-                  '&:hover': { color: themeColors.primary.main }
+                  textDecoration: "none",
+                  "&:hover": { color: themeColors.primary.main },
                 }}
               >
                 Security
@@ -3390,52 +3628,59 @@ const Footer = () => {
             </Stack>
           </Grid>
         </Grid>
-        
-        <Divider sx={{ my: 4, borderColor: 'rgba(0,0,0,0.1)' }} />
-        
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' } }}>
-          <Typography 
-            variant="body2" 
-            sx={{ 
+
+        <Divider sx={{ my: 4, borderColor: "rgba(0,0,0,0.1)" }} />
+
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", md: "center" },
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
               color: themeColors.text.secondary,
-              mb: { xs: 2, md: 0 }
+              mb: { xs: 2, md: 0 },
             }}
           >
             © {new Date().getFullYear()} ExpenseTracker. All rights reserved.
           </Typography>
-          <Box sx={{ display: 'flex', gap: 3 }}>
-            <Typography 
-              variant="body2" 
+          <Box sx={{ display: "flex", gap: 3 }}>
+            <Typography
+              variant="body2"
               component={RouterLink}
               to="/privacy"
-              sx={{ 
+              sx={{
                 color: themeColors.text.secondary,
-                textDecoration: 'none',
-                '&:hover': { color: themeColors.primary.main }
+                textDecoration: "none",
+                "&:hover": { color: themeColors.primary.main },
               }}
             >
               Privacy
             </Typography>
-            <Typography 
-              variant="body2" 
+            <Typography
+              variant="body2"
               component={RouterLink}
               to="/terms"
-              sx={{ 
+              sx={{
                 color: themeColors.text.secondary,
-                textDecoration: 'none',
-                '&:hover': { color: themeColors.primary.main }
+                textDecoration: "none",
+                "&:hover": { color: themeColors.primary.main },
               }}
             >
               Terms
             </Typography>
-            <Typography 
-              variant="body2" 
+            <Typography
+              variant="body2"
               component={RouterLink}
               to="/sitemap"
-              sx={{ 
+              sx={{
                 color: themeColors.text.secondary,
-                textDecoration: 'none',
-                '&:hover': { color: themeColors.primary.main }
+                textDecoration: "none",
+                "&:hover": { color: themeColors.primary.main },
               }}
             >
               Sitemap
@@ -3446,4 +3691,3 @@ const Footer = () => {
     </Box>
   );
 };
-            

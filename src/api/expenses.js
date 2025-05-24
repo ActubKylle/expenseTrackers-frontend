@@ -90,62 +90,72 @@ export const addExpense = async (expenseData) => {
     throw error;
   }
 };
-// Update an existing expense
 export const updateExpense = async (id, expenseData) => {
   try {
-    console.log('Updating expense ID:', id, 'with data:', expenseData);
+    console.log('Updating expense ID:', id);
     
     // Determine if we need to use FormData (for file uploads) or regular JSON
     const hasFile = expenseData.receipt_file && expenseData.receipt_file instanceof File;
     
     if (hasFile) {
+      console.log('Uploading file with expense update:', expenseData.receipt_file.name);
+      
       // Use FormData for file uploads
       const formData = new FormData();
       
-      // Convert amount to number if it's a string
-      if (expenseData.amount !== undefined) {
-        formData.append('amount', parseFloat(expenseData.amount));
-      }
-      
-      // Add other fields
-      if (expenseData.date !== undefined) {
-        formData.append('date', expenseData.date);
-      }
-      
-      if (expenseData.description !== undefined) {
-        formData.append('description', expenseData.description || '');
-      }
-      
-      if (expenseData.category_id !== undefined) {
-        formData.append('category_id', parseInt(expenseData.category_id, 10));
-      }
+      // Add fields
+      formData.append('amount', parseFloat(expenseData.amount));
+      formData.append('date', expenseData.date);
+      formData.append('description', expenseData.description || '');
+      formData.append('category_id', parseInt(expenseData.category_id, 10));
       
       // Add receipt file
       formData.append('receipt', expenseData.receipt_file);
       
-      const response = await axios.put(`/expenses/${id}`, formData, {
+      // IMPORTANT: Use method spoofing for Laravel
+      formData.append('_method', 'PUT');
+      
+      // Use POST instead of PUT for FormData
+      const response = await axios.post(`/expenses/${id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       
+      console.log('File upload response:', response.data);
       return response.data;
     } else {
-      // For regular updates without files, use JSON
-      // Create a new object with proper data types
+      // No change for regular JSON updates
       const updatedData = {
         ...expenseData,
-        amount: expenseData.amount !== undefined ? parseFloat(expenseData.amount) : undefined,
-        category_id: expenseData.category_id !== undefined ? parseInt(expenseData.category_id, 10) : undefined
+        amount: parseFloat(expenseData.amount),
+        category_id: parseInt(expenseData.category_id, 10)
       };
       
       const response = await axios.put(`/expenses/${id}`, updatedData);
       return response.data;
     }
   } catch (error) {
-    console.error('Error updating expense:', error.response?.data || error.message);
+    console.error('Error updating expense:', error);
     throw error;
   }
 };
 
+
+export const uploadReceipt = async (id, receiptFile) => {
+  try {
+    // Create FormData for the file
+    const formData = new FormData();
+    formData.append('receipt', receiptFile);
+    
+    const response = await axios.post(`/expenses/${id}/upload-receipt`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading receipt:', error);
+    throw error;
+  }
+};
 
 // Delete an expense
 export const deleteExpense = async (id) => {

@@ -35,7 +35,6 @@ import {
   Fade,
   Zoom,
   Tooltip, // Added Tooltip import
-
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -47,7 +46,6 @@ import {
   FilterList as FilterIcon,
   Visibility as VisibilityIcon,
   ZoomOutMap as ZoomOutMapIcon, // Added ZoomOutMap import
-
 } from "@mui/icons-material";
 import { format, parseISO } from "date-fns";
 import MainLayout from "../layouts/MainLayout";
@@ -60,9 +58,10 @@ import {
   updateExpense,
   deleteExpense,
   getExpense,
+    uploadReceipt  
 } from "../api/expenses";
 import { getCategories } from "../api/categories";
-import { NotificationEventBus } from '../contexts/NotificationContext';
+import { NotificationEventBus } from "../contexts/NotificationContext";
 
 const Expenses = () => {
   const theme = useTheme();
@@ -114,6 +113,7 @@ const Expenses = () => {
     description: "",
     category_id: "",
     receipt_path: null,
+    receipt_file: null,
   });
   const [formErrors, setFormErrors] = useState({});
 
@@ -183,20 +183,41 @@ const Expenses = () => {
       <MenuItem disabled>No categories available</MenuItem>
     );
   }
+
   // Function to fetch expenses
   const fetchExpenses = async () => {
     try {
       setLoading(true);
 
+      // Build request parameters
       const params = {
         page: page + 1,
         per_page: rowsPerPage,
-        // Other parameters
+        // Only include category filter if selected
+        category_id: filters.category || undefined,
+        // Only include date filters if set
+        date_from: filters.dateFrom || undefined,
+        date_to: filters.dateTo || undefined,
+        // Important: Only include search param if non-empty
+        search:
+          filters.searchTerm && filters.searchTerm.trim() !== ""
+            ? filters.searchTerm
+            : undefined,
+        // Always sort by date when search is empty
+        sort_by:
+          !filters.searchTerm || filters.searchTerm.trim() === ""
+            ? "date"
+            : undefined,
+        sort_order:
+          !filters.searchTerm || filters.searchTerm.trim() === ""
+            ? "desc"
+            : undefined,
       };
 
+      // Make the API call
       const response = await getExpenses(params);
 
-      // Make sure to only work with expenses that belong to the current user
+      // Process the response
       if (response && Array.isArray(response.data)) {
         setExpenses(response.data);
         setTotalExpenses(response.total || response.data.length);
@@ -252,20 +273,36 @@ const Expenses = () => {
 
   // Enhanced filter handlers
   const handleFilterChange = (field, value) => {
-    clearTimeout(searchTimeout);
+    // Clear any pending search timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
 
+    // Update the filters state
     setFilters((prev) => ({
       ...prev,
       [field]: value,
     }));
 
-    // Debounce search
+    // Special handling for search term changes
     if (field === "searchTerm") {
-      const timeoutId = setTimeout(() => {
+      // If search is cleared (empty string), reset immediately
+      if (value === "") {
+        // Reset to first page
         setPage(0);
-        fetchExpenses();
-      }, 500);
-      setSearchTimeout(timeoutId);
+        // Immediately fetch all expenses without search filtering
+        const timeoutId = setTimeout(() => {
+          fetchExpenses();
+        }, 10); // Small delay to ensure state is updated
+        setSearchTimeout(timeoutId);
+      } else {
+        // Normal debounce for active typing
+        const timeoutId = setTimeout(() => {
+          setPage(0);
+          fetchExpenses();
+        }, 500);
+        setSearchTimeout(timeoutId);
+      }
     }
   };
 
@@ -276,6 +313,13 @@ const Expenses = () => {
       dateTo: "",
       searchTerm: "",
     });
+
+    // Reset to first page and fetch expenses immediately
+    setPage(0);
+    // Add a small delay to ensure state is updated before fetching
+    setTimeout(() => {
+      fetchExpenses();
+    }, 0);
   };
 
   // Toggle filter visibility with animation
@@ -453,98 +497,95 @@ const Expenses = () => {
   };
 
   // CRUD operations
-  const handleAddExpense = async () => {
-    if (!validateForm()) return;
-  
-    try {
-      setLoading(true);
-  
-      const expenseData = {
-        amount: formData.amount,
-        date: formData.date,
-        description: formData.description || "",
-        category_id: parseInt(formData.category_id, 10),
-        receipt_path: formData.receipt_path || null,
-      };
-      console.log("Sending expense data:", expenseData);
-  
-      const response = await addExpense(expenseData);
-      
-      // Trigger notification check via the event bus
-      NotificationEventBus.publish('EXPENSE_CREATED', { 
-        expense: response,
-        timestamp: new Date().toISOString()
-      });
-      
-      handleCloseDialog();
-      showSnackbar("Expense added successfully", "success");
-      fetchExpenses();
-    } catch (error) {
-      // Error handling...
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handleEditExpense = async () => {
-    if (!validateForm() || !currentExpense) return;
-  
-    try {
-      setLoading(true);
-  
-      const expenseData = {
-        amount: formData.amount,
-        date: formData.date,
-        description: formData.description || "",
-        category_id: parseInt(formData.category_id, 10),
-        receipt_path: formData.receipt_path
-          ? formData.receipt_path.trim()
-          : null,
-      };
-  
-      console.log("Updating expense with data:", expenseData);
-  
-      const updatedExpense = await updateExpense(
-        currentExpense.id,
-        expenseData
-      );
-      console.log("Update response:", updatedExpense);
-  
-      // Trigger notification check after successful expense update
-      NotificationEventBus.publish('EXPENSE_CREATED', { expense: updatedExpense });
-  
-      // Rest of your code...
-      
-      if (expenseData.receipt_path && !updatedExpense.receipt_path) {
-        console.error(
-          "Warning: receipt_path not saved correctly. Sent:",
-          expenseData.receipt_path,
-          "Received:",
-          updatedExpense.receipt_path
-        );
-        showSnackbar(
-          "Note: Receipt image may not have been saved correctly",
-          "warning"
-        );
+    const handleAddExpense = async () => {
+      if (!validateForm()) return;
+
+      try {
+        setLoading(true);
+
+        const expenseData = {
+          amount: formData.amount,
+          date: formData.date,
+          description: formData.description || "",
+          category_id: parseInt(formData.category_id, 10),
+          receipt_file: formData.receipt_file || null,
+        };
+
+        console.log("Sending expense data:", expenseData);
+
+        const response = await addExpense(expenseData);
+
+        // Rest of your code remains the same
+        NotificationEventBus.publish("EXPENSE_CREATED", {
+          expense: response,
+          timestamp: new Date().toISOString(),
+        });
+
+        NotificationEventBus.publish("BUDGET_DATA_CHANGED", {
+          timestamp: new Date().toISOString(),
+        });
+
+        handleCloseDialog();
+        showSnackbar("Expense added successfully", "success");
+        fetchExpenses();
+      } catch (error) {
+        console.error("Error adding expense:", error);
+        showSnackbar("Failed to add expense", "error");
+      } finally {
+        setLoading(false);
       }
-  
-      handleCloseDialog();
-      showSnackbar("Expense updated successfully", "success");
-  
-      fetchExpenses();
-    } catch (error) {
-      console.error("Error updating expense:", error);
-      if (error.response && error.response.status === 403) {
-        showSnackbar(
-          "You do not have permission to edit this expense",
-          "error"
-        );
-      } else {
-        showSnackbar("Failed to update expense", "error");
+    };
+
+const handleEditExpense = async () => {
+  if (!validateForm() || !currentExpense) return;
+
+  try {
+    setLoading(true);
+    
+    // First update the expense details
+    const basicData = {
+      amount: formData.amount,
+      date: formData.date,
+      description: formData.description || "",
+      category_id: parseInt(formData.category_id, 10),
+    };
+    
+    console.log("Updating expense details:", basicData);
+    let updatedExpense = await updateExpense(currentExpense.id, basicData);
+    
+    // If we have a file, upload it using the dedicated endpoint
+    if (formData.receipt_file) {
+      console.log("Uploading receipt file:", formData.receipt_file.name);
+      
+      try {
+        // Use the uploadReceipt function from your API
+        const fileResponse = await uploadReceipt(currentExpense.id, formData.receipt_file);
+        console.log("File upload successful:", fileResponse);
+        
+        // Update with the response that includes the receipt_path
+        updatedExpense = fileResponse;
+      } catch (fileError) {
+        console.error("Error uploading file:", fileError);
+        showSnackbar("Expense updated but receipt upload failed", "warning");
       }
-    } finally {
-      setLoading(false);
     }
-  };
+    
+    // Trigger notification
+    NotificationEventBus.publish("EXPENSE_CREATED", {
+      expense: updatedExpense,
+    });
+
+    handleCloseDialog();
+    showSnackbar("Expense updated successfully", "success");
+    fetchExpenses();
+  } catch (error) {
+    console.error("Error updating expense:", error);
+    showSnackbar(`Update failed: ${error.message || 'Unknown error'}`, "error");
+  } finally {
+    setLoading(false);
+  }
+};
+
   const handleDeleteExpense = async () => {
     if (!currentExpense) return;
 
@@ -1098,489 +1139,786 @@ const Expenses = () => {
         />
       </Paper>
 
-    {/* Optimized Add Expense Dialog - Side-by-Side Receipt Preview */}
-<Dialog
-  open={openAddDialog}
-  onClose={handleCloseDialog}
-  maxWidth="md"
-  fullWidth
-  TransitionComponent={Zoom}
-  transitionDuration={400}
-  PaperProps={{
-    sx: {
-      borderRadius: 3,
-      boxShadow: 5,
-      overflow: "hidden",
-      maxHeight: "90vh",
-    },
-  }}
->
-  <Box
-    sx={{ background: "linear-gradient(45deg, #2196F3, #3f51b5)", py: 1 }}
-  >
-    <DialogTitle sx={{ color: "white", py: 0.5 }}>
-      Add New Expense
-    </DialogTitle>
-  </Box>
-  
-  <DialogContent sx={{ p: 2 }}>
-    <Grid container spacing={2} sx={{ mt: 0 }}>
-      {/* Form Section */}
-      <Grid item xs={12} md={formData.receipt_path ? 6 : 12}>
-        <Grid container spacing={2}>
-          {/* Amount and Date */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Amount"
-              name="amount"
-              type="number"
-              value={formData.amount}
-              onChange={handleInputChange}
-              error={!!formErrors.amount}
-              helperText={formErrors.amount}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">₱</InputAdornment>
-                ),
-                sx: { borderRadius: 2 },
-              }}
-              required
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Date"
-              name="date"
-              type="date"
-              value={formData.date}
-              onChange={handleInputChange}
-              InputLabelProps={{ shrink: true }}
-              error={!!formErrors.date}
-              helperText={formErrors.date}
-              required
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            />
-          </Grid>
-          
-          {/* Category Selection */}
-          <Grid item xs={12}>
-            <FormControl fullWidth error={!!formErrors.category_id} required>
-              <InputLabel id="category-add-label">Category</InputLabel>
-              <Select
-                labelId="category-add-label"
-                name="category_id"
-                value={formData.category_id}
-                label="Category"
-                onChange={handleInputChange}
-                sx={{ borderRadius: 2 }}
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      {/* Optimized Add Expense Dialog - Side-by-Side Receipt Preview */}
+      <Dialog
+        open={openAddDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+        TransitionComponent={Zoom}
+        transitionDuration={400}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: 5,
+            overflow: "hidden",
+            maxHeight: "90vh",
+          },
+        }}
+      >
+        <Box
+          sx={{ background: "linear-gradient(45deg, #2196F3, #3f51b5)", py: 1 }}
+        >
+          <DialogTitle sx={{ color: "white", py: 0.5 }}>
+            Add New Expense
+          </DialogTitle>
+        </Box>
+
+        <DialogContent sx={{ p: 2 }}>
+          <Grid container spacing={2} sx={{ mt: 0 }}>
+            {/* Form Section */}
+            <Grid
+              item
+              xs={12}
+              md={formData.receipt_path || formData.receipt_file ? 6 : 12}
+            >
+              <Grid container spacing={2}>
+                {/* Amount and Date */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Amount"
+                    name="amount"
+                    type="number"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                    error={!!formErrors.amount}
+                    helperText={formErrors.amount}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">₱</InputAdornment>
+                      ),
+                      sx: { borderRadius: 2 },
+                    }}
+                    required
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Date"
+                    name="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    InputLabelProps={{ shrink: true }}
+                    error={!!formErrors.date}
+                    helperText={formErrors.date}
+                    required
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                </Grid>
+
+                {/* Category Selection */}
+                <Grid item xs={12}>
+                  <FormControl
+                    fullWidth
+                    error={!!formErrors.category_id}
+                    required
+                  >
+                    <InputLabel id="category-add-label">Category</InputLabel>
+                    <Select
+                      labelId="category-add-label"
+                      name="category_id"
+                      value={formData.category_id}
+                      label="Category"
+                      onChange={handleInputChange}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: "50%",
+                                bgcolor: category.color,
+                              }}
+                            />
+                            {category.name}
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {formErrors.category_id && (
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        sx={{ mt: 0.5, ml: 1.5 }}
+                      >
+                        {formErrors.category_id}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                {/* Description */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description (Optional)"
+                    name="description"
+                    multiline
+                    rows={2}
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                </Grid>
+
+                {/* Receipt Image Upload */}
+                <Grid item xs={12}>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Receipt Image (Optional)
+                    </Typography>
+
+                    {/* File Upload Button */}
+                    {!formData.receipt_file ? (
+                      <>
+                        <input
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          id="receipt-file-upload"
+                          type="file"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                receipt_file: e.target.files[0],
+                                receipt_path: null,
+                              }));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="receipt-file-upload"
+                          style={{ width: "100%" }}
+                        >
+                          <Button
+                            variant="outlined"
+                            component="span"
+                            startIcon={<ReceiptIcon />}
+                            fullWidth
+                            sx={{
+                              borderRadius: 2,
+                              py: 1,
+                              borderStyle: "dashed",
+                              borderWidth: "1px",
+                            }}
+                          >
+                            Select Receipt Image
+                          </Button>
+                        </label>
+                      </>
+                    ) : (
+                      /* Selected File Display */
                       <Box
                         sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: "50%",
-                          bgcolor: category.color,
+                          p: 2,
+                          borderRadius: 2,
+                          border: "1px solid",
+                          borderColor: "divider",
+                          bgcolor: "background.paper",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
                         }}
-                      />
-                      {category.name}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <ReceiptIcon
+                            color="primary"
+                            sx={{ mr: 1, flexShrink: 0 }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {formData.receipt_file.name}
+                          </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              receipt_file: null,
+                            }))
+                          }
+                          sx={{ ml: 1, flexShrink: 0 }}
+                        >
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Receipt Preview Section - Works with both file uploads and URL paths */}
+            {(formData.receipt_path || formData.receipt_file) && (
+              <Grid item xs={12} md={6}>
+                <Card
+                  elevation={2}
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: 2,
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      p: 2,
+                      flexGrow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                        Receipt Preview
+                      </Typography>
+
+                      <Tooltip title="View Full Size">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            if (formData.receipt_file) {
+                              window.open(
+                                URL.createObjectURL(formData.receipt_file),
+                                "_blank"
+                              );
+                            } else if (formData.receipt_path) {
+                              window.open(
+                                getReceiptImageUrl(formData.receipt_path),
+                                "_blank"
+                              );
+                            }
+                          }}
+                        >
+                          <ZoomOutMapIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-              {formErrors.category_id && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                  {formErrors.category_id}
-                </Typography>
-              )}
-            </FormControl>
+
+                    <Box
+                      sx={{
+                        flexGrow: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {formData.receipt_file ? (
+                        // Preview for file upload
+                        <Box
+                          component="img"
+                          src={URL.createObjectURL(formData.receipt_file)}
+                          alt="Receipt Preview"
+                          sx={{
+                            width: "100%",
+                            maxHeight: "50vh",
+                            objectFit: "contain",
+                            borderRadius: 1,
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/placeholder-image.png";
+                            showSnackbar(
+                              "Failed to preview receipt image",
+                              "warning"
+                            );
+                          }}
+                        />
+                      ) : (
+                        // Display URL preview (existing code)
+                        <Box
+                          component="img"
+                          src={getReceiptImageUrl(formData.receipt_path)}
+                          alt="Receipt Preview"
+                          sx={{
+                            width: "100%",
+                            maxHeight: "50vh",
+                            objectFit: "contain",
+                            borderRadius: 1,
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/placeholder-image.png";
+                            showSnackbar(
+                              "Invalid image URL. Please enter a direct link to an image file.",
+                              "warning"
+                            );
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
           </Grid>
-          
-          {/* Description */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description (Optional)"
-              name="description"
-              multiline
-              rows={2}
-              value={formData.description}
-              onChange={handleInputChange}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            />
-          </Grid>
-          
-          {/* Receipt Image URL - Always visible */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Receipt Image URL (Optional)"
-              name="receipt_path"
-              value={formData.receipt_path || ""}
-              onChange={handleInputChange}
-              placeholder="https://example.com/receipt.jpg"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <ReceiptIcon />
-                  </InputAdornment>
-                ),
-                sx: { borderRadius: 2 },
-              }}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-      
-      {/* Receipt Preview Section - Side by side with form when URL exists */}
-      {formData.receipt_path && (
-        <Grid item xs={12} md={6}>
-          <Card
-            elevation={2}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
+          <Button
+            onClick={handleCloseDialog}
+            color="inherit"
             sx={{
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              borderRadius: 2,
+              borderRadius: 8,
+              px: 3,
+              transition: "all 0.2s",
+              "&:hover": {
+                backgroundColor: theme.palette.grey[200],
+              },
             }}
           >
-            <CardContent sx={{ p: 2, flexGrow: 1, display: "flex", flexDirection: "column" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                  Receipt Preview
-                </Typography>
-                
-                <Tooltip title="View Full Size">
-                  <IconButton 
-                    size="small"
-                    onClick={() => window.open(getReceiptImageUrl(formData.receipt_path), "_blank")}
-                  >
-                    <ZoomOutMapIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-              
-              <Box
-                sx={{
-                  flexGrow: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                }}
-              >
-                <Box
-                  component="img"
-                  src={getReceiptImageUrl(formData.receipt_path)}
-                  alt="Receipt Preview"
-                  sx={{
-                    width: "100%",
-                    maxHeight: "50vh",
-                    objectFit: "contain",
-                    borderRadius: 1,
-                  }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/placeholder-image.png";
-                    showSnackbar(
-                      "Invalid image URL. Please enter a direct link to an image file.",
-                      "warning"
-                    );
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      )}
-    </Grid>
-  </DialogContent>
-
-  <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
-    <Button
-      onClick={handleCloseDialog}
-      color="inherit"
-      sx={{
-        borderRadius: 8,
-        px: 3,
-        transition: "all 0.2s",
-        "&:hover": {
-          backgroundColor: theme.palette.grey[200],
-        },
-      }}
-    >
-      Cancel
-    </Button>
-    <Button
-      onClick={handleAddExpense}
-      variant="contained"
-      color="primary"
-      disabled={loading}
-      sx={{
-        borderRadius: 8,
-        px: 3,
-        background: "linear-gradient(45deg, #2196F3, #3f51b5)",
-        transition: "all 0.3s",
-        boxShadow: 2,
-        "&:hover": {
-          boxShadow: 4,
-          transform: "translateY(-2px)",
-        },
-      }}
-    >
-      {loading ? "Saving..." : "Save Expense"}
-    </Button>
-  </DialogActions>
-</Dialog>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAddExpense}
+            variant="contained"
+            color="primary"
+            disabled={loading}
+            sx={{
+              borderRadius: 8,
+              px: 3,
+              background: "linear-gradient(45deg, #2196F3, #3f51b5)",
+              transition: "all 0.3s",
+              boxShadow: 2,
+              "&:hover": {
+                boxShadow: 4,
+                transform: "translateY(-2px)",
+              },
+            }}
+          >
+            {loading ? "Saving..." : "Save Expense"}
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Edit Expense Dialog with animation */}
-    {/* Optimized Edit Expense Dialog - Reduced Scrolling for Receipt */}
-<Dialog
-  open={openEditDialog}
-  onClose={handleCloseDialog}
-  maxWidth="md"
-  fullWidth
-  TransitionComponent={Zoom}
-  transitionDuration={400}
-  PaperProps={{
-    sx: {
-      borderRadius: 3,
-      boxShadow: 5,
-      overflow: "hidden",
-      maxHeight: "90vh",
-    },
-  }}
->
-  <Box
-    sx={{ background: "linear-gradient(45deg, #4CAF50, #2E7D32)", py: 1 }}
-  >
-    <DialogTitle sx={{ color: "white", py: 0.5 }}>
-      Edit Expense
-    </DialogTitle>
-  </Box>
-  
-  <DialogContent sx={{ p: 2 }}>
-    <Grid container spacing={2} sx={{ mt: 0 }}>
-      {/* Form Section */}
-      <Grid item xs={12} md={formData.receipt_path ? 6 : 12}>
-        <Grid container spacing={2}>
-          {/* Amount and Date */}
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Amount"
-              name="amount"
-              type="number"
-              value={formData.amount}
-              onChange={handleInputChange}
-              error={!!formErrors.amount}
-              helperText={formErrors.amount}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">₱</InputAdornment>
-                ),
-                sx: { borderRadius: 2 },
-              }}
-              required
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            />
-          </Grid>
-          
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Date"
-              name="date"
-              type="date"
-              value={formData.date}
-              onChange={handleInputChange}
-              InputLabelProps={{ shrink: true }}
-              error={!!formErrors.date}
-              helperText={formErrors.date}
-              required
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            />
-          </Grid>
-          
-          {/* Category Selection */}
-          <Grid item xs={12}>
-            <FormControl fullWidth error={!!formErrors.category_id} required>
-              <InputLabel id="category-label">Category</InputLabel>
-              <Select
-                labelId="category-label"
-                name="category_id"
-                value={formData.category_id}
-                label="Category"
-                onChange={handleInputChange}
-                sx={{ borderRadius: 2 }}
-              >
-                {categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      {/* Optimized Edit Expense Dialog - Reduced Scrolling for Receipt */}
+      <Dialog
+        open={openEditDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+        TransitionComponent={Zoom}
+        transitionDuration={400}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: 5,
+            overflow: "hidden",
+            maxHeight: "90vh",
+          },
+        }}
+      >
+        <Box
+          sx={{ background: "linear-gradient(45deg, #4CAF50, #2E7D32)", py: 1 }}
+        >
+          <DialogTitle sx={{ color: "white", py: 0.5 }}>
+            Edit Expense
+          </DialogTitle>
+        </Box>
+
+        <DialogContent sx={{ p: 2 }}>
+          <Grid container spacing={2} sx={{ mt: 0 }}>
+            {/* Form Section */}
+            <Grid
+              item
+              xs={12}
+              md={formData.receipt_path || formData.receipt_file ? 6 : 12}
+            >
+              <Grid container spacing={2}>
+                {/* Amount and Date */}
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Amount"
+                    name="amount"
+                    type="number"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                    error={!!formErrors.amount}
+                    helperText={formErrors.amount}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">₱</InputAdornment>
+                      ),
+                      sx: { borderRadius: 2 },
+                    }}
+                    required
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Date"
+                    name="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    InputLabelProps={{ shrink: true }}
+                    error={!!formErrors.date}
+                    helperText={formErrors.date}
+                    required
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                </Grid>
+
+                {/* Category Selection */}
+                <Grid item xs={12}>
+                  <FormControl
+                    fullWidth
+                    error={!!formErrors.category_id}
+                    required
+                  >
+                    <InputLabel id="category-label">Category</InputLabel>
+                    <Select
+                      labelId="category-label"
+                      name="category_id"
+                      value={formData.category_id}
+                      label="Category"
+                      onChange={handleInputChange}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: "50%",
+                                bgcolor: category.color,
+                              }}
+                            />
+                            {category.name}
+                          </Box>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {formErrors.category_id && (
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        sx={{ mt: 0.5, ml: 1.5 }}
+                      >
+                        {formErrors.category_id}
+                      </Typography>
+                    )}
+                  </FormControl>
+                </Grid>
+
+                {/* Description */}
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Description (Optional)"
+                    name="description"
+                    multiline
+                    rows={2}
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                </Grid>
+
+                {/* Simple Receipt Image Upload - Focus only on file upload */}
+                <Grid item xs={12}>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Receipt Image (Optional)
+                    </Typography>
+
+                    {/* File Upload Button */}
+                    {!formData.receipt_file ? (
+                      <>
+                        <input
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          id="receipt-file-upload"
+                          type="file"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setFormData((prev) => ({
+                                ...prev,
+                                receipt_file: e.target.files[0],
+                                receipt_path: null,
+                              }));
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="receipt-file-upload"
+                          style={{ width: "100%" }}
+                        >
+                          <Button
+                            variant="outlined"
+                            component="span"
+                            startIcon={<ReceiptIcon />}
+                            fullWidth
+                            sx={{
+                              borderRadius: 2,
+                              py: 1,
+                              borderStyle: "dashed",
+                              borderWidth: "1px",
+                            }}
+                          >
+                            Select Receipt Image
+                          </Button>
+                        </label>
+                      </>
+                    ) : (
+                      /* Selected File Display */
                       <Box
                         sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: "50%",
-                          bgcolor: category.color,
+                          p: 2,
+                          borderRadius: 2,
+                          border: "1px solid",
+                          borderColor: "divider",
+                          bgcolor: "background.paper",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
                         }}
-                      />
-                      {category.name}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <ReceiptIcon
+                            color="primary"
+                            sx={{ mr: 1, flexShrink: 0 }}
+                          />
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {formData.receipt_file.name}
+                          </Typography>
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              receipt_file: null,
+                            }))
+                          }
+                          sx={{ ml: 1, flexShrink: 0 }}
+                        >
+                          <ClearIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {(formData.receipt_path || formData.receipt_file) && (
+              <Grid item xs={12} md={6}>
+                <Card
+                  elevation={2}
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    borderRadius: 2,
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      p: 2,
+                      flexGrow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                        Receipt Preview
+                      </Typography>
+
+                      <Tooltip title="View Full Size">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            if (formData.receipt_file) {
+                              window.open(
+                                URL.createObjectURL(formData.receipt_file),
+                                "_blank"
+                              );
+                            } else if (formData.receipt_path) {
+                              window.open(
+                                getReceiptImageUrl(formData.receipt_path),
+                                "_blank"
+                              );
+                            }
+                          }}
+                        >
+                          <ZoomOutMapIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-              {formErrors.category_id && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                  {formErrors.category_id}
-                </Typography>
-              )}
-            </FormControl>
+
+                    <Box
+                      sx={{
+                        flexGrow: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {formData.receipt_file ? (
+                        // Preview for file upload
+                        <Box
+                          component="img"
+                          src={URL.createObjectURL(formData.receipt_file)}
+                          alt="Receipt Preview"
+                          sx={{
+                            width: "100%",
+                            maxHeight: "50vh",
+                            objectFit: "contain",
+                            borderRadius: 1,
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/placeholder-image.png";
+                            showSnackbar(
+                              "Failed to preview receipt image",
+                              "warning"
+                            );
+                          }}
+                        />
+                      ) : (
+                        // Preview for URL path
+                        <Box
+                          component="img"
+                          src={getReceiptImageUrl(formData.receipt_path)}
+                          alt="Receipt Preview"
+                          sx={{
+                            width: "100%",
+                            maxHeight: "50vh",
+                            objectFit: "contain",
+                            borderRadius: 1,
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "/placeholder-image.png";
+                            showSnackbar(
+                              "Invalid image URL. Please enter a direct link to an image file.",
+                              "warning"
+                            );
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
           </Grid>
-          
-          {/* Description */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description (Optional)"
-              name="description"
-              multiline
-              rows={2}
-              value={formData.description}
-              onChange={handleInputChange}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            />
-          </Grid>
-          
-          {/* Receipt Image URL - Always visible */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Receipt Image URL (Optional)"
-              name="receipt_path"
-              value={formData.receipt_path || ""}
-              onChange={handleInputChange}
-              placeholder="https://example.com/receipt.jpg"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <ReceiptIcon />
-                  </InputAdornment>
-                ),
-                sx: { borderRadius: 2 },
-              }}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-      
-      {/* Receipt Preview Section - Side by side with form when URL exists */}
-      {formData.receipt_path && (
-        <Grid item xs={12} md={6}>
-          <Card
-            elevation={2}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
+          <Button
+            onClick={handleCloseDialog}
+            color="inherit"
             sx={{
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              borderRadius: 2,
+              borderRadius: 8,
+              px: 3,
+              transition: "all 0.2s",
+              "&:hover": {
+                backgroundColor: theme.palette.grey[200],
+              },
             }}
           >
-            <CardContent sx={{ p: 2, flexGrow: 1, display: "flex", flexDirection: "column" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                  Receipt Preview
-                </Typography>
-                
-                <Tooltip title="View Full Size">
-                  <IconButton 
-                    size="small"
-                    onClick={() => window.open(getReceiptImageUrl(formData.receipt_path), "_blank")}
-                  >
-                    <ZoomOutMapIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-              
-              <Box
-                sx={{
-                  flexGrow: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                }}
-              >
-                <Box
-                  component="img"
-                  src={getReceiptImageUrl(formData.receipt_path)}
-                  alt="Receipt Preview"
-                  sx={{
-                    width: "100%",
-                    maxHeight: "50vh",
-                    objectFit: "contain",
-                    borderRadius: 1,
-                  }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/placeholder-image.png";
-                    showSnackbar(
-                      "Invalid image URL. Please enter a direct link to an image file.",
-                      "warning"
-                    );
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      )}
-    </Grid>
-  </DialogContent>
-
-  <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
-    <Button
-      onClick={handleCloseDialog}
-      color="inherit"
-      sx={{
-        borderRadius: 8,
-        px: 3,
-        transition: "all 0.2s",
-        "&:hover": {
-          backgroundColor: theme.palette.grey[200],
-        },
-      }}
-    >
-      Cancel
-    </Button>
-    <Button
-      onClick={handleEditExpense}
-      variant="contained"
-      color="primary"
-      disabled={loading}
-      sx={{
-        borderRadius: 8,
-        px: 3,
-        background: "linear-gradient(45deg, #4CAF50, #2E7D32)",
-        transition: "all 0.3s",
-        boxShadow: 2,
-        "&:hover": {
-          boxShadow: 4,
-          transform: "translateY(-2px)",
-        },
-      }}
-    >
-      {loading ? "Updating..." : "Update Expense"}
-    </Button>
-  </DialogActions>
-</Dialog>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleEditExpense}
+            variant="contained"
+            color="primary"
+            disabled={loading}
+            sx={{
+              borderRadius: 8,
+              px: 3,
+              background: "linear-gradient(45deg, #4CAF50, #2E7D32)",
+              transition: "all 0.3s",
+              boxShadow: 2,
+              "&:hover": {
+                boxShadow: 4,
+                transform: "translateY(-2px)",
+              },
+            }}
+          >
+            {loading ? "Updating..." : "Update Expense"}
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Delete Confirmation Dialog with animation */}
       <Dialog
         open={openDeleteDialog}
@@ -1729,319 +2067,362 @@ const Expenses = () => {
         </DialogActions>
       </Dialog>
 
-   {/* Optimized View Expense Dialog - No Scrolling Needed */}
-<Dialog
-  open={openViewDialog}
-  onClose={handleCloseDialog}
-  maxWidth="lg"
-  fullWidth
-  TransitionComponent={Zoom}
-  transitionDuration={400}
-  PaperProps={{
-    sx: {
-      borderRadius: 3,
-      boxShadow: 5,
-      overflow: "hidden",
-      maxHeight: "90vh",
-    },
-  }}
->
-  <Box
-    sx={{ background: "linear-gradient(45deg, #3f51b5, #2196F3)", py: 1 }}
-  >
-    <DialogTitle sx={{ color: "white", fontWeight: 500, py: 0.5 }}>
-      Expense Details
-    </DialogTitle>
-  </Box>
-  
-  {currentExpense ? (
-    <>
-      <DialogContent sx={{ p: 2 }}>
-        <Grid container spacing={2}>
-          {/* Expense Information Card */}
-          <Grid item xs={12} md={currentExpense.receipt_path ? 6 : 12}>
-            <Card 
-              elevation={2}
-              sx={{ 
-                height: "100%", 
-                borderRadius: 2,
-                display: "flex",
-                flexDirection: "column"
-              }}
-            >
-              <CardContent sx={{ p: 2, flexGrow: 1 }}>
-                <Typography
-                  variant="h6"
-                  gutterBottom
-                  sx={{
-                    fontWeight: 600,
-                    color: theme.palette.primary.main,
-                    mb: 1.5
-                  }}
-                >
-                  Expense Information
-                </Typography>
+      {/* Optimized View Expense Dialog - No Scrolling Needed */}
+      <Dialog
+        open={openViewDialog}
+        onClose={handleCloseDialog}
+        maxWidth="lg"
+        fullWidth
+        TransitionComponent={Zoom}
+        transitionDuration={400}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: 5,
+            overflow: "hidden",
+            maxHeight: "90vh",
+          },
+        }}
+      >
+        <Box
+          sx={{ background: "linear-gradient(45deg, #3f51b5, #2196F3)", py: 1 }}
+        >
+          <DialogTitle sx={{ color: "white", fontWeight: 500, py: 0.5 }}>
+            Expense Details
+          </DialogTitle>
+        </Box>
 
-                <Grid container spacing={2}>
-                  {/* Main Info Section - 3 columns (Date, Amount, Category) */}
-                  <Grid item xs={4}>
-                    <Typography 
-                      variant="body2" 
-                      color="textSecondary"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      Date
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{ fontWeight: 500, mt: 0.5 }}
-                    >
-                      {formatDate(currentExpense.date)}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={4}>
-                    <Typography 
-                      variant="body2" 
-                      color="textSecondary"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      Amount
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        fontWeight: 600,
-                        mt: 0.5,
-                        color: theme.palette.success.dark
-                      }}
-                    >
-                      ₱{parseFloat(currentExpense.amount).toFixed(2)}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={4}>
-                    <Typography 
-                      variant="body2" 
-                      color="textSecondary"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      Category
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        mt: 0.5
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: "50%",
-                          bgcolor: currentExpense.category?.color || theme.palette.primary.main,
-                          mr: 1
-                        }}
-                      />
-                      <Typography
-                        variant="body1"
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {currentExpense.category?.name || "Unknown"}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  
-                  {/* Description Section */}
-                  <Grid item xs={12}>
-                    <Typography 
-                      variant="body2" 
-                      color="textSecondary"
-                      sx={{ fontWeight: 500 }}
-                    >
-                      Description
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{ mt: 0.5, lineHeight: 1.4 }}
-                    >
-                      {currentExpense.description || "No description provided"}
-                    </Typography>
-                  </Grid>
-                  
-                  {/* Meta Info - Created/Updated in a single row */}
-                  <Grid item xs={12}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between',
-                      borderTop: '1px solid', 
-                      borderColor: 'divider', 
-                      pt: 1,
-                      mt: 0.5
-                    }}>
-                      <Box>
-                        <Typography variant="caption" color="textSecondary" display="inline">
-                          Created:
-                        </Typography>
-                        <Typography variant="caption" sx={{ ml: 0.5, fontStyle: 'italic' }} display="inline">
-                          {currentExpense.created_at ? formatDate(currentExpense.created_at) : "Unknown"}
-                        </Typography>
-                      </Box>
-                      
-                      {currentExpense.updated_at && currentExpense.updated_at !== currentExpense.created_at && (
-                        <Box>
-                          <Typography variant="caption" color="textSecondary" display="inline">
-                            Updated:
-                          </Typography>
-                          <Typography variant="caption" sx={{ ml: 0.5, fontStyle: 'italic' }} display="inline">
-                            {formatDate(currentExpense.updated_at)}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Receipt Card */}
-          {currentExpense.receipt_path && (
-            <Grid item xs={12} md={6}>
-              <Card
-                elevation={2}
-                sx={{
-                  borderRadius: 2,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <CardContent
-                  sx={{
-                    p: 2,
-                    flexGrow: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        color: theme.palette.primary.main
-                      }}
-                    >
-                      Receipt
-                    </Typography>
-                    
-                    <Tooltip title="View Full Size">
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          window.open(
-                            getReceiptImageUrl(currentExpense.receipt_path),
-                            "_blank"
-                          )
-                        }
-                      >
-                        <ZoomOutMapIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-
-                  <Box
+        {currentExpense ? (
+          <>
+            <DialogContent sx={{ p: 2 }}>
+              <Grid container spacing={2}>
+                {/* Expense Information Card */}
+                <Grid item xs={12} md={currentExpense.receipt_path ? 6 : 12}>
+                  <Card
+                    elevation={2}
                     sx={{
-                      flexGrow: 1,
+                      height: "100%",
+                      borderRadius: 2,
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden"
+                      flexDirection: "column",
                     }}
                   >
-                    {/* Receipt Image - Height capped to prevent scrolling */}
-                    {currentExpense.receipt_path ? (
-                      <Box
-                        component="img"
-                        src={getReceiptImageUrl(currentExpense.receipt_path)}
-                        alt="Receipt"
+                    <CardContent sx={{ p: 2, flexGrow: 1 }}>
+                      <Typography
+                        variant="h6"
+                        gutterBottom
                         sx={{
-                          width: "100%",
-                          maxHeight: "50vh", // Reduced to prevent scrolling
-                          objectFit: "contain",
-                          borderRadius: 1
+                          fontWeight: 600,
+                          color: theme.palette.primary.main,
+                          mb: 1.5,
                         }}
-                        onError={(e) => {
-                          console.error(
-                            "Failed to load image:",
-                            getReceiptImageUrl(currentExpense.receipt_path)
-                          );
-                          e.target.onerror = null;
-                          e.target.src = "/placeholder-image.png";
-                          showSnackbar("Failed to load receipt image", "warning");
-                        }}
-                      />
-                    ) : (
-                      <Typography variant="body1" color="textSecondary">
-                        No receipt image available
+                      >
+                        Expense Information
                       </Typography>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
-      </DialogContent>
-      
-      <DialogActions sx={{ px: 2, pb: 2, pt: 0 }}>
-        <Button
-          onClick={() => handleOpenEditDialog(currentExpense)}
-          variant="outlined"
-          color="primary"
-          startIcon={<EditIcon />}
-          size="small"
-          sx={{
-            borderRadius: 6,
-            px: 2,
-            mr: 1,
-            transition: "all 0.2s",
-            "&:hover": {
-              transform: "translateY(-2px)",
-              boxShadow: 1,
-            }
-          }}
-        >
-          Edit
-        </Button>
-        <Button
-          onClick={handleCloseDialog}
-          variant="contained"
-          size="small"
-          sx={{
-            borderRadius: 6,
-            px: 2,
-            background: "linear-gradient(45deg, #3f51b5, #2196F3)",
-            transition: "all 0.3s",
-            boxShadow: 1,
-            "&:hover": {
-              boxShadow: 2,
-              transform: "translateY(-2px)",
-            }
-          }}
-        >
-          Close
-        </Button>
-      </DialogActions>
-    </>
-  ) : (
-    <DialogContent sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-      <CircularProgress />
-    </DialogContent>
-  )}
-</Dialog>
+
+                      <Grid container spacing={2}>
+                        {/* Main Info Section - 3 columns (Date, Amount, Category) */}
+                        <Grid item xs={4}>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ fontWeight: 500 }}
+                          >
+                            Date
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            sx={{ fontWeight: 500, mt: 0.5 }}
+                          >
+                            {formatDate(currentExpense.date)}
+                          </Typography>
+                        </Grid>
+
+                        <Grid item xs={4}>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ fontWeight: 500 }}
+                          >
+                            Amount
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontWeight: 600,
+                              mt: 0.5,
+                              color: theme.palette.success.dark,
+                            }}
+                          >
+                            ₱{parseFloat(currentExpense.amount).toFixed(2)}
+                          </Typography>
+                        </Grid>
+
+                        <Grid item xs={4}>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ fontWeight: 500 }}
+                          >
+                            Category
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              mt: 0.5,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: "50%",
+                                bgcolor:
+                                  currentExpense.category?.color ||
+                                  theme.palette.primary.main,
+                                mr: 1,
+                              }}
+                            />
+                            <Typography
+                              variant="body1"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {currentExpense.category?.name || "Unknown"}
+                            </Typography>
+                          </Box>
+                        </Grid>
+
+                        {/* Description Section */}
+                        <Grid item xs={12}>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ fontWeight: 500 }}
+                          >
+                            Description
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            sx={{ mt: 0.5, lineHeight: 1.4 }}
+                          >
+                            {currentExpense.description ||
+                              "No description provided"}
+                          </Typography>
+                        </Grid>
+
+                        {/* Meta Info - Created/Updated in a single row */}
+                        <Grid item xs={12}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              borderTop: "1px solid",
+                              borderColor: "divider",
+                              pt: 1,
+                              mt: 0.5,
+                            }}
+                          >
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                color="textSecondary"
+                                display="inline"
+                              >
+                                Created:
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{ ml: 0.5, fontStyle: "italic" }}
+                                display="inline"
+                              >
+                                {currentExpense.created_at
+                                  ? formatDate(currentExpense.created_at)
+                                  : "Unknown"}
+                              </Typography>
+                            </Box>
+
+                            {currentExpense.updated_at &&
+                              currentExpense.updated_at !==
+                                currentExpense.created_at && (
+                                <Box>
+                                  <Typography
+                                    variant="caption"
+                                    color="textSecondary"
+                                    display="inline"
+                                  >
+                                    Updated:
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ ml: 0.5, fontStyle: "italic" }}
+                                    display="inline"
+                                  >
+                                    {formatDate(currentExpense.updated_at)}
+                                  </Typography>
+                                </Box>
+                              )}
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                </Grid>
+
+                {/* Receipt Card */}
+                {currentExpense.receipt_path && (
+                  <Grid item xs={12} md={6}>
+                    <Card
+                      elevation={2}
+                      sx={{
+                        borderRadius: 2,
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                      }}
+                    >
+                      <CardContent
+                        sx={{
+                          p: 2,
+                          flexGrow: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            mb: 1.5,
+                          }}
+                        >
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 600,
+                              color: theme.palette.primary.main,
+                            }}
+                          >
+                            Receipt
+                          </Typography>
+
+                          <Tooltip title="View Full Size">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                window.open(
+                                  getReceiptImageUrl(
+                                    currentExpense.receipt_path
+                                  ),
+                                  "_blank"
+                                )
+                              }
+                            >
+                              <ZoomOutMapIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            flexGrow: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {/* Receipt Image - Height capped to prevent scrolling */}
+                          {currentExpense.receipt_path ? (
+                            <Box
+                              component="img"
+                              src={getReceiptImageUrl(
+                                currentExpense.receipt_path
+                              )}
+                              alt="Receipt"
+                              sx={{
+                                width: "100%",
+                                maxHeight: "50vh", // Reduced to prevent scrolling
+                                objectFit: "contain",
+                                borderRadius: 1,
+                              }}
+                              onError={(e) => {
+                                console.error(
+                                  "Failed to load image:",
+                                  getReceiptImageUrl(
+                                    currentExpense.receipt_path
+                                  )
+                                );
+                                e.target.onerror = null;
+                                e.target.src = "/placeholder-image.png";
+                                showSnackbar(
+                                  "Failed to load receipt image",
+                                  "warning"
+                                );
+                              }}
+                            />
+                          ) : (
+                            <Typography variant="body1" color="textSecondary">
+                              No receipt image available
+                            </Typography>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+              </Grid>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 2, pb: 2, pt: 0 }}>
+              <Button
+                onClick={() => handleOpenEditDialog(currentExpense)}
+                variant="outlined"
+                color="primary"
+                startIcon={<EditIcon />}
+                size="small"
+                sx={{
+                  borderRadius: 6,
+                  px: 2,
+                  mr: 1,
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: 1,
+                  },
+                }}
+              >
+                Edit
+              </Button>
+              <Button
+                onClick={handleCloseDialog}
+                variant="contained"
+                size="small"
+                sx={{
+                  borderRadius: 6,
+                  px: 2,
+                  background: "linear-gradient(45deg, #3f51b5, #2196F3)",
+                  transition: "all 0.3s",
+                  boxShadow: 1,
+                  "&:hover": {
+                    boxShadow: 2,
+                    transform: "translateY(-2px)",
+                  },
+                }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </>
+        ) : (
+          <DialogContent
+            sx={{ display: "flex", justifyContent: "center", py: 3 }}
+          >
+            <CircularProgress />
+          </DialogContent>
+        )}
+      </Dialog>
       {/* Snackbar for notifications with animation */}
       <Snackbar
         open={snackbar.open}
