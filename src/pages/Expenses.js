@@ -647,8 +647,8 @@ const handleEditExpense = async () => {
       return trimmedPath;
     }
 
-    // For local development - use the APP_URL from env
-    const baseUrl = "http://expense-tracker.test";
+    // Backend base URL for storage/receipt files
+    const baseUrl = "https://expensetracker-backend-1-u3jn.onrender.com";
 
     // Return the full URL to the storage path
     return `${baseUrl}/storage/${trimmedPath}`;

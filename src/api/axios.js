@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://expensetracker-backend-1-u3jn.onrender.com';
+const API_URL = 'https://expensetracker-backend-1-u3jn.onrender.com/api';
 const axiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
